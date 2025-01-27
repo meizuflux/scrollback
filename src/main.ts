@@ -73,7 +73,7 @@ folderPicker?.addEventListener('change', (e) => {
 });
 
 document.getElementById('clearData')?.addEventListener('click', () => {
-    indexedDB.deleteDatabase("ConnectionsDB");
+    indexedDB.deleteDatabase("instagram-data");
     localStorage.removeItem("setup");
     location.reload();
 });
