@@ -1,5 +1,5 @@
 import './style.css'
-import { handleConnections } from './import.ts';
+import { importUsers, importMessages } from './import/import.ts';
 import { showAnalysis } from './analysis.ts';
 
 //indexedDB.deleteDatabase("ConnectionsDB"); // TODO: remove once done
@@ -48,7 +48,17 @@ function handleFiles(files: FileList) {
     const fileTree = document.createElement('ul');
     fileTree.className = 'pl-4';
 
-    handleConnections(files, statusLabel);
+    const request = indexedDB.open('db', 1);
+
+    request.onupgradeneeded = (_event) => {
+        const db = request.result;
+        db.createObjectStore('users', { keyPath: 'username' });
+        db.createObjectStore('messages', { keyPath: 'id' });
+    };
+
+
+    importMessages(files, statusLabel);
+    importUsers(files, statusLabel);
 
     Array.from(files).forEach(file => {
         const item = document.createElement('li');
@@ -56,6 +66,50 @@ function handleFiles(files: FileList) {
         item.textContent = file.webkitRelativePath;
         fileTree.appendChild(item);
     });
+
+    // Find and read personal information file
+    const personalInfoFile = Array.from(files).find(file => 
+        file.webkitRelativePath.endsWith('/personal_information/personal_information.json')
+    );
+    console.log(personalInfoFile)
+    interface StringMapData {
+        Username?: { value: string };
+        Name?: { value: string };
+        Email?: { value: string };
+        Bio?: { value: string };
+        Gender?: { value: string };
+        //'Date of birth'?: { value: string };
+        'Private Account'?: { value: string };
+    }
+    //personal_info_data = JSON.parse(e.target?.result as string).profile_user[0].string_map_data;
+    let personal_info_data: StringMapData = {};
+    
+    if (personalInfoFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const result = JSON.parse(e.target?.result as string);
+            console.log(result)
+            personal_info_data = result.profile_user[0].string_map_data;
+        };
+        reader.readAsText(personalInfoFile);
+    }
+
+    console.log(personal_info_data)
+
+    const user = {
+        username: personal_info_data.Username?.value,
+        name: personal_info_data.Name?.value,
+        email: personal_info_data.Email?.value,
+        bio: personal_info_data.Bio?.value,
+        gender: personal_info_data.Gender?.value,
+        //date_of_birth: new Date(personal_info_data['Date of birth']!.value),
+        private_account: new Boolean(personal_info_data['Private Account']?.value),
+    }
+    console.log(user)
+    localStorage.setItem('user', JSON.stringify(user));
+
+
+
     
     fileList.appendChild(fileTree);
     viewAnalysis.disabled = false;
@@ -73,7 +127,7 @@ folderPicker?.addEventListener('change', (e) => {
 });
 
 document.getElementById('clearData')?.addEventListener('click', () => {
-    indexedDB.deleteDatabase("instagram-data");
+    indexedDB.deleteDatabase("db");
     localStorage.removeItem("setup");
     location.reload();
 });

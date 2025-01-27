@@ -27,7 +27,7 @@ export interface StoredUser {
     recently_unfollowed_timestamp?: Date;
 }
 
-export async function handleConnections(files: FileList, status: HTMLLabelElement) {
+export async function importUsers(files: FileList, status: HTMLLabelElement) {
     status.textContent = 'Status: Processing connections...';
 
     const fileData = [
@@ -137,12 +137,7 @@ export async function handleConnections(files: FileList, status: HTMLLabelElemen
 
     status.textContent = 'Status: Storing data...';
 
-    const request = indexedDB.open('instagram-data');
-
-    request.onupgradeneeded = (_event) => {
-        const db = request.result;
-        db.createObjectStore('users', { keyPath: 'username' });
-    };
+    const request = indexedDB.open('db');
 
     request.onsuccess = (_event) => {
         const db = request.result;
@@ -159,4 +154,6 @@ export async function handleConnections(files: FileList, status: HTMLLabelElemen
     request.onerror = (_event) => {
         console.error('Database error:', request.error);
     };
+
+
 }
