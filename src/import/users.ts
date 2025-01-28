@@ -1,40 +1,8 @@
 import { IDBPDatabase } from "idb";
 import { loadFile } from "../utils";
-interface User {
-    string_list_data: [{
-        href: string;
-        value: string;
-        timestamp: number;
-    }];
-}
-
-// TODO: adjust for timezone
-export interface StoredUser {
-    username: string;
-    blocked?: boolean; // you blocked them
-    blocked_timestamp?: Date;
-    close_friends?: boolean; // on close friends list
-    close_friends_timestamp?: Date;
-    requested_to_follow_you?: boolean; // they requested to follow you
-    requested_to_follow_timestamp?: Date;
-    follower?: boolean; // they follow you
-    follower_timestamp?: Date;
-    following?: boolean; // you follow them
-    following_timestamp?: Date;
-    hidden_story_from?: boolean; // you hide them from seeing your story
-    hidden_story_from_timestamp?: Date;
-    pending_follow_request?: boolean; // ie, you requested to follow them and they haven't yet accepted
-    pending_follow_request_timestamp?: Date;
-    recently_unfollowed?: boolean; // you recently unfollowed them
-    recently_unfollowed_timestamp?: Date;
-}
+import { StoredUser } from "../types/user";
 
 export default async (files: File[], db: IDBPDatabase) => {
-    console.log("Importing users...");
-
-    //const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    //await sleep(3000);
-
     const fileData = [
         {
             "name": "blocked_profiles.json",
@@ -132,5 +100,4 @@ export default async (files: File[], db: IDBPDatabase) => {
 
     await tx.done;
 
-    console.log("Users imported");
 }

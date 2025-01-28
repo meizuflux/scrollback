@@ -1,30 +1,25 @@
 import { Component, createResource, createSignal, Show } from "solid-js";
-import { User } from "../types/user";
+import { StoredData, User } from "../types/user";
 import { openDB } from "idb";
+
+import MessageAnalysis from "../components/Messages";
+import UsersAnalysis from "../components/Users";
 
 interface Props {
     pfp: string;
     user: User
 }
 
-interface AppData {
-    users: any;
-    conversations: any,
-    messages: any
-}
 
-const loadData = async (): Promise<AppData> => {
-    const data: AppData = {
-        users: [],
-        conversations: [],
-        messages: []
-    }
-
+const loadData = async (): Promise<StoredData> => {
     const db = await openDB("instagram-data", 1)
-    data.users = await db.getAll("users")
-    data.conversations = await db.getAll("conversations")
-    data.messages = await db.getAll("messages")
 
+    const data: StoredData = {
+        user: JSON.parse(localStorage.getItem("user")!),
+        users: await db.getAll("users"),
+        conversations: await db.getAll("conversations"),
+        messages: await db.getAll("messages"),
+    }
 
     return data
 }
@@ -42,18 +37,16 @@ const Analysis: Component<Props> = (props) => {
 
     return (
         <div>
+            <h1 class="text-3xl font-bold mb-4">Analysis</h1>
             <button 
                 class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" 
                 onClick={clearData}
             >
                 Clear Data
             </button>
-            <h1>Analysis</h1>
-            {// <img src={props.pfp} alt="Profile Picture" /> 
-        }
             <Show when={!data.loading} fallback={<p>Loading...</p>}>
-                <p>loaded</p>
-                <p>Messages: {data()!.messages!.length ?? 0}</p>
+                <MessageAnalysis data={data()!} />
+                <UsersAnalysis data={data()!} />
             </Show>
 
         </div>

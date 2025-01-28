@@ -1,48 +1,11 @@
 // there's other fields but idrc about them ngl
 
 import { IDBPDatabase } from "idb";
+import { MessageFile, StoredMessage } from "../types/user";
 
 // also some messages of things that happen are just messages, like changing the theme
-interface Message {
-    sender_name: string
-    timestamp_ms: number
-    content?: string
-    share?: {
-        link: string,
-        share_text?: string,
-        original_content_owner?: string
-    },
-    photos?: {
-        uri: string,
-        creation_timestamp: number,
-    },
-    videos?: {
-        uri: string,
-        creation_timestamp: number,
-    },
-    reactions?: {
-        reaction: string;
-        actor: string; // person who reacted,
-        timestamp: number;
-    }[],
-}
-
-export interface StoredMessage extends Message {
-    conversation: string;
-}
 
 
-interface MessageFile {
-    participants: { name: string }[],
-    messages: Message[],
-    title: string,
-    image?: {
-        uri: string,
-        creation_timestamp: number,
-    }
-}
-
-// TODO: test that this works
 function decodeU8String(encodedText: string): string {
     // Split by \u and convert each escape sequence
     const parts = encodedText.split('\\u').map((part, index) => {
@@ -57,9 +20,9 @@ function decodeU8String(encodedText: string): string {
     return decoder.decode(utf8Array);
 }
 
-export default async (files: File[], db: IDBPDatabase) => {
-    console.log("Importing messages...");
 
+
+export default async (files: File[], db: IDBPDatabase) => {
     const data: any = {
         "conversations": [],
         "messages": []
@@ -75,33 +38,48 @@ export default async (files: File[], db: IDBPDatabase) => {
     for (const file of messageFiles) {
         const json_file = await file.text().then(JSON.parse) as MessageFile;
 
-        const conversation = json_file.title;
+        const conversation = decodeU8String(json_file.title);
 
 
 
-        // store the messages
-        {
-            for (const message of json_file.messages) {
-                const storedMessage: StoredMessage = {
-                    ...message,
-                    conversation,
+        
+        // TODO: figure out a way to store this directly in the DB without it causing a timing issue
+        // current hack is to laod it all into memory and then store it all at once, should be another way around this
+        for (const message of json_file.messages) {
+            if (message.content) {
+                message.content = decodeU8String(message.content);
+            }
+
+            // TODO: figure out why this happens with some conversations and also check what else to filter out
+            if ((message.content?.startsWith("Reacted ") && message.content?.endsWith(" to your message")) || message.content === "Liked a message" || message.content?.includes(" changed the theme to ")) {
+                continue
+            }
+
+            if (message.reactions) {
+                for (const reaction of message.reactions) {
+                    reaction.reaction = decodeU8String(reaction.reaction);
                 }
-
-                data["messages"].push(storedMessage);
             }
-        }
+            message.sender_name = decodeU8String(message.sender_name);
 
-        // store the conversation in the conversations store
-        {
-            const conversationData = {
-                title: conversation,
-                participants: json_file.participants.map(participant => participant.name),
-                is_group: json_file.participants.length > 2,
+            const storedMessage: StoredMessage = {
+                ...message,
+                conversation,
             }
 
-            data["conversations"].push(conversationData);
+            data["messages"].push(storedMessage);
         }
+
+
+        const conversationData = {
+            title: conversation,
+            participants: json_file.participants.map(participant => participant.name),
+            is_group: json_file.participants.length > 2,
+        }
+
+        data["conversations"].push(conversationData);
     }
+    
     // hack to get around some timing issues I don't fully understand
     const tx = db.transaction(["messages", "conversations"], "readwrite");
 
@@ -119,6 +97,4 @@ export default async (files: File[], db: IDBPDatabase) => {
     await Promise.all(promises);
 
     await tx.done
-
-    console.debug("Messages imported")
 }

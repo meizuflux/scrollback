@@ -8,7 +8,6 @@ const createDatabase = async (): Promise<IDBPDatabase<unknown>> => {
             db.createObjectStore("users", { keyPath: "username" })
             db.createObjectStore("messages", { autoIncrement: true })
             db.createObjectStore("conversations", { keyPath: "title"})
-            console.log("Database created")
         }
     })
 
@@ -21,10 +20,28 @@ export const importData = async (files: File[]) => {
 
     const importers = [
         importUsers(files, db),
-        importMessages(files, db)
+        importMessages(files, db),
+        /* 
+        importStoryLikes(files, db),
+        importPostLikes(files, db),
+        importLikedComments(files, db),
+        importComments(files, db),
+        importYourTopics(files, db),
+        importLocationsOfInterest(files, db),
+        importProfileChanges(files, db)
+        */
     ]
 
-    await Promise.all(importers)
+    /* TODO: save misc stats to local storage
+        - number of saved posts
+        - number of stories
+        - profile based in
 
-    console.log("Import complete")
+    could potentially gather all the timestamps from everything and display it as a graph to determine activity over time / when most active based on number of events?
+    probably interactable, filterable graph preferably
+
+    lots of information missing on the data request zip
+    */
+
+    await Promise.all(importers)
 }

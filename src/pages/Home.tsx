@@ -5,9 +5,7 @@ import { User } from '../types/user';
 import { importData } from '../import/import';
 
 const Home: Component = () => {
-    const [files, setFiles] = createStore<File[]>([])    
-    const [status, setStatus] = createSignal<string>("Waiting for file upload");
-
+    // TODO: move this out of this file
     const loadUser = async (fileList: File[]) => {
         const userFileData = await loadFile<any>(fileList, '/personal_information/personal_information.json');
 
@@ -23,8 +21,8 @@ const Home: Component = () => {
 
         localStorage.setItem('user', JSON.stringify(user));
         
+        // TODO: figure out if this could technically be skipped if the rest of the data is imported too fast
         const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
-        console.log("pfpPath", pfpPath)
         if (pfpPath) {
             const pfp = findFile(fileList, pfpPath)!;
 
@@ -42,14 +40,12 @@ const Home: Component = () => {
 
     const handleFiles = async (files: FileList) => {
         const fileArray = Array.from(files)
-        setFiles(fileArray)
         
         await loadUser(fileArray)
         await importData(fileArray)
 
         localStorage.setItem("loaded", "true")
 
-        console.log("reloading...")
         window.location.reload()
     }
 
@@ -57,32 +53,16 @@ const Home: Component = () => {
     return (
         <>
             <div class="container mx-auto p-4">
-            <h1 class="text-3xl font-bold mb-4">Folder Upload</h1>
-                <div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg mb-4">
-                    <input type="file" 
-                    /* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
-                    webkitdirectory directory multiple id="folderPicker" class="hidden" onChange={(e) => handleFiles(e.currentTarget.files)}/>
-                    <label for="folderPicker" class="cursor-pointer">
-                        Click to select folder
-                    </label>
-                </div>
-
-            <label for="status" class="text-lg font-semibold" id="status">Status: {status()}</label><br />
-
-            
-            <div id="fileList" class="mt-4"></div>
+                <h1 class="text-3xl font-bold mb-4">Folder Upload</h1>
+                    <div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg mb-4">
+                        <input type="file" 
+                        /* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
+                        webkitdirectory directory multiple id="folderPicker" class="hidden" onChange={(e) => handleFiles(e.currentTarget.files)}/>
+                        <label for="folderPicker" class="cursor-pointer">
+                            Click to select folder
+                        </label>
+                    </div>
             </div>
-
-            <Show when={files.length > 0}>
-                <div>
-                    <h2 class="text-xl font-semibold mb-2">Selected Files:</h2>
-                    <ul class="pl-4">
-                        {files.map(file => (
-                            <li class="mb-1">{file.webkitRelativePath}</li>
-                        ))}
-                    </ul>
-                </div>
-            </Show>
         </>
     )
 }
