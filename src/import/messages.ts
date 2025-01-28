@@ -1,4 +1,7 @@
 // there's other fields but idrc about them ngl
+
+import { IDBPDatabase } from "idb";
+
 // also some messages of things that happen are just messages, like changing the theme
 interface Message {
     sender_name: string
@@ -26,7 +29,6 @@ interface Message {
 
 export interface StoredMessage extends Message {
     conversation: string;
-    id: number;
 }
 
 
@@ -40,6 +42,7 @@ interface MessageFile {
     }
 }
 
+// TODO: test that this works
 function decodeU8String(encodedText: string): string {
     // Split by \u and convert each escape sequence
     const parts = encodedText.split('\\u').map((part, index) => {
@@ -54,49 +57,68 @@ function decodeU8String(encodedText: string): string {
     return decoder.decode(utf8Array);
 }
 
-export async function importMessages(files: FileList, status: HTMLLabelElement) {
-    status.textContent = 'Status: Processing messages...';
+export default async (files: File[], db: IDBPDatabase) => {
+    console.log("Importing messages...");
 
-    const messageFiles = Array.from(files).filter(file => file.name.endsWith('message_1.json'));
+    const data: any = {
+        "conversations": [],
+        "messages": []
+    }
 
+    const messageFiles = files.filter(file => file.name.endsWith('message_1.json'));
     const messagesFilesData: MessageFile[] = [];
 
     for (const file of messageFiles) {
         messagesFilesData.push(await file.text().then(JSON.parse));
     }
 
-    const request = indexedDB.open('db', 1);
+    for (const file of messageFiles) {
+        const json_file = await file.text().then(JSON.parse) as MessageFile;
 
-    request.onsuccess = (_event) => {
-        const db = request.result;
-        const transaction = db.transaction('messages', 'readwrite');
-        const store = transaction.objectStore('messages');
-        
-        let _id = 0;
-        for (const messageFile of messagesFilesData) {
-            for (const message of messageFile.messages) {
-                // not sure why, but one of my conversations had a lot of this
-                if (message.content == "Liked a message") {
-                    continue
-                }
+        const conversation = json_file.title;
 
+
+
+        // store the messages
+        {
+            for (const message of json_file.messages) {
                 const storedMessage: StoredMessage = {
                     ...message,
-                    conversation: decodeU8String(messageFile.title),
-                    id: _id++
-                };
-                store.put(storedMessage);
+                    conversation,
+                }
+
+                data["messages"].push(storedMessage);
             }
         }
 
-        status.textContent = 'Status: Messages processed';
-    };
+        // store the conversation in the conversations store
+        {
+            const conversationData = {
+                title: conversation,
+                participants: json_file.participants.map(participant => participant.name),
+                is_group: json_file.participants.length > 2,
+            }
 
-    request.onerror = (_event) => {
-        console.error('Database error:', request.error);
-    };
+            data["conversations"].push(conversationData);
+        }
+    }
+    // hack to get around some timing issues I don't fully understand
+    const tx = db.transaction(["messages", "conversations"], "readwrite");
 
-    
+    const messagesStore = tx.objectStore("messages");
+    const conversationsStore = tx.objectStore("conversations");
 
-    status.textContent = 'Status: Messages imported';
+    const promises = []
+    for (const message of data["messages"]) {
+        promises.push(messagesStore.put(message));
+    }
+    for (const conversation of data["conversations"]) {
+        promises.push(conversationsStore.put(conversation));
+    }
+
+    await Promise.all(promises);
+
+    await tx.done
+
+    console.debug("Messages imported")
 }

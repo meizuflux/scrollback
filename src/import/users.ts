@@ -1,3 +1,5 @@
+import { IDBPDatabase } from "idb";
+import { loadFile } from "../utils";
 interface User {
     string_list_data: [{
         href: string;
@@ -27,8 +29,11 @@ export interface StoredUser {
     recently_unfollowed_timestamp?: Date;
 }
 
-export async function importUsers(files: FileList, status: HTMLLabelElement) {
-    status.textContent = 'Status: Processing connections...';
+export default async (files: File[], db: IDBPDatabase) => {
+    console.log("Importing users...");
+
+    //const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    //await sleep(3000);
 
     const fileData = [
         {
@@ -72,31 +77,16 @@ export async function importUsers(files: FileList, status: HTMLLabelElement) {
         }
     ];
 
-    
     const data: { [key: string]: StoredUser } = {};
 
-    const filesArray = Array.from(files);
     for (const file of fileData) {
-        status.textContent = `Status: Processing ${file.name}...`;
-
         const filename = "/connections/followers_and_following/" + file.name
-        const json_file = filesArray.find(file => file.webkitRelativePath.endsWith(filename));
-
-        if (!json_file) {
-            console.error(`File ${file.name} not found`);
-            continue;
-        }
-
-        //console.log(file.name)
-
-        let json_file_data = await json_file.text().then(JSON.parse);
-
+        let json_file_data = await loadFile<any>(files, filename);
         if (file.stored_at) {
-            json_file_data = json_file_data[file.stored_at];
+            json_file_data = json_file_data[file.stored_at]
         }
 
-        // TODO: does not properly handle when a user is blocked
-        json_file_data.forEach((user: User) => {
+        for (const user of json_file_data) {
             let user_data = user.string_list_data[0];
 
             if (!user_data.value) {
@@ -131,29 +121,16 @@ export async function importUsers(files: FileList, status: HTMLLabelElement) {
             }
 
             data[userData.username] = userData;
-
-        });
+        }
     }
 
-    status.textContent = 'Status: Storing data...';
+    const tx = db.transaction('users', 'readwrite');
+    const store = tx.objectStore('users');
 
-    const request = indexedDB.open('db');
+    const promises = Object.values(data).map(user => store.put(user));
+    await Promise.all(promises);
 
-    request.onsuccess = (_event) => {
-        const db = request.result;
-        const transaction = db.transaction('users', 'readwrite');
-        const store = transaction.objectStore('users');
-        
-        Object.values(data).forEach(user => {
-            store.put(user);
-        });
+    await tx.done;
 
-        status.textContent = 'Status: Connections processed';
-    };
-
-    request.onerror = (_event) => {
-        console.error('Database error:', request.error);
-    };
-
-
+    console.log("Users imported");
 }
