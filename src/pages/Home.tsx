@@ -1,6 +1,6 @@
 import { createSignal, Show, type Component } from "solid-js";
 import { createStore } from "solid-js/store";
-import { findFile, loadFile } from "../utils";
+import { findFile, loadFile, extractZipToFiles } from "../utils";
 import { User } from "../types/user";
 import { importData } from "../import/import";
 
@@ -46,13 +46,24 @@ const Home: Component = () => {
 		setImportProgress(0);
 		
 		try {
+			let processedFiles: File[];
+			
+			// Check if it's a zip file
+			if (fileArray.length === 1 && fileArray[0].name.endsWith('.zip')) {
+				setCurrentStep("Extracting zip file...");
+				setImportProgress(5);
+				processedFiles = await extractZipToFiles(fileArray[0]);
+			} else {
+				processedFiles = fileArray;
+			}
+			
 			setCurrentStep("Loading user data...");
 			setImportProgress(10);
-			await loadUser(fileArray);
+			await loadUser(processedFiles);
 			
 			setCurrentStep("Importing data...");
 			setImportProgress(20);
-			await importData(fileArray, (progress, step) => {
+			await importData(processedFiles, (progress, step) => {
 				setImportProgress(20 + (progress * 0.8)); // Scale to 20-100%
 				setCurrentStep(step);
 			});
@@ -71,7 +82,7 @@ const Home: Component = () => {
 	return (
 		<>
 			<div class="container mx-auto p-4">
-				<h1 class="text-3xl font-bold mb-4">Folder Upload</h1>
+				<h1 class="text-3xl font-bold mb-4">Data Upload</h1>
 				
 				<Show when={isImporting()}>
 					<div class="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -86,21 +97,47 @@ const Home: Component = () => {
 					</div>
 				</Show>
 				
-				<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg mb-4">
-					<input
-						type="file"
-						/* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
-						webkitdirectory
-						directory
-						multiple
-						id="folderPicker"
-						class="hidden"
-						disabled={isImporting()}
-						onChange={(e) => handleFiles(e.currentTarget.files!)}
-					/>
-					<label for="folderPicker" class={`cursor-pointer ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
-						{isImporting() ? 'Importing...' : 'Click to select folder'}
-					</label>
+				<div class="space-y-4">
+					{/* Folder Upload */}
+					<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg">
+						<input
+							type="file"
+							/* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
+							webkitdirectory
+							directory
+							multiple
+							id="folderPicker"
+							class="hidden"
+							disabled={isImporting()}
+							onChange={(e) => handleFiles(e.currentTarget.files!)}
+						/>
+						<label for="folderPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
+							<div class="text-lg font-medium mb-2">📁 Upload Folder</div>
+							<div class="text-sm text-gray-600">
+								{isImporting() ? 'Importing...' : 'Click to select your Instagram data folder'}
+							</div>
+						</label>
+					</div>
+
+					<div class="text-center text-gray-500 font-medium">OR</div>
+
+					{/* Zip File Upload */}
+					<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg">
+						<input
+							type="file"
+							accept=".zip"
+							id="zipPicker"
+							class="hidden"
+							disabled={isImporting()}
+							onChange={(e) => handleFiles(e.currentTarget.files!)}
+						/>
+						<label for="zipPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
+							<div class="text-lg font-medium mb-2">📦 Upload Zip File</div>
+							<div class="text-sm text-gray-600">
+								{isImporting() ? 'Importing...' : 'Click to select your Instagram data zip file'}
+							</div>
+						</label>
+					</div>
 				</div>
 			</div>
 		</>
