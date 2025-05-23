@@ -15,7 +15,7 @@ export default async (files: File[], db: IDBPDatabase) => {
 			stored_at: "relationships_close_friends",
 		},
 		{
-			name: "follow_requests_you_ve_received.json",
+			name: "follow_requests_you've_received.json",
 			column: "requested_to_follow_you",
 			stored_at: "relationships_follow_requests_received",
 		},
