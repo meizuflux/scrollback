@@ -14,22 +14,21 @@ const createDatabase = async (): Promise<IDBPDatabase<unknown>> => {
 	return db;
 };
 
-export const importData = async (files: File[]) => {
+export const importData = async (files: File[], onProgress?: (progress: number, step: string) => void) => {
 	const db = await createDatabase();
 
 	const importers = [
-		importUsers(files, db),
-		importMessages(files, db),
-		/* 
-        importStoryLikes(files, db),
-        importPostLikes(files, db),
-        importLikedComments(files, db),
-        importComments(files, db),
-        importYourTopics(files, db),
-        importLocationsOfInterest(files, db),
-        importProfileChanges(files, db)
-        */
+		{ name: "Processing users...", fn: () => importUsers(files, db) },
+		{ name: "Processing messages...", fn: () => importMessages(files, db) },
 	];
+
+	for (let i = 0; i < importers.length; i++) {
+		const importer = importers[i];
+		onProgress?.((i / importers.length) * 100, importer.name);
+		await importer.fn();
+	}
+
+	onProgress?.(100, "Import complete!");
 
 	/* TODO: save misc stats to local storage
         - number of saved posts
@@ -41,6 +40,4 @@ export const importData = async (files: File[]) => {
 
     lots of information missing on the data request zip
     */
-
-	await Promise.all(importers);
 };

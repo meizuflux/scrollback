@@ -31,11 +31,13 @@ export default async (files: File[], db: IDBPDatabase) => {
 	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
 	const messagesFilesData: MessageFile[] = [];
 
-	for (const file of messageFiles) {
+	for (let i = 0; i < messageFiles.length; i++) {
+		const file = messageFiles[i];
 		messagesFilesData.push(await file.text().then(JSON.parse));
 	}
 
-	for (const file of messageFiles) {
+	for (let i = 0; i < messageFiles.length; i++) {
+		const file = messageFiles[i];
 		const json_file = (await file.text().then(JSON.parse)) as MessageFile;
 
 		const conversation = decodeU8String(json_file.title);

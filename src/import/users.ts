@@ -47,7 +47,8 @@ export default async (files: File[], db: IDBPDatabase) => {
 
 	const data: { [key: string]: StoredUser } = {};
 
-	for (const file of fileData) {
+	for (let i = 0; i < fileData.length; i++) {
+		const file = fileData[i];
 		const filename = "/connections/followers_and_following/" + file.name;
 		let json_file_data = await loadFile<any>(files, filename);
 		if (file.stored_at) {
