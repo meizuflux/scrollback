@@ -8,15 +8,57 @@ export const importData = async (files: File[], onProgress?: (progress: number, 
 	await db.open();
 
 	const importers = [
-		{ name: "Processing users...", fn: () => importUsers(files, db) },
-		{ name: "Processing messages...", fn: () => importMessages(files, db) },
+		{ 
+			name: "Processing users...", 
+			fn: (progressCallback: (progress: number, step: string) => void) => importUsers(files, db, progressCallback),
+			weight: 0.3 // 30% of total progress
+		},
+		{ 
+			name: "Processing messages...", 
+			fn: (progressCallback: (progress: number, step: string) => void) => importMessages(files, db, progressCallback),
+			weight: 0.7 // 70% of total progress
+		},
 	];
 
-	for (let i = 0; i < importers.length; i++) {
-		const importer = importers[i];
-		onProgress?.((i / importers.length) * 100, importer.name);
-		await importer.fn();
-	}
+	// Track progress for each importer
+	const progressTrackers = importers.map(() => ({ progress: 0, step: "" }));
+	
+	const updateOverallProgress = () => {
+		const totalProgress = progressTrackers.reduce((sum, tracker, index) => {
+			return sum + (tracker.progress / 100) * importers[index].weight * 100;
+		}, 0);
+		
+		// Show combined status of both importers
+		const activeSteps = progressTrackers
+			.map((tracker, index) => tracker.progress > 0 && tracker.progress < 100 ? tracker.step : null)
+			.filter(Boolean);
+		
+		const completedSteps = progressTrackers
+			.map((tracker, index) => tracker.progress === 100 ? importers[index].name.replace('...', '') : null)
+			.filter(Boolean);
+		
+		let statusMessage = "Processing...";
+		if (activeSteps.length > 0) {
+			statusMessage = activeSteps.join(" | ");
+		} else if (completedSteps.length > 0) {
+			statusMessage = `Completed: ${completedSteps.join(", ")}`;
+		}
+		
+		onProgress?.(totalProgress, statusMessage);
+	};
+
+	// Run importers in parallel
+	await Promise.all(
+		importers.map(async (importer, index) => {
+			const progressCallback = (progress: number, step: string) => {
+				progressTrackers[index] = { progress, step };
+				updateOverallProgress();
+			};
+
+			progressCallback(0, importer.name);
+			await importer.fn(progressCallback);
+		})
+	);
 
 	onProgress?.(100, "Import complete!");
 

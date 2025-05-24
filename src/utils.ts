@@ -59,3 +59,13 @@ export const extractZipToFiles = async (zipFile: File): Promise<File[]> => {
 		});
 	});
 };
+
+export const findFileByPath = (files: File[], path: string): File | undefined => {
+	// Normalize the path to handle both slash directions and leading slashes
+	const normalizedSearchPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+	
+	return files.find((file) => {
+		const normalizedFilePath = file.webkitRelativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+		return normalizedFilePath === normalizedSearchPath || normalizedFilePath.endsWith('/' + normalizedSearchPath);
+	});
+};

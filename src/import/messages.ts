@@ -1,10 +1,10 @@
 // there's other fields but idrc about them ngl
 
-import { InstagramDatabase } from "../db/database";
-import { MessageFile, StoredMessage } from "../types/user";
+import { InstagramDatabase, StoredMedia } from "../db/database";
+import { Conversation, MessageFile, StoredMessage } from "../types/message";
+import { findFileByPath } from "../utils";
 
-// also some messages of things that happen are just messages, like changing the theme
-
+// insta messages are encoded, like urls and stuff like that so we have to parse it like this
 function decodeU8String(encodedText: string): string {
 	// Split by \u and convert each escape sequence
 	const parts = encodedText
@@ -22,16 +22,22 @@ function decodeU8String(encodedText: string): string {
 	return decoder.decode(utf8Array);
 }
 
-export default async (files: File[], database: InstagramDatabase) => {
-	const conversations: any[] = [];
+export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, step: string) => void) => {
+	const conversations: Conversation[] = [];
 	const messages: StoredMessage[] = [];
+	const mediaFiles: StoredMedia[] = [];
 
 	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
+	
+	onProgress?.(0, `Found ${messageFiles.length} conversations to process...`);
 
 	// Process files in batches for better memory management
 	const BATCH_SIZE = 10;
 	for (let batchStart = 0; batchStart < messageFiles.length; batchStart += BATCH_SIZE) {
 		const batch = messageFiles.slice(batchStart, batchStart + BATCH_SIZE);
+		const batchProgress = (batchStart / messageFiles.length) * 70; // Use 70% for processing
+		
+		onProgress?.(batchProgress, `Processing conversations ${batchStart + 1}-${Math.min(batchStart + batch.length, messageFiles.length)} of ${messageFiles.length}...`);
 		
 		// Process batch in parallel
 		const batchResults = await Promise.all(
@@ -39,6 +45,7 @@ export default async (files: File[], database: InstagramDatabase) => {
 				const json_file = (await file.text().then(JSON.parse)) as MessageFile;
 				const conversation = decodeU8String(json_file.title);
 				const batchMessages: StoredMessage[] = [];
+				const batchMedia: StoredMedia[] = [];
 
 				for (const message of json_file.messages) {
 					// Check if message has any meaningful content
@@ -54,6 +61,7 @@ export default async (files: File[], database: InstagramDatabase) => {
 					const onlyMetadataFields = Object.keys(message).every((key) =>
 						["is_unsent_image_by_messenger_kid_parent", "is_geoblocked_for_viewer"].includes(key)
 					);
+
 
 					if (onlyMetadataFields || !hasContent) {
 						continue;
@@ -82,6 +90,45 @@ export default async (files: File[], database: InstagramDatabase) => {
 						message.sender_name = decodeU8String(message.sender_name);
 					}
 
+					// Process photos - store media files and keep original structure
+					if (message.photos?.length) {
+						for (const photo of message.photos) {
+							const mediaFile = findFileByPath(files, photo.uri);
+							if (mediaFile) {
+								const mediaData: StoredMedia = {
+									uri: photo.uri,
+									creation_timestamp: photo.creation_timestamp,
+									type: 'photo',
+									data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'image/jpeg' })
+								};
+								batchMedia.push(mediaData);
+							}
+						}
+					}
+
+					// Process videos - store media files and keep original structure
+					if (message.videos?.length) {
+						for (const video of message.videos) {
+							const mediaFile = findFileByPath(files, video.uri);
+							if (mediaFile) {
+								const mediaData: StoredMedia = {
+									uri: video.uri,
+									creation_timestamp: video.creation_timestamp,
+									type: 'video',
+									data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'video/mp4' })
+								};
+								batchMedia.push(mediaData);
+							}
+						}
+					}
+
+					// unused fields:
+					// @ts-ignore
+					delete message.is_geoblocked_for_viewer
+					// @ts-ignore
+					delete message.is_unsent_image_by_messenger_kid_parent
+
+					// conversation is like the foreign key for a message
 					const storedMessage: StoredMessage = {
 						...message,
 						conversation,
@@ -96,7 +143,7 @@ export default async (files: File[], database: InstagramDatabase) => {
 					is_group: json_file.participants.length > 2,
 				};
 
-				return { messages: batchMessages, conversation: conversationData };
+				return { messages: batchMessages, conversation: conversationData, media: batchMedia };
 			})
 		);
 
@@ -104,12 +151,21 @@ export default async (files: File[], database: InstagramDatabase) => {
 		for (const result of batchResults) {
 			messages.push(...result.messages);
 			conversations.push(result.conversation);
+			mediaFiles.push(...result.media);
 		}
 	}
 
+	onProgress?.(70, "Saving media files...");
+	
+	// Save media files using URI as key
+	await database.media.bulkPut(mediaFiles);
+	
+	onProgress?.(90, "Saving messages and conversations...");
 	// Use bulk operations for better performance
 	await Promise.all([
 		database.messages.bulkAdd(messages),
 		database.conversations.bulkPut(conversations)
 	]);
+	
+	onProgress?.(100, `Processed ${messages.length} messages with ${mediaFiles.length} media files from ${conversations.length} conversations`);
 };

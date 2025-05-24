@@ -1,5 +1,6 @@
 import { Component, For, createMemo, createSignal, Show } from "solid-js";
-import { StoredData, StoredUser } from "../types/user";
+import { StoredUser } from "../types/user";
+import { StoredData } from "../types/data";
 
 interface ConnectionsAnalysisProps {
 	data: StoredData;
@@ -13,7 +14,7 @@ const UserList: Component<{
 	title: string; 
 	users: StoredUser[]; 
 	showTimestamps?: boolean;
-	timestampKey?: string;
+	timestampKey?: keyof StoredUser;
 	emptyMessage?: string;
 }> = (props) => {
 	const [searchTerm, setSearchTerm] = createSignal("");
@@ -85,7 +86,7 @@ const UserList: Component<{
 								</div>
 								<Show when={props.showTimestamps && props.timestampKey}>
 									<span class="text-sm text-gray-400">
-										{formatDate((user as any)[props.timestampKey!])}
+										{formatDate((user as any)[props.timestampKey!]?.timestamp)}
 									</span>
 								</Show>
 							</div>
@@ -134,14 +135,14 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 	const users = props.data.users;
 
 	const stats = createMemo(() => {
-		const followers = users.filter((u) => u.follower);
-		const following = users.filter((u) => u.following);
-		const closeFriends = users.filter((u) => u.close_friends);
-		const blocked = users.filter((u) => u.blocked);
-		const receivedFollowRequests = users.filter((u) => u.requested_to_follow_you);
-		const hiddenStory = users.filter((u) => u.hidden_story_from);
-		const pendingFollowRequests = users.filter((u) => u.pending_follow_request);
-		const recentlyUnfollowed = users.filter((u) => u.recently_unfollowed);
+		const followers = users.filter((u) => u.follower?.value);
+		const following = users.filter((u) => u.following?.value);
+		const closeFriends = users.filter((u) => u.close_friends?.value);
+		const blocked = users.filter((u) => u.blocked?.value);
+		const receivedFollowRequests = users.filter((u) => u.requested_to_follow_you?.value);
+		const hiddenStory = users.filter((u) => u.hidden_story_from?.value);
+		const pendingFollowRequests = users.filter((u) => u.pending_follow_request?.value);
+		const recentlyUnfollowed = users.filter((u) => u.recently_unfollowed?.value);
 
 		const followerUsernames = new Set(followers.map((u) => u.username));
 		const followingUsernames = new Set(following.map((u) => u.username));
@@ -175,13 +176,13 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 
 		return {
 			recentFollowers: stats().followers.filter(u => 
-				u.follower_timestamp && u.follower_timestamp > thirtyDaysAgo
+				u.follower?.timestamp && u.follower.timestamp > thirtyDaysAgo
 			),
 			recentFollowing: stats().following.filter(u => 
-				u.following_timestamp && u.following_timestamp > thirtyDaysAgo
+				u.following?.timestamp && u.following.timestamp > thirtyDaysAgo
 			),
 			recentUnfollowed: stats().recentlyUnfollowed.filter(u => 
-				u.recently_unfollowed_timestamp && u.recently_unfollowed_timestamp > thirtyDaysAgo
+				u.recently_unfollowed?.timestamp && u.recently_unfollowed.timestamp > thirtyDaysAgo
 			)
 		};
 	});
@@ -278,7 +279,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Followers Not Following Back" 
 					users={stats().notFollowingBack}
 					showTimestamps={true}
-					timestampKey="follower_timestamp"
+					timestampKey="follower"
 					emptyMessage="All your followers follow you back! 🎉"
 				/>
 
@@ -286,7 +287,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Following But Not Following Back" 
 					users={stats().notFollowingYouBack}
 					showTimestamps={true}
-					timestampKey="following_timestamp"
+					timestampKey="following"
 					emptyMessage="Everyone you follow follows you back! 🎉"
 				/>
 
@@ -294,7 +295,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Close Friends" 
 					users={stats().closeFriends}
 					showTimestamps={true}
-					timestampKey="close_friends_timestamp"
+					timestampKey="close_friends"
 					emptyMessage="No close friends added yet"
 				/>
 
@@ -302,7 +303,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Pending Follow Requests" 
 					users={stats().pendingFollowRequests}
 					showTimestamps={true}
-					timestampKey="pending_follow_request_timestamp"
+					timestampKey="pending_follow_request"
 					emptyMessage="No pending requests"
 				/>
 
@@ -310,7 +311,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Hidden From Stories" 
 					users={stats().hiddenStory}
 					showTimestamps={true}
-					timestampKey="hidden_story_from_timestamp"
+					timestampKey="hidden_story_from"
 					emptyMessage="Not hiding stories from anyone"
 				/>
 
@@ -318,7 +319,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Recently Unfollowed" 
 					users={stats().recentlyUnfollowed}
 					showTimestamps={true}
-					timestampKey="recently_unfollowed_timestamp"
+					timestampKey="recently_unfollowed"
 					emptyMessage="Haven't unfollowed anyone recently"
 				/>
 
@@ -326,7 +327,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 					title="Received Follow Requests" 
 					users={stats().receivedFollowRequests}
 					showTimestamps={true}
-					timestampKey="requested_to_follow_timestamp"
+					timestampKey="requested_to_follow_you"
 					emptyMessage="No follow requests received"
 				/>
 
@@ -335,7 +336,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 						title="Blocked Users" 
 						users={stats().blocked}
 						showTimestamps={true}
-						timestampKey="blocked_timestamp"
+						timestampKey="blocked"
 						emptyMessage="No blocked users"
 					/>
 				</Show>

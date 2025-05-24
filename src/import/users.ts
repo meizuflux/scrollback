@@ -1,12 +1,12 @@
 import { InstagramDatabase } from "../db/database";
 import { loadFile } from "../utils";
-import { StoredUser } from "../types/user";
+import { StoredUser, TimestampedValue } from "../types/user";
 
-export default async (files: File[], database: InstagramDatabase) => {
+export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, step: string) => void) => {
 	const fileData = [
 		{
 			name: "blocked_profiles.json",
-			columm: "blocked",
+			column: "blocked",
 			stored_at: "relationships_blocked_users",
 		},
 		{
@@ -49,50 +49,62 @@ export default async (files: File[], database: InstagramDatabase) => {
 
 	for (let i = 0; i < fileData.length; i++) {
 		const file = fileData[i];
+		const progress = (i / fileData.length) * 80; // Use 80% for processing, 20% for saving
+		onProgress?.(progress, `Processing ${file.name}...`);
+		
 		const filename = "/connections/followers_and_following/" + file.name;
 		let json_file_data = await loadFile<any>(files, filename);
+		
+		// Skip if file doesn't exist or has no data
+		if (!json_file_data) {
+			continue;
+		}
+		
 		if (file.stored_at) {
 			json_file_data = json_file_data[file.stored_at];
 		}
 
+		// Skip if no data after extracting stored_at property
+		if (!json_file_data || !Array.isArray(json_file_data)) {
+			continue;
+		}
+
 		for (const user of json_file_data) {
-			let user_data = user.string_list_data[0];
+			let user_data = user.string_list_data?.[0];
+			
+			// Skip if user data is malformed
+			if (!user_data) {
+				continue;
+			}
 
 			if (!user_data.value) {
 				// blocked_profiles has a different format for each and every thing
-				user_data.value = user_data.href.split("/").pop() || "";
+				user_data.value = user_data.href?.split("/").pop() || "";
+			}
+
+			// Skip if we still don't have a username
+			if (!user_data.value) {
+				continue;
 			}
 
 			let userData = data[user_data.value] || {
 				username: user_data.value,
-				blocked: false,
-				blocked_timestamp: undefined,
-				close_friends: false,
-				close_friends_timestamp: undefined,
-				requested_to_follow_you: false,
-				requested_to_follow_timestamp: undefined,
-				follower: false,
-				follower_timestamp: undefined,
-				following: false,
-				following_timestamp: undefined,
-				hidden_story_from: false,
-				hidden_story_from_timestamp: undefined,
-				pending_follow_request: false,
-				pending_follow_request_timestamp: undefined,
-				recently_unfollowed: false,
-				recently_unfollowed_timestamp: undefined,
 			};
 
-			// typescript magic idk
-			if (file.column && file.column in userData) {
-				(userData as any)[file.column] = true;
-				(userData as any)[`${file.column}_timestamp`] = new Date(user_data.timestamp * 1000); // idk why it has to be * 1000 but it just works
+			// Set the timestamped value for the current column
+			if (file.column) {
+				const timestampedValue: TimestampedValue = {
+					value: true,
+					timestamp: new Date(user_data.timestamp * 1000)
+				};
+				(userData as any)[file.column] = timestampedValue;
 			}
 
 			data[userData.username] = userData;
 		}
 	}
 
-	// Use bulk operation for better performance
+	onProgress?.(80, "Saving user data...");
 	await database.users.bulkPut(Object.values(data));
+	onProgress?.(100, "Users processed successfully");
 };
