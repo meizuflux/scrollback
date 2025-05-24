@@ -1,5 +1,5 @@
 import { db } from "../db/database";
-import importUser from "./user";
+import { importUser, importContent } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
 
@@ -10,6 +10,7 @@ export const importData = async (files: File[]) => {
 
 	const importers = [
 		importUser,
+		importContent,
 		importConnections,
 		importMessages,
 	];
@@ -23,6 +24,7 @@ export const importData = async (files: File[]) => {
 
 	/* TODO: 
 		- multiple progress bars for each import since they happen in parallel?
+		- perf stats for each import, and overall indexeddb size, metadata like time of import, etc
 	
 	save misc stats to local storage
         - number of saved posts

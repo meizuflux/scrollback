@@ -43,3 +43,18 @@ export const extractZipToFiles = async (zipFile: File): Promise<File[]> => {
 		});
 	});
 };
+
+// insta messages are encoded, like urls and stuff like that so we have to parse it like this
+export const decodeU8String = (encodedText: string): string => {
+	try {
+		const decoder = new TextDecoder('utf-8');
+		const bytes = new Uint8Array(encodedText.length);
+		for (let i = 0; i < encodedText.length; i++) {
+			bytes[i] = encodedText.charCodeAt(i);
+		}
+		return decoder.decode(bytes);
+	} catch (error) {
+		console.error("Decoding error:", error);
+		return encodedText; // Fallback in case of errors
+	}
+}

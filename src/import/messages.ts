@@ -1,22 +1,7 @@
 import { InstagramDatabase } from "../db/database";
 import { StoredMedia } from "../types/data";
 import { Conversation, MessageFile, StoredMessage } from "../types/message";
-import { findFile } from "../utils";
-
-// insta messages are encoded, like urls and stuff like that so we have to parse it like this
-function decodeU8String(encodedText: string): string {
-    try {
-        const decoder = new TextDecoder('utf-8');
-        const bytes = new Uint8Array(encodedText.length);
-        for (let i = 0; i < encodedText.length; i++) {
-            bytes[i] = encodedText.charCodeAt(i);
-        }
-        return decoder.decode(bytes);
-    } catch (error) {
-        console.error("Decoding error:", error);
-        return encodedText; // Fallback in case of errors
-    }
-}
+import { decodeU8String, findFile } from "../utils";
 
 export default async (files: File[], database: InstagramDatabase) => {
 	const conversations: Conversation[] = [];

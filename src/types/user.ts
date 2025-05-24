@@ -24,6 +24,7 @@ export interface StoredUser {
 	hidden_story_from?: TimestampedValue; // you hide them from seeing your story
 	pending_follow_request?: TimestampedValue; // ie, you requested to follow them and they haven't yet accepted
 	recently_unfollowed?: TimestampedValue; // you recently unfollowed them
+	stories_liked?: number; // number of stories you liked from this user
 }
 
 
