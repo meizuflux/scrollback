@@ -4,7 +4,15 @@ import { decodeU8String, findFile, loadFile } from "../utils";
 
 const importUser = async (files: File[], database: InstagramDatabase) => {
     const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
-    
+
+    const basedInFile = await loadFile<any>(files, "/personal_information/information_about_you/profile_based_in.json");
+    const locOfInterestFile = await loadFile<any>(files, "/personal_information/information_about_you/locations_of_interest.json");
+    const videosWatchedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/videos_watched.json");
+    const notInterestedProfilesFile = await loadFile<any>(files, "/ads_information/ads_and_topics/profiles_you're_not_interested_in.json");
+    const notInterestedPostsFile = await loadFile<any>(files, "/ads_information/ads_and_topics/posts_you're_not_interested_in.json");
+    const postsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/posts_viewed.json");
+    const adsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json");
+
     const user: User = {
         username: userFileData.profile_user[0].string_map_data.Username?.value,
         name: userFileData.profile_user[0].string_map_data.Name?.value,
@@ -13,6 +21,15 @@ const importUser = async (files: File[], database: InstagramDatabase) => {
         gender: userFileData.profile_user[0].string_map_data.Gender?.value,
         privateAccount: new Boolean(userFileData.profile_user[0].string_map_data["Private Account"]?.value),
         dateOfBirth: new Date(userFileData.profile_user[0].string_map_data["Date of birth"]?.value),
+        basedIn: basedInFile?.inferred_data_primary_location[0].string_map_data["City Name"]?.value || null,
+        locationsOfInterest: locOfInterestFile.label_values
+            .filter((label: any) => label.label === "Locations of interest")[0].vec
+            .map((v: any) => (v.value)),
+        videosWatched: videosWatchedFile.impressions_history_videos_watched?.length || 0,
+        notInterestedProfiles: notInterestedProfilesFile.impressions_history_recs_hidden_authors?.length || 0,
+        notInterestedPosts: notInterestedPostsFile.impressions_history_posts_not_interested?.length || 0,
+        postsViewed: postsViewedFile.impressions_history_posts_seen?.length || 0,
+        adsViewed: adsViewedFile.impressions_history_ads_seen?.length || 0
     };
 
     localStorage.setItem("user", JSON.stringify(user));

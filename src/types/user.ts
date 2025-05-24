@@ -6,6 +6,13 @@ export interface User {
 	gender: string;
 	privateAccount: Boolean;
 	dateOfBirth: Date;
+	basedIn: string;
+	locationsOfInterest: string[];
+	videosWatched: number;
+	notInterestedProfiles: number;
+	notInterestedPosts: number;
+	postsViewed: number;
+	adsViewed: number
 }
 
 export interface TimestampedValue<T = boolean> {
