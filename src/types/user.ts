@@ -27,6 +27,13 @@ export interface StoredUser {
 	stories_liked?: number; // number of stories you liked from this user
 }
 
+export interface ProfileChange {
+	changed: string;
+	previousValue: string;
+	newValue: string;
+	timestamp: Date;
+}
+
 
 
 

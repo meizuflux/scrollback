@@ -1,5 +1,5 @@
 import { db } from "../db/database";
-import { importUser, importContent } from "./user";
+import { importUser, importContent, importProfileChanges } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
 import interactionImporters from "./interactions";
@@ -12,6 +12,7 @@ export const importData = async (files: File[]) => {
 	const importers = [
 		importUser,
 		importContent,
+		importProfileChanges,
 		...interactionImporters,
 		importConnections,
 		importMessages,

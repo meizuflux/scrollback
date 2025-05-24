@@ -112,7 +112,29 @@ const importContent = async (files: File[], database: InstagramDatabase) => {
 
 }
 
+const importProfileChanges = async (files: File[], database: InstagramDatabase) => {
+    const profileChangesFile = await loadFile<any>(files, "/personal_information/personal_information/profile_changes.json");
+    
+    if (!profileChangesFile?.profile_profile_change) {
+        return;
+    }
+
+    const profileChanges = profileChangesFile.profile_profile_change.map((change: any) => {
+        const stringMapData = change.string_map_data;
+        
+        return {
+            changed: stringMapData.Changed?.value || "",
+            previousValue: decodeU8String(stringMapData["Previous Value"]?.value || ""),
+            newValue: decodeU8String(stringMapData["New Value"]?.value || ""),
+            timestamp: new Date(stringMapData["Change Date"]?.timestamp * 1000)
+        };
+    });
+
+    await database.profileChanges.bulkAdd(profileChanges);
+}
+
 export {
     importUser,
-    importContent
+    importContent,
+    importProfileChanges
 }

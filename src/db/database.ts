@@ -2,6 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { StoredUser } from '../types/user';
 import { Conversation, StoredMessage } from '../types/message';
 import { StoredMedia } from '../types/data';
+import { ProfileChange } from '../types/user';
 
 interface StoredPost {
     id?: number;
@@ -45,6 +46,7 @@ export class InstagramDatabase extends Dexie {
     comments!: Table<StoredComment>;
     likedPosts!: Table<StoredLikedPost>;
     savedPosts!: Table<StoredSavedPost>;
+    profileChanges!: Table<ProfileChange>;
 
     constructor() {
         super('instagram-data');
@@ -58,7 +60,8 @@ export class InstagramDatabase extends Dexie {
             stories: "++id, title, creation_timestamp",
             comments: "++id, media_owner, comment, timestamp",
             likedPosts: "++id, media_owner, href, timestamp",
-            savedPosts: "++id, media_owner, href, timestamp"
+            savedPosts: "++id, media_owner, href, timestamp",
+            profileChanges: "++id, changed, timestamp"
         });
     }
 }
