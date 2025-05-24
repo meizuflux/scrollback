@@ -1,6 +1,6 @@
 // there's other fields but idrc about them ngl
 
-import { IDBPDatabase } from "idb";
+import { InstagramDatabase } from "../db/database";
 import { MessageFile, StoredMessage } from "../types/user";
 
 // also some messages of things that happen are just messages, like changing the theme
@@ -22,102 +22,94 @@ function decodeU8String(encodedText: string): string {
 	return decoder.decode(utf8Array);
 }
 
-export default async (files: File[], db: IDBPDatabase) => {
-	const data: any = {
-		conversations: [],
-		messages: [],
-	};
+export default async (files: File[], database: InstagramDatabase) => {
+	const conversations: any[] = [];
+	const messages: StoredMessage[] = [];
 
 	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
-	const messagesFilesData: MessageFile[] = [];
 
-	for (let i = 0; i < messageFiles.length; i++) {
-		const file = messageFiles[i];
-		messagesFilesData.push(await file.text().then(JSON.parse));
-	}
+	// Process files in batches for better memory management
+	const BATCH_SIZE = 10;
+	for (let batchStart = 0; batchStart < messageFiles.length; batchStart += BATCH_SIZE) {
+		const batch = messageFiles.slice(batchStart, batchStart + BATCH_SIZE);
+		
+		// Process batch in parallel
+		const batchResults = await Promise.all(
+			batch.map(async (file) => {
+				const json_file = (await file.text().then(JSON.parse)) as MessageFile;
+				const conversation = decodeU8String(json_file.title);
+				const batchMessages: StoredMessage[] = [];
 
-	for (let i = 0; i < messageFiles.length; i++) {
-		const file = messageFiles[i];
-		const json_file = (await file.text().then(JSON.parse)) as MessageFile;
+				for (const message of json_file.messages) {
+					// Check if message has any meaningful content
+					const hasContent =
+						message.content ||
+						message.share ||
+						message.photos ||
+						message.videos ||
+						(message.reactions?.length ?? 0) > 0 ||
+						message.sender_name;
 
-		const conversation = decodeU8String(json_file.title);
+					// Skip messages that only contain metadata fields
+					const onlyMetadataFields = Object.keys(message).every((key) =>
+						["is_unsent_image_by_messenger_kid_parent", "is_geoblocked_for_viewer"].includes(key)
+					);
 
-		// TODO: figure out a way to store this directly in the DB without it causing a timing issue
-		// current hack is to laod it all into memory and then store it all at once, should be another way around this
-		for (const message of json_file.messages) {
-			// Check if message has any meaningful content
-			const hasContent =
-				message.content ||
-				message.share ||
-				message.photos ||
-				message.videos ||
-				(message.reactions?.length ?? 0) > 0 ||
-				message.sender_name;
+					if (onlyMetadataFields || !hasContent) {
+						continue;
+					}
 
-			// Skip messages that only contain metadata fields
-			const onlyMetadataFields = Object.keys(message).every((key) =>
-				["is_unsent_image_by_messenger_kid_parent", "is_geoblocked_for_viewer"].includes(key)
-			);
+					if (message.content) {
+						message.content = decodeU8String(message.content);
+					}
 
-			if (onlyMetadataFields || !hasContent) {
-				continue;
-			}
+					// TODO: figure out why this happens with some conversations and also check what else to filter out
+					if (
+						(message.content?.startsWith("Reacted ") && message.content?.endsWith(" to your message")) ||
+						message.content === "Liked a message" ||
+						message.content?.includes(" changed the theme to ")
+					) {
+						continue;
+					}
 
-			if (message.content) {
-				message.content = decodeU8String(message.content);
-			}
+					if (message.reactions) {
+						for (const reaction of message.reactions) {
+							reaction.reaction = decodeU8String(reaction.reaction);
+						}
+					}
 
-			// TODO: figure out why this happens with some conversations and also check what else to filter out
-			if (
-				(message.content?.startsWith("Reacted ") && message.content?.endsWith(" to your message")) ||
-				message.content === "Liked a message" ||
-				message.content?.includes(" changed the theme to ")
-			) {
-				continue;
-			}
+					if (message.sender_name) {
+						message.sender_name = decodeU8String(message.sender_name);
+					}
 
-			if (message.reactions) {
-				for (const reaction of message.reactions) {
-					reaction.reaction = decodeU8String(reaction.reaction);
+					const storedMessage: StoredMessage = {
+						...message,
+						conversation,
+					};
+
+					batchMessages.push(storedMessage);
 				}
-			}
 
-			if (message.sender_name) {
-				message.sender_name = decodeU8String(message.sender_name);
-			}
+				const conversationData = {
+					title: conversation,
+					participants: json_file.participants.map((participant) => participant.name),
+					is_group: json_file.participants.length > 2,
+				};
 
-			const storedMessage: StoredMessage = {
-				...message,
-				conversation,
-			};
+				return { messages: batchMessages, conversation: conversationData };
+			})
+		);
 
-			data["messages"].push(storedMessage);
+		// Collect results from batch
+		for (const result of batchResults) {
+			messages.push(...result.messages);
+			conversations.push(result.conversation);
 		}
-
-		const conversationData = {
-			title: conversation,
-			participants: json_file.participants.map((participant) => participant.name),
-			is_group: json_file.participants.length > 2,
-		};
-
-		data["conversations"].push(conversationData);
 	}
 
-	// hack to get around some timing issues I don't fully understand
-	const tx = db.transaction(["messages", "conversations"], "readwrite");
-
-	const messagesStore = tx.objectStore("messages");
-	const conversationsStore = tx.objectStore("conversations");
-
-	const promises = [];
-	for (const message of data["messages"]) {
-		promises.push(messagesStore.put(message));
-	}
-	for (const conversation of data["conversations"]) {
-		promises.push(conversationsStore.put(conversation));
-	}
-
-	await Promise.all(promises);
-
-	await tx.done;
+	// Use bulk operations for better performance
+	await Promise.all([
+		database.messages.bulkAdd(messages),
+		database.conversations.bulkPut(conversations)
+	]);
 };

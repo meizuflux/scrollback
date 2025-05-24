@@ -1,5 +1,6 @@
 import { Navigate, useNavigate } from "@solidjs/router";
 import { Component, onMount } from "solid-js";
+import { db } from "../db/database";
 
 const Export: Component = () => {
     const navigate = useNavigate();

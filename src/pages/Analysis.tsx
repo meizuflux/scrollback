@@ -1,22 +1,26 @@
 import { Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { StoredData, User } from "../types/user";
-import { openDB } from "idb";
+import { db } from "../db/database";
 
 import MessageAnalysis from "../components/Messages";
 import UsersAnalysis from "../components/Users";
 
 const loadData = async (): Promise<StoredData> => {
-	const db = await openDB("instagram-data", 1);
+	// Use Promise.all for parallel data loading
+	const [user, users, conversations, messages] = await Promise.all([
+		Promise.resolve(JSON.parse(localStorage.getItem("user")!)),
+		db.users.toArray(),
+		db.conversations.toArray(),
+		db.messages.toArray()
+	]);
 
-	const data: StoredData = {
-		user: JSON.parse(localStorage.getItem("user")!),
-		users: await db.getAll("users"),
-		conversations: await db.getAll("conversations"),
-		messages: await db.getAll("messages"),
+	return {
+		user,
+		users,
+		conversations,
+		messages,
 	};
-
-	return data;
 };
 
 const Analysis: Component = (props) => {
@@ -31,9 +35,9 @@ const Analysis: Component = (props) => {
 		}
 	});
 
-	const clearData = () => {
+	const clearData = async () => {
 		localStorage.clear();
-		indexedDB.deleteDatabase("instagram-data");
+		await db.delete();
 		navigate("/", { replace: true });
 	};
 

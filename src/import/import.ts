@@ -1,21 +1,11 @@
-import { IDBPDatabase, openDB } from "idb";
+import { db } from "../db/database";
 import importUsers from "./users";
 import importMessages from "./messages";
 
-const createDatabase = async (): Promise<IDBPDatabase<unknown>> => {
-	const db = await openDB("instagram-data", 1, {
-		upgrade(db) {
-			db.createObjectStore("users", { keyPath: "username" });
-			db.createObjectStore("messages", { autoIncrement: true });
-			db.createObjectStore("conversations", { keyPath: "title" });
-		},
-	});
-
-	return db;
-};
-
 export const importData = async (files: File[], onProgress?: (progress: number, step: string) => void) => {
-	const db = await createDatabase();
+	// Clear existing data
+	await db.delete();
+	await db.open();
 
 	const importers = [
 		{ name: "Processing users...", fn: () => importUsers(files, db) },

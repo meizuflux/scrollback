@@ -1,8 +1,8 @@
-import { IDBPDatabase } from "idb";
+import { InstagramDatabase } from "../db/database";
 import { loadFile } from "../utils";
 import { StoredUser } from "../types/user";
 
-export default async (files: File[], db: IDBPDatabase) => {
+export default async (files: File[], database: InstagramDatabase) => {
 	const fileData = [
 		{
 			name: "blocked_profiles.json",
@@ -93,11 +93,6 @@ export default async (files: File[], db: IDBPDatabase) => {
 		}
 	}
 
-	const tx = db.transaction("users", "readwrite");
-	const store = tx.objectStore("users");
-
-	const promises = Object.values(data).map((user) => store.put(user));
-	await Promise.all(promises);
-
-	await tx.done;
+	// Use bulk operation for better performance
+	await database.users.bulkPut(Object.values(data));
 };
