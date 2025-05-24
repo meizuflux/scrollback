@@ -2,6 +2,7 @@ import { db } from "../db/database";
 import { importUser, importContent } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
+import interactionImporters from "./interactions";
 
 export const importData = async (files: File[]) => {
 	// Clear existing data
@@ -11,6 +12,7 @@ export const importData = async (files: File[]) => {
 	const importers = [
 		importUser,
 		importContent,
+		...interactionImporters,
 		importConnections,
 		importMessages,
 	];

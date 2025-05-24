@@ -47,7 +47,7 @@ interface Post {
 const importContent = async (files: File[], database: InstagramDatabase) => {
     //const recentlyDeletedContentFile = await loadFile<any>(files, "/your_instagram_activity/media/recently_deleted_content.json"); // gonna skip this for now
     const postsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/posts_1.json");
-    const archivedPostsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/archived_posts.json");
+    const archivedPostsFile = await loadFile<any>(files, "/your_instagram_activity/media/archived_posts.json");
 
     const processPosts = async (posts: Post[], archived: boolean = false) => {
         if (!posts || !Array.isArray(posts)) return; // Skip if file doesn't exist or isn't an array
@@ -85,7 +85,7 @@ const importContent = async (files: File[], database: InstagramDatabase) => {
     };
 
     await processPosts(postsFile, false);
-    await processPosts(archivedPostsFile, true);
+    await processPosts(archivedPostsFile.ig_archived_post_media, true);
 
     const storiesFile = await loadFile<any>(files, "/your_instagram_activity/media/stories.json");
 
@@ -109,34 +109,7 @@ const importContent = async (files: File[], database: InstagramDatabase) => {
         });
         await database.stories.add(story)
     }
-    
-    const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
-    if (storyLikesFile?.story_activities_story_likes) {
-        // Count story likes per user
-        const storyLikeCounts: Record<string, number> = {};
-        
-        for (const storyLike of storyLikesFile.story_activities_story_likes) {
-            const username = storyLike.title;
-            if (username) {
-                storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
-            }
-        }
-        
-        await database.transaction('rw', database.users, async () => {
-            for (const [username, count] of Object.entries(storyLikeCounts)) {
-                let user = await database.users.get(username);
-                if (!user) {
-                    user = { username };
-                }
-                
-                // Update stories_liked count
-                user.stories_liked = count;
-                
-                // Upsert the user record
-                await database.users.put(user);
-            }
-        });
-    }
+
 }
 
 export {

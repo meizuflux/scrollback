@@ -17,6 +17,24 @@ interface StoredStory {
     uri: string;
 }
 
+interface StoredComment {
+    media_owner: string;
+    comment: string;
+    timestamp: number;
+}
+
+interface StoredLikedPost {
+    media_owner: string;
+    href: string;
+    timestamp: number;
+}
+
+interface StoredSavedPost {
+    media_owner: string;
+    href: string;
+    timestamp: number;
+}
+
 export class InstagramDatabase extends Dexie {
     users!: Table<StoredUser>;
     messages!: Table<StoredMessage>;
@@ -24,6 +42,9 @@ export class InstagramDatabase extends Dexie {
     media!: Table<StoredMedia>;
     posts!: Table<StoredPost>;
     stories!: Table<StoredStory>;
+    comments!: Table<StoredComment>;
+    likedPosts!: Table<StoredLikedPost>;
+    savedPosts!: Table<StoredSavedPost>;
 
     constructor() {
         super('instagram-data');
@@ -34,7 +55,10 @@ export class InstagramDatabase extends Dexie {
             conversations: 'title, *participants',
             media: 'uri, type, creation_timestamp',
             posts: "++id, title, creation_timestamp, archived",
-            stories: "++id, title, creation_timestamp"
+            stories: "++id, title, creation_timestamp",
+            comments: "++id, media_owner, comment, timestamp",
+            likedPosts: "++id, media_owner, href, timestamp",
+            savedPosts: "++id, media_owner, href, timestamp"
         });
     }
 }

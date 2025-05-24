@@ -103,4 +103,33 @@ export default async (files: File[], database: InstagramDatabase) => {
 	}
 
 	await database.users.bulkPut(Object.values(data));
+
+	// this kind of shouldn't be here, but i have it here because it's updating users, so they have to be created first through the connections
+	const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
+    if (storyLikesFile?.story_activities_story_likes) {
+        // Count story likes per user
+        const storyLikeCounts: Record<string, number> = {};
+        
+        for (const storyLike of storyLikesFile.story_activities_story_likes) {
+            const username = storyLike.title;
+            if (username) {
+                storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
+            }
+        }
+        
+        await database.transaction('rw', database.users, async () => {
+            for (const [username, count] of Object.entries(storyLikeCounts)) {
+                let user = await database.users.get(username);
+                if (!user) {
+                    user = { username };
+                }
+                
+                // Update stories_liked count
+                user.stories_liked = count;
+                
+                // Upsert the user record
+                await database.users.put(user);
+            }
+        });
+    }
 };
