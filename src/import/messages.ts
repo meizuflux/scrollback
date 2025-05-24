@@ -51,7 +51,7 @@ export default async (files: File[], db: IDBPDatabase) => {
 				message.share ||
 				message.photos ||
 				message.videos ||
-				message.reactions?.length > 0 ||
+				(message.reactions?.length ?? 0) > 0 ||
 				message.sender_name;
 
 			// Skip messages that only contain metadata fields
