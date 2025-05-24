@@ -21,8 +21,8 @@ export class InstagramDatabase extends Dexie {
         this.version(1).stores({
             users: 'username',
             messages: '++id, conversation, sender_name, timestamp_ms, *content',
-            conversations: 'title, *participants, is_group',
-            media: 'uri, type, creation_timestamp, *conversation' // Add conversation reference
+            conversations: 'title, *participants',
+            media: 'uri, type, creation_timestamp'
         });
     }
 }
