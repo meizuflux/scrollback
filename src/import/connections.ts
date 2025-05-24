@@ -2,7 +2,7 @@ import { InstagramDatabase } from "../db/database";
 import { loadFile } from "../utils";
 import { StoredUser, TimestampedValue } from "../types/user";
 
-export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, step: string) => void) => {
+export default async (files: File[], database: InstagramDatabase) => {
 	const fileData = [
 		{
 			name: "blocked_profiles.json",
@@ -49,8 +49,6 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 
 	for (let i = 0; i < fileData.length; i++) {
 		const file = fileData[i];
-		const progress = (i / fileData.length) * 80; // Use 80% for processing, 20% for saving
-		onProgress?.(progress, `Processing ${file.name}...`);
 		
 		const filename = "/connections/followers_and_following/" + file.name;
 		let json_file_data = await loadFile<any>(files, filename);
@@ -104,7 +102,5 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 		}
 	}
 
-	onProgress?.(80, "Saving user data...");
 	await database.users.bulkPut(Object.values(data));
-	onProgress?.(100, "Users processed successfully");
 };

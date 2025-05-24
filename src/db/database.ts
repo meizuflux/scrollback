@@ -1,13 +1,8 @@
 import Dexie, { Table } from 'dexie';
 import { StoredUser } from '../types/user';
 import { Conversation, StoredMessage } from '../types/message';
+import { StoredMedia } from '../types/data';
 
-export interface StoredMedia {
-    uri: string; // Primary key
-    creation_timestamp: number;
-    type: 'photo' | 'video';
-    data: Blob;
-}
 
 export class InstagramDatabase extends Dexie {
     users!: Table<StoredUser>;

@@ -7,3 +7,10 @@ export interface StoredData {
 	messages: StoredMessage[];
 	conversations: Conversation[];
 }
+
+export interface StoredMedia {
+	uri: string;
+	creation_timestamp: number;
+	type: 'photo' | 'video';
+	data: Blob;
+}
