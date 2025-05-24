@@ -85,6 +85,7 @@ export interface Conversation {
 
 export interface StoredData {
 	user: User;
+	users: StoredUser[];
 	messages: StoredMessage[];
 	conversations: Conversation[];
 }
