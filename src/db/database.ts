@@ -2,7 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { StoredUser } from '../types/user';
 import { Conversation, StoredMessage } from '../types/message';
 import { StoredMedia } from '../types/data';
-import { ProfileChange } from '../types/user';
+import { ProfileChange, User } from '../types/user';
 
 interface StoredPost {
     id?: number;
@@ -38,6 +38,7 @@ interface StoredSavedPost {
 
 export class InstagramDatabase extends Dexie {
     users!: Table<StoredUser>;
+    mainUser!: Table<User>;
     messages!: Table<StoredMessage>;
     conversations!: Table<Conversation>;
     media!: Table<StoredMedia>;
@@ -53,6 +54,7 @@ export class InstagramDatabase extends Dexie {
 
         this.version(1).stores({
             users: 'username, stories_liked',
+            mainUser: 'username',
             messages: '++id, conversation, sender_name, timestamp_ms, *content',
             conversations: 'title, *participants',
             media: 'uri, type, creation_timestamp',

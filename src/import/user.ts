@@ -32,20 +32,19 @@ const importUser = async (files: File[], database: InstagramDatabase) => {
         adsViewed: adsViewedFile.impressions_history_ads_seen?.length || 0
     };
 
-    localStorage.setItem("user", JSON.stringify(user));
+    // Store user in database instead of localStorage
+    await database.mainUser.put(user);
 
     const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
     if (pfpPath) {
         const pfp = findFile(files, pfpPath)!;
 
-        const blob = new Blob([await pfp.arrayBuffer()], { type: 'image/jpeg' });
-        const reader = new FileReader();
-        await new Promise<void>((resolve) => {
-            reader.onloadend = () => {
-                localStorage.setItem("pfp", reader.result as string);
-                resolve();
-            }
-            reader.readAsDataURL(blob);
+        // Store profile photo in media table instead of localStorage
+        await database.media.add({
+            uri: pfpPath,
+            creation_timestamp: Date.now(),
+            type: 'photo',
+            data: new Blob([await pfp.arrayBuffer()], { type: pfp.type || 'image/jpeg' })
         });
     }
 }

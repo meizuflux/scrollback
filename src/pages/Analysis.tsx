@@ -8,15 +8,15 @@ import { StoredData } from "../types/data";
 
 const loadData = async (): Promise<StoredData> => {
 	// Use Promise.all for parallel data loading
-	const [user, users, conversations, messages] = await Promise.all([
-		Promise.resolve(JSON.parse(localStorage.getItem("user")!)),
+	const [mainUsers, users, conversations, messages] = await Promise.all([
+		db.mainUser.toArray(),
 		db.users.toArray(),
 		db.conversations.toArray(),
 		db.messages.toArray()
 	]);
 
 	return {
-		user,
+		user: mainUsers[0], // Get the first (and only) main user
 		users,
 		conversations,
 		messages,
