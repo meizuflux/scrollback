@@ -2,32 +2,22 @@
 import { render } from "solid-js/web";
 
 import "./index.css";
-import { Router, Route, RouteSectionProps } from "@solidjs/router";
-import { JSX, lazy } from "solid-js";
+import { Router, Route } from "@solidjs/router";
+import { lazy } from "solid-js";
 
 const Home = lazy(() => import("./pages/Home"));
 const Analysis = lazy(() => import("./pages/Analysis"));
+const Export = lazy(() => import("./pages/Export"));
 
-const Layout = (props: RouteSectionProps): JSX.Element => {
+const App = () => {
 	return (
-		<>
-			<h1 class="text-3xl font-bold underline">welcome</h1>
-			{props.children}
-		</>
+		<Router>
+			<Route path="/" component={Home} />
+			<Route path="/analysis" component={Analysis} />
+			<Route path="/export" component={Export} />
+			<Route path="/*" component={() => <div>404 Not Found</div>} />
+		</Router>
 	);
 };
 
-const App = () => {
-	const loaded = localStorage.getItem("loaded");
-
-	if (loaded === "true") {
-		const user = JSON.parse(localStorage.getItem("user")!);
-		const pfp = localStorage.getItem("pfp")!;
-
-		return <Analysis user={user} pfp={pfp} />;
-	} else {
-		return <Home />;
-	}
-};
-
-render(App, document.getElementById("root")!);
+render(() => <App />, document.getElementById("root")!);

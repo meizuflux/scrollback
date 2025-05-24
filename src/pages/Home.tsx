@@ -1,10 +1,12 @@
-import { createSignal, Show, type Component } from "solid-js";
+import { createSignal, Show, type Component, onMount } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 import { createStore } from "solid-js/store";
 import { findFile, loadFile, extractZipToFiles } from "../utils";
 import { User } from "../types/user";
 import { importData } from "../import/import";
 
 const Home: Component = () => {
+	const navigate = useNavigate();
 	const [isImporting, setIsImporting] = createSignal(false);
 	const [importProgress, setImportProgress] = createSignal(0);
 	const [currentStep, setCurrentStep] = createSignal("");
@@ -39,6 +41,14 @@ const Home: Component = () => {
 		}
 	};
 
+	onMount(() => {
+		// Check if data is already loaded and redirect to analysis
+		const loaded = localStorage.getItem("loaded");
+		if (loaded === "true") {
+			navigate("/analysis", { replace: true });
+		}
+	});
+
 	const handleFiles = async (files: FileList) => {
 		const fileArray = Array.from(files);
 		
@@ -72,7 +82,10 @@ const Home: Component = () => {
 			setImportProgress(100);
 			setCurrentStep("Complete!");
 			
-			window.location.reload();
+			// Navigate to analysis page instead of reloading
+			setTimeout(() => {
+				navigate("/analysis", { replace: true });
+			}, 1000);
 		} catch (error) {
 			console.error("Import failed:", error);
 			setIsImporting(false);
@@ -80,67 +93,72 @@ const Home: Component = () => {
 	};
 
 	return (
-		<>
+		<div class="min-h-screen bg-gray-50">
 			<div class="container mx-auto p-4">
-				<h1 class="text-3xl font-bold mb-4">Data Upload</h1>
-				
-				<Show when={isImporting()}>
-					<div class="mb-6 p-4 bg-blue-50 rounded-lg">
-						<div class="mb-2 text-sm font-medium text-blue-700">{currentStep()}</div>
-						<div class="w-full bg-blue-200 rounded-full h-2.5">
-							<div 
-								class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-								style={`width: ${importProgress()}%`}
-							></div>
+				<div class="max-w-2xl mx-auto">
+					<h1 class="text-4xl font-bold text-center mb-2">Instagram Data Explorer</h1>
+					<p class="text-gray-600 text-center mb-8">
+						Upload your Instagram data package to analyze your account activity
+					</p>
+					
+					<Show when={isImporting()}>
+						<div class="mb-6 p-4 bg-blue-50 rounded-lg">
+							<div class="mb-2 text-sm font-medium text-blue-700">{currentStep()}</div>
+							<div class="w-full bg-blue-200 rounded-full h-2.5">
+								<div 
+									class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+									style={`width: ${importProgress()}%`}
+								></div>
+							</div>
+							<div class="mt-1 text-xs text-blue-600">{Math.round(importProgress())}%</div>
 						</div>
-						<div class="mt-1 text-xs text-blue-600">{Math.round(importProgress())}%</div>
-					</div>
-				</Show>
-				
-				<div class="space-y-4">
-					{/* Folder Upload */}
-					<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg">
-						<input
-							type="file"
-							/* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
-							webkitdirectory
-							directory
-							multiple
-							id="folderPicker"
-							class="hidden"
-							disabled={isImporting()}
-							onChange={(e) => handleFiles(e.currentTarget.files!)}
-						/>
-						<label for="folderPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
-							<div class="text-lg font-medium mb-2">📁 Upload Folder</div>
-							<div class="text-sm text-gray-600">
-								{isImporting() ? 'Importing...' : 'Click to select your Instagram data folder'}
-							</div>
-						</label>
-					</div>
+					</Show>
+					
+					<div class="space-y-4">
+						{/* Folder Upload */}
+						<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg hover:border-blue-400 transition-colors">
+							<input
+								type="file"
+								/* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
+								webkitdirectory
+								directory
+								multiple
+								id="folderPicker"
+								class="hidden"
+								disabled={isImporting()}
+								onChange={(e) => handleFiles(e.currentTarget.files!)}
+							/>
+							<label for="folderPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
+								<div class="text-lg font-medium mb-2">📁 Upload Folder</div>
+								<div class="text-sm text-gray-600">
+									{isImporting() ? 'Importing...' : 'Click to select your Instagram data folder'}
+								</div>
+							</label>
+						</div>
 
-					<div class="text-center text-gray-500 font-medium">OR</div>
+						<div class="text-center text-gray-500 font-medium">OR</div>
 
-					{/* Zip File Upload */}
-					<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg">
-						<input
-							type="file"
-							accept=".zip"
-							id="zipPicker"
-							class="hidden"
-							disabled={isImporting()}
-							onChange={(e) => handleFiles(e.currentTarget.files!)}
-						/>
-						<label for="zipPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
-							<div class="text-lg font-medium mb-2">📦 Upload Zip File</div>
-							<div class="text-sm text-gray-600">
-								{isImporting() ? 'Importing...' : 'Click to select your Instagram data zip file'}
-							</div>
-						</label>
+						{/* Zip File Upload */}
+						<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg hover:border-blue-400 transition-colors">
+							<input
+								type="file"
+								accept=".zip"
+								id="zipPicker"
+								class="hidden"
+								disabled={isImporting()}
+								onChange={(e) => handleFiles(e.currentTarget.files!)}
+							/>
+							<label for="zipPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
+								<div class="text-lg font-medium mb-2">📦 Upload Zip File</div>
+								<div class="text-sm text-gray-600">
+									{isImporting() ? 'Importing...' : 'Click to select your Instagram data zip file'}
+								</div>
+							</label>
+						</div>
 					</div>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 };
 
