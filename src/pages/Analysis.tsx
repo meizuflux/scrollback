@@ -42,26 +42,26 @@ const Analysis: Component = (props) => {
 	};
 
 	return (
-		<div class="min-h-screen bg-gray-50">
+		<div class="min-h-screen bg-gray-900">
 			<div class="container mx-auto p-4">
 				<div class="flex justify-between items-center mb-6">
 					<div>
-						<h1 class="text-4xl font-bold mb-2">Instagram Data Analysis</h1>
+						<h1 class="text-4xl font-bold mb-2 text-white">Instagram Data Analysis</h1>
 						<Show when={data() && !data.loading}>
-							<p class="text-gray-600">
+							<p class="text-gray-300">
 								Analysis for @{data()?.user?.username}
 							</p>
 						</Show>
 					</div>
 					<div class="flex gap-2">
 						<button 
-							class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+							class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
 							onClick={() => navigate("/export")}
 						>
 							Export
 						</button>
 						<button 
-							class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors" 
+							class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors" 
 							onClick={clearData}
 						>
 							Clear Data
@@ -72,8 +72,8 @@ const Analysis: Component = (props) => {
 				<Show when={!data.loading} fallback={
 					<div class="flex justify-center items-center py-20">
 						<div class="text-center">
-							<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-							<p class="text-gray-600">Loading your data...</p>
+							<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+							<p class="text-gray-300">Loading your data...</p>
 						</div>
 					</div>
 				}>

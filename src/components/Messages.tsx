@@ -101,30 +101,30 @@ const ConversationAnalysis: Component<{ messages: StoredData["messages"]; conver
 	});
 
 	return (
-		<div class="bg-gray-50 rounded-lg p-4 mt-2">
+		<div class="bg-gray-800 rounded-lg p-4 mt-2 border border-gray-700">
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-				<div class="bg-white p-3 rounded shadow text-center">
-					<div class="text-2xl font-bold text-blue-600">{totalStats().total}</div>
-					<div class="text-sm text-gray-600">Total Messages</div>
+				<div class="bg-gray-700 p-3 rounded shadow text-center border border-gray-600">
+					<div class="text-2xl font-bold text-blue-400">{totalStats().total}</div>
+					<div class="text-sm text-gray-300">Total Messages</div>
 				</div>
-				<div class="bg-white p-3 rounded shadow text-center">
-					<div class="text-2xl font-bold text-green-600">{totalStats().reels}</div>
-					<div class="text-sm text-gray-600">Reels Shared</div>
+				<div class="bg-gray-700 p-3 rounded shadow text-center border border-gray-600">
+					<div class="text-2xl font-bold text-green-400">{totalStats().reels}</div>
+					<div class="text-sm text-gray-300">Reels Shared</div>
 				</div>
-				<div class="bg-white p-3 rounded shadow text-center">
-					<div class="text-2xl font-bold text-purple-600">{totalStats().photos}</div>
-					<div class="text-sm text-gray-600">Photos</div>
+				<div class="bg-gray-700 p-3 rounded shadow text-center border border-gray-600">
+					<div class="text-2xl font-bold text-purple-400">{totalStats().photos}</div>
+					<div class="text-sm text-gray-300">Photos</div>
 				</div>
-				<div class="bg-white p-3 rounded shadow text-center">
-					<div class="text-2xl font-bold text-red-600">{totalStats().reactions}</div>
-					<div class="text-sm text-gray-600">Reactions</div>
+				<div class="bg-gray-700 p-3 rounded shadow text-center border border-gray-600">
+					<div class="text-2xl font-bold text-red-400">{totalStats().reactions}</div>
+					<div class="text-sm text-gray-300">Reactions</div>
 				</div>
 			</div>
 
 			<Show when={timeRange()}>
-				<div class="bg-white p-3 rounded shadow mb-4">
-					<h4 class="font-semibold mb-2">Timeline</h4>
-					<p class="text-sm text-gray-600">
+				<div class="bg-gray-700 p-3 rounded shadow mb-4 border border-gray-600">
+					<h4 class="font-semibold mb-2 text-white">Timeline</h4>
+					<p class="text-sm text-gray-300">
 						From {formatDate(timeRange()!.first.getTime())} to{" "}
 						{formatDate(timeRange()!.last.getTime())}
 						<span class="ml-2">({timeRange()!.span} days)</span>
@@ -132,30 +132,30 @@ const ConversationAnalysis: Component<{ messages: StoredData["messages"]; conver
 				</div>
 			</Show>
 
-			<div class="bg-white rounded shadow">
-				<h4 class="font-semibold p-3 border-b">Activity by Sender</h4>
+			<div class="bg-gray-700 rounded shadow border border-gray-600">
+				<h4 class="font-semibold p-3 border-b border-gray-600 text-white">Activity by Sender</h4>
 				<div class="overflow-x-auto">
 					<table class="w-full text-sm">
-						<thead class="bg-gray-50">
+						<thead class="bg-gray-600">
 							<tr>
-								<th class="px-3 py-2 text-left">Sender</th>
-								<th class="px-3 py-2 text-center">Messages</th>
-								<th class="px-3 py-2 text-center">Reels</th>
-								<th class="px-3 py-2 text-center">Photos</th>
-								<th class="px-3 py-2 text-center">Videos</th>
-								<th class="px-3 py-2 text-center">Reactions</th>
+								<th class="px-3 py-2 text-left text-gray-200">Sender</th>
+								<th class="px-3 py-2 text-center text-gray-200">Messages</th>
+								<th class="px-3 py-2 text-center text-gray-200">Reels</th>
+								<th class="px-3 py-2 text-center text-gray-200">Photos</th>
+								<th class="px-3 py-2 text-center text-gray-200">Videos</th>
+								<th class="px-3 py-2 text-center text-gray-200">Reactions</th>
 							</tr>
 						</thead>
 						<tbody>
 							<For each={senderStats()}>
 								{(sender) => (
-									<tr class="border-b">
-										<td class="px-3 py-2 font-medium">{sender.name}</td>
-										<td class="px-3 py-2 text-center">{sender.messages}</td>
-										<td class="px-3 py-2 text-center">{sender.reels}</td>
-										<td class="px-3 py-2 text-center">{sender.photos}</td>
-										<td class="px-3 py-2 text-center">{sender.videos}</td>
-										<td class="px-3 py-2 text-center">{sender.reactions}</td>
+									<tr class="border-b border-gray-600">
+										<td class="px-3 py-2 font-medium text-white">{sender.name}</td>
+										<td class="px-3 py-2 text-center text-gray-300">{sender.messages}</td>
+										<td class="px-3 py-2 text-center text-gray-300">{sender.reels}</td>
+										<td class="px-3 py-2 text-center text-gray-300">{sender.photos}</td>
+										<td class="px-3 py-2 text-center text-gray-300">{sender.videos}</td>
+										<td class="px-3 py-2 text-center text-gray-300">{sender.reactions}</td>
 									</tr>
 								)}
 							</For>
@@ -227,29 +227,29 @@ const ConversationBrowser: Component<{
 	);
 
 	return (
-		<div class="bg-white rounded-lg shadow p-6">
-			<h3 class="text-xl font-bold mb-4">All Conversations</h3>
+		<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
+			<h3 class="text-xl font-bold mb-4 text-white">All Conversations</h3>
 			
 			{/* Search and Filters */}
 			<div class="space-y-4 mb-6">
 				<div class="flex flex-col sm:flex-row gap-4">
 					<div class="flex-1">
-						<label class="block text-sm font-medium text-gray-700 mb-1">Search Conversations</label>
+						<label class="block text-sm font-medium text-gray-300 mb-1">Search Conversations</label>
 						<input
 							type="text"
 							placeholder="Search by name..."
 							value={searchTerm()}
 							onInput={(e) => setSearchTerm(e.currentTarget.value)}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
 					</div>
 					
 					<div class="sm:w-48">
-						<label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+						<label class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
 						<select
 							value={sortBy()}
 							onChange={(e) => setSortBy(e.currentTarget.value as any)}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						>
 							<option value="messages">Message Count</option>
 							<option value="name">Name (A-Z)</option>
@@ -258,19 +258,19 @@ const ConversationBrowser: Component<{
 					</div>
 					
 					<div class="sm:w-48">
-						<label class="block text-sm font-medium text-gray-700 mb-1">Min Messages</label>
+						<label class="block text-sm font-medium text-gray-300 mb-1">Min Messages</label>
 						<input
 							type="number"
 							min="0"
 							value={minMessages()}
 							onInput={(e) => setMinMessages(parseInt(e.currentTarget.value) || 0)}
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							class="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
 					</div>
 				</div>
 
 				<div class="flex justify-between items-center">
-					<p class="text-sm text-gray-600">
+					<p class="text-sm text-gray-300">
 						Showing {filteredAndSortedConversations().length} of {totalFiltered()} conversations
 						{searchTerm() && ` matching "${searchTerm()}"`}
 					</p>
@@ -293,14 +293,14 @@ const ConversationBrowser: Component<{
 						const isExpanded = () => expandedConversations().has(conversation);
 						
 						return (
-							<div class="border rounded-lg">
+							<div class="border border-gray-600 rounded-lg bg-gray-700">
 								<div 
-									class="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
+									class="p-4 cursor-pointer hover:bg-gray-600 flex justify-between items-center"
 									onClick={() => toggleConversation(conversation)}
 								>
 									<div class="flex-1">
-										<span class="font-medium">{conversation}</span>
-										<div class="text-sm text-gray-500 mt-1">
+										<span class="font-medium text-white">{conversation}</span>
+										<div class="text-sm text-gray-400 mt-1">
 											<Show when={props.messages.find(m => m.conversation === conversation)?.timestamp_ms}>
 												Last active: {formatDate(Math.max(...props.messages
 													.filter(m => m.conversation === conversation)
@@ -310,7 +310,7 @@ const ConversationBrowser: Component<{
 									</div>
 									
 									<div class="flex items-center gap-2">
-										<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+										<span class="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm font-medium">
 											{count.toLocaleString()} messages
 										</span>
 										<svg 
@@ -333,7 +333,7 @@ const ConversationBrowser: Component<{
 				</For>
 				
 				<Show when={filteredAndSortedConversations().length === 0}>
-					<div class="text-center py-8 text-gray-500">
+					<div class="text-center py-8 text-gray-400">
 						<p>No conversations found matching your criteria.</p>
 						<Show when={searchTerm() || minMessages() > 0}>
 							<button
@@ -341,7 +341,7 @@ const ConversationBrowser: Component<{
 									setSearchTerm("");
 									setMinMessages(0);
 								}}
-								class="mt-2 text-blue-600 hover:text-blue-800"
+								class="mt-2 text-blue-400 hover:text-blue-300"
 							>
 								Clear filters
 							</button>
@@ -398,65 +398,65 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 
 	return (
 		<div class="space-y-6">
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold mb-6">Message Analysis</h2>
+			<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
+				<h2 class="text-2xl font-bold mb-6 text-white">Message Analysis</h2>
 
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-					<div class="bg-blue-50 p-4 rounded-lg text-center">
-						<div class="text-3xl font-bold text-blue-600">
+					<div class="bg-blue-900 p-4 rounded-lg text-center border border-blue-700">
+						<div class="text-3xl font-bold text-blue-300">
 							{userStats().total.toLocaleString()}
 						</div>
-						<div class="text-blue-800 font-medium">Total Messages</div>
+						<div class="text-blue-200 font-medium">Total Messages</div>
 					</div>
-					<div class="bg-green-50 p-4 rounded-lg text-center">
-						<div class="text-3xl font-bold text-green-600">
+					<div class="bg-green-900 p-4 rounded-lg text-center border border-green-700">
+						<div class="text-3xl font-bold text-green-300">
 							{userStats().sent.toLocaleString()}
 						</div>
-						<div class="text-green-800 font-medium">Messages Sent</div>
+						<div class="text-green-200 font-medium">Messages Sent</div>
 					</div>
-					<div class="bg-purple-50 p-4 rounded-lg text-center">
-						<div class="text-3xl font-bold text-purple-600">
+					<div class="bg-purple-900 p-4 rounded-lg text-center border border-purple-700">
+						<div class="text-3xl font-bold text-purple-300">
 							{userStats().received.toLocaleString()}
 						</div>
-						<div class="text-purple-800 font-medium">Messages Received</div>
+						<div class="text-purple-200 font-medium">Messages Received</div>
 					</div>
-					<div class="bg-orange-50 p-4 rounded-lg text-center">
-						<div class="text-3xl font-bold text-orange-600">
+					<div class="bg-orange-900 p-4 rounded-lg text-center border border-orange-700">
+						<div class="text-3xl font-bold text-orange-300">
 							{Object.keys(conversationCounts()).length}
 						</div>
-						<div class="text-orange-800 font-medium">Conversations</div>
+						<div class="text-orange-200 font-medium">Conversations</div>
 					</div>
 				</div>
 
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-					<div class="bg-white border p-3 rounded text-center">
-						<div class="text-xl font-bold text-gray-800">{userStats().reelsSent}</div>
-						<div class="text-sm text-gray-600">Reels Sent</div>
+					<div class="bg-gray-700 border border-gray-600 p-3 rounded text-center">
+						<div class="text-xl font-bold text-gray-200">{userStats().reelsSent}</div>
+						<div class="text-sm text-gray-400">Reels Sent</div>
 					</div>
-					<div class="bg-white border p-3 rounded text-center">
-						<div class="text-xl font-bold text-gray-800">{userStats().reelsReceived}</div>
-						<div class="text-sm text-gray-600">Reels Received</div>
+					<div class="bg-gray-700 border border-gray-600 p-3 rounded text-center">
+						<div class="text-xl font-bold text-gray-200">{userStats().reelsReceived}</div>
+						<div class="text-sm text-gray-400">Reels Received</div>
 					</div>
-					<div class="bg-white border p-3 rounded text-center">
-						<div class="text-xl font-bold text-gray-800">{userStats().photosSent}</div>
-						<div class="text-sm text-gray-600">Photos Sent</div>
+					<div class="bg-gray-700 border border-gray-600 p-3 rounded text-center">
+						<div class="text-xl font-bold text-gray-200">{userStats().photosSent}</div>
+						<div class="text-sm text-gray-400">Photos Sent</div>
 					</div>
-					<div class="bg-white border p-3 rounded text-center">
-						<div class="text-xl font-bold text-gray-800">{userStats().reactionsGiven}</div>
-						<div class="text-sm text-gray-600">Reactions Given</div>
+					<div class="bg-gray-700 border border-gray-600 p-3 rounded text-center">
+						<div class="text-xl font-bold text-gray-200">{userStats().reactionsGiven}</div>
+						<div class="text-sm text-gray-400">Reactions Given</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="bg-white rounded-lg shadow p-6">
-				<h3 class="text-xl font-bold mb-4">Top 5 Conversations</h3>
+			<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
+				<h3 class="text-xl font-bold mb-4 text-white">Top 5 Conversations</h3>
 				<div class="space-y-2">
 					<For each={topConversations()}>
 						{([conversation, count]) => (
-							<details class="border rounded-lg">
-								<summary class="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center">
-									<span class="font-medium">{conversation}</span>
-									<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+							<details class="border border-gray-600 rounded-lg bg-gray-700">
+								<summary class="p-4 cursor-pointer hover:bg-gray-600 flex justify-between items-center">
+									<span class="font-medium text-white">{conversation}</span>
+									<span class="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm font-medium">
 										{count.toLocaleString()} messages
 									</span>
 								</summary>

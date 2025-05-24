@@ -93,30 +93,30 @@ const Home: Component = () => {
 	};
 
 	return (
-		<div class="min-h-screen bg-gray-50">
+		<div class="min-h-screen bg-gray-900">
 			<div class="container mx-auto p-4">
 				<div class="max-w-2xl mx-auto">
-					<h1 class="text-4xl font-bold text-center mb-2">Instagram Data Explorer</h1>
-					<p class="text-gray-600 text-center mb-8">
+					<h1 class="text-4xl font-bold text-center mb-2 text-white">Instagram Data Explorer</h1>
+					<p class="text-gray-300 text-center mb-8">
 						Upload your Instagram data package to analyze your account activity
 					</p>
 					
 					<Show when={isImporting()}>
-						<div class="mb-6 p-4 bg-blue-50 rounded-lg">
-							<div class="mb-2 text-sm font-medium text-blue-700">{currentStep()}</div>
-							<div class="w-full bg-blue-200 rounded-full h-2.5">
+						<div class="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+							<div class="mb-2 text-sm font-medium text-blue-300">{currentStep()}</div>
+							<div class="w-full bg-gray-700 rounded-full h-2.5">
 								<div 
-									class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+									class="bg-blue-500 h-2.5 rounded-full transition-all duration-300" 
 									style={`width: ${importProgress()}%`}
 								></div>
 							</div>
-							<div class="mt-1 text-xs text-blue-600">{Math.round(importProgress())}%</div>
+							<div class="mt-1 text-xs text-blue-400">{Math.round(importProgress())}%</div>
 						</div>
 					</Show>
 					
 					<div class="space-y-4">
 						{/* Folder Upload */}
-						<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg hover:border-blue-400 transition-colors">
+						<div class="upload-zone border-2 border-dashed border-gray-600 bg-gray-800 p-8 text-center rounded-lg hover:border-blue-500 hover:bg-gray-750 transition-colors">
 							<input
 								type="file"
 								/* @ts-expect-error */ // webkitdirectory isn't supported in JSX :shrug:
@@ -129,17 +129,17 @@ const Home: Component = () => {
 								onChange={(e) => handleFiles(e.currentTarget.files!)}
 							/>
 							<label for="folderPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
-								<div class="text-lg font-medium mb-2">📁 Upload Folder</div>
-								<div class="text-sm text-gray-600">
+								<div class="text-lg font-medium mb-2 text-white">📁 Upload Folder</div>
+								<div class="text-sm text-gray-300">
 									{isImporting() ? 'Importing...' : 'Click to select your Instagram data folder'}
 								</div>
 							</label>
 						</div>
 
-						<div class="text-center text-gray-500 font-medium">OR</div>
+						<div class="text-center text-gray-400 font-medium">OR</div>
 
 						{/* Zip File Upload */}
-						<div class="upload-zone border-2 border-dashed border-gray-300 p-8 text-center rounded-lg hover:border-blue-400 transition-colors">
+						<div class="upload-zone border-2 border-dashed border-gray-600 bg-gray-800 p-8 text-center rounded-lg hover:border-blue-500 hover:bg-gray-750 transition-colors">
 							<input
 								type="file"
 								accept=".zip"
@@ -149,8 +149,8 @@ const Home: Component = () => {
 								onChange={(e) => handleFiles(e.currentTarget.files!)}
 							/>
 							<label for="zipPicker" class={`cursor-pointer block ${isImporting() ? 'opacity-50 cursor-not-allowed' : ''}`}>
-								<div class="text-lg font-medium mb-2">📦 Upload Zip File</div>
-								<div class="text-sm text-gray-600">
+								<div class="text-lg font-medium mb-2 text-white">📦 Upload Zip File</div>
+								<div class="text-sm text-gray-300">
 									{isImporting() ? 'Importing...' : 'Click to select your Instagram data zip file'}
 								</div>
 							</label>

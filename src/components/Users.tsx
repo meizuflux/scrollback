@@ -33,16 +33,16 @@ const UserList: Component<{
 	);
 
 	return (
-		<div class="bg-white rounded-lg shadow p-6 mb-6">
+		<div class="bg-gray-800 rounded-lg shadow p-6 mb-6 border border-gray-700">
 			<div class="flex justify-between items-center mb-4">
-				<h3 class="text-xl font-bold">{props.title}</h3>
-				<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+				<h3 class="text-xl font-bold text-white">{props.title}</h3>
+				<span class="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm font-medium">
 					{props.users.length} users
 				</span>
 			</div>
 
 			<Show when={props.users.length > 0} fallback={
-				<div class="text-center py-8 text-gray-500">
+				<div class="text-center py-8 text-gray-400">
 					<div class="text-4xl mb-2">👤</div>
 					<p>{props.emptyMessage || "No users in this category"}</p>
 				</div>
@@ -53,12 +53,12 @@ const UserList: Component<{
 						placeholder="Search users..."
 						value={searchTerm()}
 						onInput={(e) => setSearchTerm(e.currentTarget.value)}
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+						class="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 					/>
 				</div>
 
 				<div class="flex justify-between items-center mb-4">
-					<p class="text-sm text-gray-600">
+					<p class="text-sm text-gray-300">
 						Showing {filteredUsers().length} of {totalFiltered()} users
 						{searchTerm() && ` matching "${searchTerm()}"`}
 					</p>
@@ -76,15 +76,15 @@ const UserList: Component<{
 				<div class="space-y-2 max-h-96 overflow-y-auto">
 					<For each={filteredUsers()}>
 						{(user) => (
-							<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+							<div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600">
 								<div class="flex items-center">
-									<div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+									<div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
 										{user.username.charAt(0).toUpperCase()}
 									</div>
-									<span class="font-medium">@{user.username}</span>
+									<span class="font-medium text-white">@{user.username}</span>
 								</div>
 								<Show when={props.showTimestamps && props.timestampKey}>
-									<span class="text-sm text-gray-500">
+									<span class="text-sm text-gray-400">
 										{formatDate((user as any)[props.timestampKey!])}
 									</span>
 								</Show>
@@ -94,11 +94,11 @@ const UserList: Component<{
 				</div>
 
 				<Show when={filteredUsers().length === 0 && searchTerm()}>
-					<div class="text-center py-4 text-gray-500">
+					<div class="text-center py-4 text-gray-400">
 						<p>No users found matching "{searchTerm()}"</p>
 						<button
 							onClick={() => setSearchTerm("")}
-							class="mt-2 text-blue-600 hover:text-blue-800"
+							class="mt-2 text-blue-400 hover:text-blue-300"
 						>
 							Clear search
 						</button>
@@ -116,16 +116,16 @@ const MetricCard: Component<{
 	color: string;
 	icon?: string;
 }> = (props) => (
-	<div class={`bg-${props.color}-50 p-4 rounded-lg text-center`}>
+	<div class={`bg-${props.color}-900 border border-${props.color}-700 p-4 rounded-lg text-center`}>
 		<Show when={props.icon}>
 			<div class="text-2xl mb-2">{props.icon}</div>
 		</Show>
-		<div class={`text-3xl font-bold text-${props.color}-600`}>
+		<div class={`text-3xl font-bold text-${props.color}-300`}>
 			{props.value.toLocaleString()}
 		</div>
-		<div class={`text-${props.color}-800 font-medium`}>{props.title}</div>
+		<div class={`text-${props.color}-200 font-medium`}>{props.title}</div>
 		<Show when={props.subtitle}>
-			<div class="text-sm text-gray-600 mt-1">{props.subtitle}</div>
+			<div class="text-sm text-gray-400 mt-1">{props.subtitle}</div>
 		</Show>
 	</div>
 );
@@ -189,8 +189,8 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 	return (
 		<div class="space-y-6">
 			{/* Overview Stats */}
-			<div class="bg-white rounded-lg shadow p-6">
-				<h2 class="text-2xl font-bold mb-6">Connection Overview</h2>
+			<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
+				<h2 class="text-2xl font-bold mb-6 text-white">Connection Overview</h2>
 				
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 					<MetricCard 
@@ -248,26 +248,26 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 			</div>
 
 			{/* Recent Activity */}
-			<div class="bg-white rounded-lg shadow p-6">
-				<h3 class="text-xl font-bold mb-4">Recent Activity (Last 30 Days)</h3>
+			<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
+				<h3 class="text-xl font-bold mb-4 text-white">Recent Activity (Last 30 Days)</h3>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div class="bg-green-50 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-green-600">
+					<div class="bg-green-900 border border-green-700 p-4 rounded-lg text-center">
+						<div class="text-2xl font-bold text-green-300">
 							{recentActivity().recentFollowers.length}
 						</div>
-						<div class="text-green-800 font-medium">New Followers</div>
+						<div class="text-green-200 font-medium">New Followers</div>
 					</div>
-					<div class="bg-blue-50 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-blue-600">
+					<div class="bg-blue-900 border border-blue-700 p-4 rounded-lg text-center">
+						<div class="text-2xl font-bold text-blue-300">
 							{recentActivity().recentFollowing.length}
 						</div>
-						<div class="text-blue-800 font-medium">Started Following</div>
+						<div class="text-blue-200 font-medium">Started Following</div>
 					</div>
-					<div class="bg-red-50 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-red-600">
+					<div class="bg-red-900 border border-red-700 p-4 rounded-lg text-center">
+						<div class="text-2xl font-bold text-red-300">
 							{recentActivity().recentUnfollowed.length}
 						</div>
-						<div class="text-red-800 font-medium">Recently Unfollowed</div>
+						<div class="text-red-200 font-medium">Recently Unfollowed</div>
 					</div>
 				</div>
 			</div>
