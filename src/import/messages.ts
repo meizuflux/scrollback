@@ -45,6 +45,24 @@ export default async (files: File[], db: IDBPDatabase) => {
 		// TODO: figure out a way to store this directly in the DB without it causing a timing issue
 		// current hack is to laod it all into memory and then store it all at once, should be another way around this
 		for (const message of json_file.messages) {
+			// Check if message has any meaningful content
+			const hasContent =
+				message.content ||
+				message.share ||
+				message.photos ||
+				message.videos ||
+				message.reactions?.length > 0 ||
+				message.sender_name;
+
+			// Skip messages that only contain metadata fields
+			const onlyMetadataFields = Object.keys(message).every((key) =>
+				["is_unsent_image_by_messenger_kid_parent", "is_geoblocked_for_viewer"].includes(key)
+			);
+
+			if (onlyMetadataFields || !hasContent) {
+				continue;
+			}
+
 			if (message.content) {
 				message.content = decodeU8String(message.content);
 			}
@@ -63,7 +81,10 @@ export default async (files: File[], db: IDBPDatabase) => {
 					reaction.reaction = decodeU8String(reaction.reaction);
 				}
 			}
-			message.sender_name = decodeU8String(message.sender_name);
+
+			if (message.sender_name) {
+				message.sender_name = decodeU8String(message.sender_name);
+			}
 
 			const storedMessage: StoredMessage = {
 				...message,

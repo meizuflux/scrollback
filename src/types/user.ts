@@ -29,28 +29,40 @@ export interface StoredUser {
 	recently_unfollowed_timestamp?: Date;
 }
 
+export interface Participant {
+	name: string;
+}
+
+export interface Reaction {
+	reaction: string;
+	actor: string;
+}
+
+export interface Share {
+	link?: string;
+	share_text?: string;
+}
+
+export interface Photo {
+	uri: string;
+	creation_timestamp: number;
+}
+
+export interface Video {
+	uri: string;
+	creation_timestamp: number;
+}
+
 export interface Message {
-	sender_name: string;
-	timestamp_ms: number;
+	sender_name?: string;
+	timestamp_ms?: number;
 	content?: string;
-	share?: {
-		link: string;
-		share_text?: string;
-		original_content_owner?: string;
-	};
-	photos?: {
-		uri: string;
-		creation_timestamp: number;
-	};
-	videos?: {
-		uri: string;
-		creation_timestamp: number;
-	};
-	reactions?: {
-		reaction: string;
-		actor: string; // person who reacted,
-		timestamp: number;
-	}[];
+	reactions?: Reaction[];
+	share?: Share;
+	photos?: Photo[];
+	videos?: Video[];
+	is_unsent?: boolean;
+	type?: string;
 }
 
 export interface StoredMessage extends Message {
@@ -58,16 +70,14 @@ export interface StoredMessage extends Message {
 }
 
 export interface MessageFile {
-	participants: { name: string }[];
+	participants: Participant[];
 	messages: Message[];
 	title: string;
-	image?: {
-		uri: string;
-		creation_timestamp: number;
-	};
+	is_still_participant: boolean;
+	thread_path: string;
 }
 
-export interface StoredConversation {
+export interface Conversation {
 	title: string;
 	participants: string[];
 	is_group: boolean;
@@ -75,7 +85,6 @@ export interface StoredConversation {
 
 export interface StoredData {
 	user: User;
-	users: StoredUser[];
 	messages: StoredMessage[];
-	conversations: StoredConversation[];
+	conversations: Conversation[];
 }
