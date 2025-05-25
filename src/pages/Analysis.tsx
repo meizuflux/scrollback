@@ -23,6 +23,35 @@ const loadData = async (): Promise<StoredData> => {
 	};
 };
 
+const ClearButton: Component = () => {
+	const navigate = useNavigate();
+	const [isClearing, setIsClearing] = createSignal(false);
+
+	const handleClear = async () => {
+		setIsClearing(true);
+		localStorage.clear();
+		await db.delete();
+		navigate("/", { replace: true });
+	};
+
+	return (
+		<button 
+			class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
+			onClick={handleClear}
+			disabled={isClearing()}
+		>
+			<Show when={!isClearing()} fallback={
+				<div class="flex items-center">
+					<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white-500 mr-2"></div>
+					Clearing...
+				</div>
+			}>
+				Clear Data
+			</Show>
+		</button>
+	);
+};
+
 const Analysis: Component = (props) => {
 	const navigate = useNavigate();
 	const [data] = createResource(loadData);
@@ -34,12 +63,6 @@ const Analysis: Component = (props) => {
 			navigate("/", { replace: true });
 		}
 	});
-
-	const clearData = async () => {
-		localStorage.clear();
-		await db.delete();
-		navigate("/", { replace: true });
-	};
 
 	return (
 		<div class="min-h-screen bg-gray-900">
@@ -60,12 +83,7 @@ const Analysis: Component = (props) => {
 						>
 							Export
 						</button>
-						<button 
-							class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors" 
-							onClick={clearData}
-						>
-							Clear Data
-						</button>
+						<ClearButton />
 					</div>
 				</div>
 				
