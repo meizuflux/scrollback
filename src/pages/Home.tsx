@@ -3,6 +3,7 @@ import { useNavigate } from "@solidjs/router";
 import { extractZipToFiles } from "../utils";
 import { importData, ImportStep } from "../import/import";
 import ImportProgress from "../components/ImportProgress";
+import logo from "../assets/logo.svg";
 
 
 const Home: Component = () => {
@@ -65,10 +66,13 @@ const Home: Component = () => {
 		<div class="min-h-screen bg-gray-900">
 			<div class="container mx-auto p-4">
 				<div class="max-w-3xl mx-auto">
-					<h1 class="text-4xl font-bold text-center mb-2 text-white">Instagram Data Explorer</h1>
-					<p class="text-gray-300 text-center mb-8">
-						Upload your Instagram data package to analyze your account activity
-					</p>
+					<div class="flex flex-col items-center mb-8">
+						<img src={logo} alt="Instagram Data Explorer Logo" class="w-24 h-24 mb-4" />
+						<h1 class="text-4xl font-bold text-center mb-2 text-white">Instagram Data Explorer</h1>
+						<p class="text-gray-300 text-center">
+							Upload your Instagram data package to analyze your account activity
+						</p>
+					</div>
 					
 					<Show when={isImporting()}>
 						<div class="mb-6 p-6 bg-gray-800 rounded-lg border border-gray-700">
