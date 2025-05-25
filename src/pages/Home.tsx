@@ -5,7 +5,6 @@ import { importData, ImportStep } from "../import/import";
 import ImportProgress from "../components/ImportProgress";
 import logo from "../assets/logo.svg";
 
-
 const Home: Component = () => {
 	const navigate = useNavigate();
 
@@ -14,7 +13,7 @@ const Home: Component = () => {
 
 	const updateSteps = (name: string, progress: number, statusText?: string) => {
 		setImportSteps((steps) => {
-			const existingIndex = steps.findIndex(step => step.name === name);
+			const existingIndex = steps.findIndex((step) => step.name === name);
 			if (existingIndex !== -1) {
 				// Update existing step
 				const updatedSteps = [...steps];
@@ -40,25 +39,22 @@ const Home: Component = () => {
 
 	const handleFiles = async (files: FileList) => {
 		let fileArray = Array.from(files);
-		
+
 		setIsImporting(true);
-		
+
 		try {
 			var unzipping = false;
-			if (fileArray.length === 1 && fileArray[0].name.endsWith('.zip')) {
+			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
 				unzipping = true;
 				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
 			}
-			
+
 			await importData(fileArray, updateSteps, unzipping);
 
 			localStorage.setItem("loaded", "true");
 			navigate("/analysis", { replace: true });
-
-
 		} catch (error) {
 			console.error("Import failed:", error);
-
 		}
 	};
 
@@ -73,17 +69,15 @@ const Home: Component = () => {
 							Upload your Instagram data package to analyze your account activity
 						</p>
 					</div>
-					
+
 					<Show when={isImporting()}>
 						<div class="mb-6 p-6 bg-gray-800 rounded-lg border border-gray-700">
 							<ImportProgress steps={importSteps()} />
 						</div>
 					</Show>
-					
+
 					<Show when={!isImporting()}>
-						<div
-							class="border-2 border-gray-600 bg-gray-800 p-12 text-center rounded-lg"
-						>
+						<div class="border-2 border-gray-600 bg-gray-800 p-12 text-center rounded-lg">
 							<input
 								type="file"
 								/* @ts-expect-error */
@@ -103,24 +97,22 @@ const Home: Component = () => {
 								disabled={isImporting()}
 								onChange={(e) => handleFiles(e.currentTarget.files!)}
 							/>
-							
+
 							<div class="text-6xl mb-4">📁</div>
-							<div class="text-xl font-medium mb-4 text-white">
-								Upload your Instagram data here
-							</div>
+							<div class="text-xl font-medium mb-4 text-white">Upload your Instagram data here</div>
 							<div class="text-gray-300 mb-6">
 								Upload your data folder or the zip file you downloaded from Instagram
 							</div>
-							
+
 							<div class="space-x-4">
-								<label 
-									for="folderPicker" 
+								<label
+									for="folderPicker"
 									class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors"
 								>
 									Select Folder
 								</label>
-								<label 
-									for="zipPicker" 
+								<label
+									for="zipPicker"
 									class="inline-block bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors"
 								>
 									Select Zip File

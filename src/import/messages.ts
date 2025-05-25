@@ -2,22 +2,26 @@ import { InstagramDatabase, StoredMessage, StoredMedia } from "../db/database";
 import { Conversation, MessageFile } from "../types/message";
 import { decodeU8String, findFile } from "../utils";
 
-export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, statusText?: string) => void) => {
+export default async (
+	files: File[],
+	database: InstagramDatabase,
+	onProgress?: (progress: number, statusText?: string) => void,
+) => {
 	const conversations: Conversation[] = [];
 	const messages: StoredMessage[] = [];
 	const mediaFiles: StoredMedia[] = [];
 
 	onProgress?.(0, "Filtering message files...");
 	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
-	
+
 	if (messageFiles.length === 0) {
 		onProgress?.(100, "No message files found.");
 		return;
 	}
 	onProgress?.(5, `Found ${messageFiles.length} message files. Calculating total messages...`);
-	
+
 	let totalMessages = 0;
-	const parsedMessageFiles: { file: File, json: MessageFile }[] = [];
+	const parsedMessageFiles: { file: File; json: MessageFile }[] = [];
 
 	for (let i = 0; i < messageFiles.length; i++) {
 		const file = messageFiles[i];
@@ -27,15 +31,15 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 		parsedMessageFiles.push({ file, json: json_file });
 		totalMessages += json_file.messages.length;
 	}
-	
+
 	onProgress?.(15, `Total ${totalMessages} messages to process across ${messageFiles.length} files.`);
-    if (totalMessages === 0) {
-        onProgress?.(100, "No messages to process.");
-        return;
-    }
-	
+	if (totalMessages === 0) {
+		onProgress?.(100, "No messages to process.");
+		return;
+	}
+
 	let processedMessages = 0;
-	
+
 	for (let fileIndex = 0; fileIndex < parsedMessageFiles.length; fileIndex++) {
 		const { json: json_file } = parsedMessageFiles[fileIndex];
 		const conversationTitle = decodeU8String(json_file.title);
@@ -44,10 +48,17 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 			const message = json_file.messages[msgIndex];
 			processedMessages++;
 			const currentProgress = 15 + Math.round((processedMessages / totalMessages) * 65); // Processing messages: 15-80%
-			
-            if (processedMessages % Math.max(1, Math.floor(totalMessages / 50)) === 0 || processedMessages === totalMessages) { // Update ~50 times
-			    onProgress?.(Math.min(80, currentProgress), `Processing message ${processedMessages}/${totalMessages} in "${conversationTitle}"`);
-            }
+
+			if (
+				processedMessages % Math.max(1, Math.floor(totalMessages / 50)) === 0 ||
+				processedMessages === totalMessages
+			) {
+				// Update ~50 times
+				onProgress?.(
+					Math.min(80, currentProgress),
+					`Processing message ${processedMessages}/${totalMessages} in "${conversationTitle}"`,
+				);
+			}
 
 			message.sender_name = decodeU8String(message.sender_name!);
 			if (message.content) {
@@ -75,8 +86,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 						mediaFiles.push({
 							uri: photo.uri,
 							timestamp: new Date(photo.creation_timestamp * 1000),
-							type: 'photo',
-							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'image/jpeg' })
+							type: "photo",
+							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || "image/jpeg" }),
 						});
 					}
 				}
@@ -89,8 +100,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 						mediaFiles.push({
 							uri: video.uri,
 							timestamp: new Date(video.creation_timestamp * 1000),
-							type: 'video',
-							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'video/mp4' })
+							type: "video",
+							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || "video/mp4" }),
 						});
 					}
 				}
@@ -108,7 +119,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 				share: message.share,
 				photos: message.photos,
 				videos: message.videos,
-			}
+			};
 
 			messages.push(toStore);
 		}
@@ -120,11 +131,14 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 		});
 	}
 
-	onProgress?.(80, `Saving ${messages.length} messages, ${conversations.length} conversations, and ${mediaFiles.length} media items...`);
+	onProgress?.(
+		80,
+		`Saving ${messages.length} messages, ${conversations.length} conversations, and ${mediaFiles.length} media items...`,
+	);
 	await Promise.all([
 		database.media.bulkPut(mediaFiles),
 		database.messages.bulkAdd(messages),
-		database.conversations.bulkPut(conversations)
+		database.conversations.bulkPut(conversations),
 	]);
 	onProgress?.(100, `Imported ${messages.length} messages and ${conversations.length} conversations.`);
 };

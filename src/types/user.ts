@@ -12,7 +12,7 @@ export interface User {
 	notInterestedProfiles: number;
 	notInterestedPosts: number;
 	postsViewed: number;
-	adsViewed: number
+	adsViewed: number;
 }
 
 export interface ProfileChange {
@@ -21,7 +21,3 @@ export interface ProfileChange {
 	newValue: string;
 	timestamp: Date;
 }
-
-
-
-

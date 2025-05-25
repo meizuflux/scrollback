@@ -1,6 +1,6 @@
-import Dexie, { Table } from 'dexie';
-import { Conversation, Media, Reaction, Share } from '../types/message';
-import { ProfileChange, User } from '../types/user';
+import Dexie, { Table } from "dexie";
+import { Conversation, Media, Reaction, Share } from "../types/message";
+import { ProfileChange, User } from "../types/user";
 
 export interface StoredData {
 	user: User;
@@ -12,51 +12,51 @@ export interface StoredData {
 export interface StoredMedia {
 	uri: string;
 	timestamp: Date;
-	type: 'photo' | 'video';
+	type: "photo" | "video";
 	data: Blob;
 }
 
 interface StoredPost {
-    id?: number;
-    title: string;
-    timestamp: Date;
-    media: string[]; // Array of media URIs
-    archived?: boolean;
+	id?: number;
+	title: string;
+	timestamp: Date;
+	media: string[]; // Array of media URIs
+	archived?: boolean;
 }
 
 export interface StoredMessage {
-    conversation: string;
-    sender_name: string;
-    timestamp: Date;
-    content?: string;
-    reactions?: Reaction[];
-    share?: Share;
-    photos?: Media[];
-    videos?: Media[];
+	conversation: string;
+	sender_name: string;
+	timestamp: Date;
+	content?: string;
+	reactions?: Reaction[];
+	share?: Share;
+	photos?: Media[];
+	videos?: Media[];
 }
 
 interface StoredStory {
-    title: string;
-    timestamp: Date;
-    uri: string;
+	title: string;
+	timestamp: Date;
+	uri: string;
 }
 
 interface StoredComment {
-    media_owner: string;
-    comment: string;
-    timestamp: Date;
+	media_owner: string;
+	comment: string;
+	timestamp: Date;
 }
 
 interface StoredLikedPost {
-    media_owner: string;
-    href: string;
-    timestamp: Date;
+	media_owner: string;
+	href: string;
+	timestamp: Date;
 }
 
 interface StoredSavedPost {
-    media_owner: string;
-    href: string;
-    timestamp: Date;
+	media_owner: string;
+	href: string;
+	timestamp: Date;
 }
 
 export interface TimestampedValue<T = boolean> {
@@ -79,35 +79,35 @@ export interface StoredUser {
 }
 
 export class InstagramDatabase extends Dexie {
-    users!: Table<StoredUser>;
-    mainUser!: Table<User>;
-    messages!: Table<StoredMessage>;
-    conversations!: Table<Conversation>;
-    media!: Table<StoredMedia>;
-    posts!: Table<StoredPost>;
-    stories!: Table<StoredStory>;
-    comments!: Table<StoredComment>;
-    likedPosts!: Table<StoredLikedPost>;
-    savedPosts!: Table<StoredSavedPost>;
-    profileChanges!: Table<ProfileChange>;
+	users!: Table<StoredUser>;
+	mainUser!: Table<User>;
+	messages!: Table<StoredMessage>;
+	conversations!: Table<Conversation>;
+	media!: Table<StoredMedia>;
+	posts!: Table<StoredPost>;
+	stories!: Table<StoredStory>;
+	comments!: Table<StoredComment>;
+	likedPosts!: Table<StoredLikedPost>;
+	savedPosts!: Table<StoredSavedPost>;
+	profileChanges!: Table<ProfileChange>;
 
-    constructor() {
-        super('instagram-data');
+	constructor() {
+		super("instagram-data");
 
-        this.version(1).stores({
-            users: 'username, stories_liked',
-            mainUser: 'username',
-            messages: '++id, conversation, sender_name, timestamp, *content',
-            conversations: 'title, *participants',
-            media: 'uri, type, timestamp',
-            posts: "++id, title, timestamp, archived",
-            stories: "++id, title, timestamp",
-            comments: "++id, media_owner, comment, timestamp",
-            likedPosts: "++id, media_owner, href, timestamp",
-            savedPosts: "++id, media_owner, href, timestamp",
-            profileChanges: "++id, changed, timestamp"
-        });
-    }
+		this.version(1).stores({
+			users: "username, stories_liked",
+			mainUser: "username",
+			messages: "++id, conversation, sender_name, timestamp, *content",
+			conversations: "title, *participants",
+			media: "uri, type, timestamp",
+			posts: "++id, title, timestamp, archived",
+			stories: "++id, title, timestamp",
+			comments: "++id, media_owner, comment, timestamp",
+			likedPosts: "++id, media_owner, href, timestamp",
+			savedPosts: "++id, media_owner, href, timestamp",
+			profileChanges: "++id, changed, timestamp",
+		});
+	}
 }
 
 export const db = new InstagramDatabase();

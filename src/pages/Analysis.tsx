@@ -1,21 +1,21 @@
 import { Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { db, StoredData } from "../db/database";
+import { requireDataLoaded } from "../utils";
 
 import MessageAnalysis from "../components/Messages";
 import UsersAnalysis from "../components/Users";
 
 const loadData = async (): Promise<StoredData> => {
-	// Use Promise.all for parallel data loading
 	const [mainUsers, users, conversations, messages] = await Promise.all([
 		db.mainUser.toArray(),
 		db.users.toArray(),
 		db.conversations.toArray(),
-		db.messages.toArray()
+		db.messages.toArray(),
 	]);
 
 	return {
-		user: mainUsers[0], // Get the first (and only) main user
+		user: mainUsers[0],
 		users,
 		conversations,
 		messages,
@@ -34,31 +34,29 @@ const ClearButton: Component = () => {
 	};
 
 	return (
-		<button 
+		<button
 			class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
 			onClick={handleClear}
 			disabled={isClearing()}
 		>
-			<Show when={!isClearing()} fallback={
+			{isClearing() ? (
 				<div class="flex items-center">
 					<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white-500 mr-2"></div>
 					Clearing...
 				</div>
-			}>
-				Clear Data
-			</Show>
+			) : (
+				"Clear Data"
+			)}
 		</button>
 	);
 };
 
-const Analysis: Component = (props) => {
+const Analysis: Component = () => {
 	const navigate = useNavigate();
 	const [data] = createResource(loadData);
 
 	onMount(() => {
-		// Check if data is loaded, if not redirect to home
-		const loaded = localStorage.getItem("loaded");
-		if (loaded !== "true") {
+		if (!requireDataLoaded()) {
 			navigate("/", { replace: true });
 		}
 	});
@@ -70,13 +68,11 @@ const Analysis: Component = (props) => {
 					<div>
 						<h1 class="text-4xl font-bold mb-2 text-white">Instagram Data Analysis</h1>
 						<Show when={data() && !data.loading}>
-							<p class="text-gray-300">
-								Analysis for @{data()?.user?.username}
-							</p>
+							<p class="text-gray-300">Analysis for @{data()?.user?.username}</p>
 						</Show>
 					</div>
 					<div class="flex gap-2">
-						<button 
+						<button
 							class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
 							onClick={() => navigate("/export")}
 						>
@@ -85,15 +81,18 @@ const Analysis: Component = (props) => {
 						<ClearButton />
 					</div>
 				</div>
-				
-				<Show when={!data.loading} fallback={
-					<div class="flex justify-center items-center py-20">
-						<div class="text-center">
-							<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-							<p class="text-gray-300">Loading your data...</p>
+
+				<Show
+					when={!data.loading}
+					fallback={
+						<div class="flex justify-center items-center py-20">
+							<div class="text-center">
+								<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+								<p class="text-gray-300">Loading your data...</p>
+							</div>
 						</div>
-					</div>
-				}>
+					}
+				>
 					<MessageAnalysis data={data()!} />
 					<UsersAnalysis data={data()!} />
 				</Show>

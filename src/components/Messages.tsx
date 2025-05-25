@@ -21,7 +21,7 @@ interface SenderStats extends ConversationStats {
 }
 
 const formatDate = (date: Date | number) => {
-	if (typeof date === 'number') {
+	if (typeof date === "number") {
 		return new Date(date).toLocaleDateString();
 	}
 	return date.toLocaleDateString();
@@ -128,8 +128,7 @@ const ConversationAnalysis: Component<{ messages: StoredData["messages"]; conver
 				<div class="bg-gray-700 p-3 rounded shadow mb-4 border border-gray-600">
 					<h4 class="font-semibold mb-2 text-white">Timeline</h4>
 					<p class="text-sm text-gray-300">
-						From {formatDate(timeRange()!.first.getTime())} to{" "}
-						{formatDate(timeRange()!.last.getTime())}
+						From {formatDate(timeRange()!.first.getTime())} to {formatDate(timeRange()!.last.getTime())}
 						<span class="ml-2">({timeRange()!.span} days)</span>
 					</p>
 				</div>
@@ -170,8 +169,8 @@ const ConversationAnalysis: Component<{ messages: StoredData["messages"]; conver
 	);
 };
 
-const ConversationBrowser: Component<{ 
-	conversations: Array<[string, number]>; 
+const ConversationBrowser: Component<{
+	conversations: Array<[string, number]>;
 	messages: StoredMessage[];
 	userStats: any;
 }> = (props) => {
@@ -195,12 +194,16 @@ const ConversationBrowser: Component<{
 					return nameA.localeCompare(nameB);
 				case "recent":
 					// Get most recent message for each conversation
-					const lastMessageA = Math.max(...props.messages
-						.filter(m => m.conversation === nameA)
-						.map(m => m.timestamp?.getTime() || 0));
-					const lastMessageB = Math.max(...props.messages
-						.filter(m => m.conversation === nameB)
-						.map(m => m.timestamp?.getTime() || 0));
+					const lastMessageA = Math.max(
+						...props.messages
+							.filter((m) => m.conversation === nameA)
+							.map((m) => m.timestamp?.getTime() || 0),
+					);
+					const lastMessageB = Math.max(
+						...props.messages
+							.filter((m) => m.conversation === nameB)
+							.map((m) => m.timestamp?.getTime() || 0),
+					);
 					return lastMessageB - lastMessageA;
 				case "messages":
 				default:
@@ -221,18 +224,19 @@ const ConversationBrowser: Component<{
 		setExpandedConversations(expanded);
 	};
 
-	const totalFiltered = createMemo(() => 
-		props.conversations.filter(([name, count]) => {
-			const matchesSearch = name.toLowerCase().includes(searchTerm().toLowerCase());
-			const meetsMinMessages = count >= minMessages();
-			return matchesSearch && meetsMinMessages;
-		}).length
+	const totalFiltered = createMemo(
+		() =>
+			props.conversations.filter(([name, count]) => {
+				const matchesSearch = name.toLowerCase().includes(searchTerm().toLowerCase());
+				const meetsMinMessages = count >= minMessages();
+				return matchesSearch && meetsMinMessages;
+			}).length,
 	);
 
 	return (
 		<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
 			<h3 class="text-xl font-bold mb-4 text-white">All Conversations</h3>
-			
+
 			{/* Search and Filters */}
 			<div class="space-y-4 mb-6">
 				<div class="flex flex-col sm:flex-row gap-4">
@@ -246,7 +250,7 @@ const ConversationBrowser: Component<{
 							class="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
 					</div>
-					
+
 					<div class="sm:w-48">
 						<label class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
 						<select
@@ -259,7 +263,7 @@ const ConversationBrowser: Component<{
 							<option value="recent">Most Recent</option>
 						</select>
 					</div>
-					
+
 					<div class="sm:w-48">
 						<label class="block text-sm font-medium text-gray-300 mb-1">Min Messages</label>
 						<input
@@ -277,7 +281,7 @@ const ConversationBrowser: Component<{
 						Showing {filteredAndSortedConversations().length} of {totalFiltered()} conversations
 						{searchTerm() && ` matching "${searchTerm()}"`}
 					</p>
-					
+
 					<Show when={totalFiltered() > 10}>
 						<button
 							onClick={() => setShowAll(!showAll())}
@@ -294,39 +298,54 @@ const ConversationBrowser: Component<{
 				<For each={filteredAndSortedConversations()}>
 					{([conversation, count]) => {
 						const isExpanded = () => expandedConversations().has(conversation);
-						
+
 						return (
 							<div class="border border-gray-600 rounded-lg bg-gray-700">
-								<div 
+								<div
 									class="p-4 cursor-pointer hover:bg-gray-600 flex justify-between items-center"
 									onClick={() => toggleConversation(conversation)}
 								>
 									<div class="flex-1">
 										<span class="font-medium text-white">{conversation}</span>
 										<div class="text-sm text-gray-400 mt-1">
-											<Show when={props.messages.find(m => m.conversation === conversation)?.timestamp}>
-												Last active: {formatDate(Math.max(...props.messages
-													.filter(m => m.conversation === conversation)
-													.map(m => m.timestamp?.getTime() || 0)))}
+											<Show
+												when={
+													props.messages.find((m) => m.conversation === conversation)
+														?.timestamp
+												}
+											>
+												Last active:{" "}
+												{formatDate(
+													Math.max(
+														...props.messages
+															.filter((m) => m.conversation === conversation)
+															.map((m) => m.timestamp?.getTime() || 0),
+													),
+												)}
 											</Show>
 										</div>
 									</div>
-									
+
 									<div class="flex items-center gap-2">
 										<span class="bg-blue-600 text-blue-100 px-3 py-1 rounded-full text-sm font-medium">
 											{count.toLocaleString()} messages
 										</span>
-										<svg 
-											class={`w-5 h-5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-180' : ''}`}
-											fill="none" 
-											stroke="currentColor" 
+										<svg
+											class={`w-5 h-5 text-gray-400 transition-transform ${isExpanded() ? "rotate-180" : ""}`}
+											fill="none"
+											stroke="currentColor"
 											viewBox="0 0 24 24"
 										>
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 9l-7 7-7-7"
+											/>
 										</svg>
 									</div>
 								</div>
-								
+
 								<Show when={isExpanded()}>
 									<ConversationAnalysis messages={props.messages} conversation={conversation} />
 								</Show>
@@ -334,7 +353,7 @@ const ConversationBrowser: Component<{
 						);
 					}}
 				</For>
-				
+
 				<Show when={filteredAndSortedConversations().length === 0}>
 					<div class="text-center py-8 text-gray-400">
 						<p>No conversations found matching your criteria.</p>
@@ -361,11 +380,14 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 	const messages = data.messages;
 
 	const conversationCounts = createMemo(() => {
-		return messages.reduce((acc, msg) => {
-			const conversation = msg.conversation;
-			acc[conversation] = (acc[conversation] || 0) + 1;
-			return acc;
-		}, {} as Record<string, number>);
+		return messages.reduce(
+			(acc, msg) => {
+				const conversation = msg.conversation;
+				acc[conversation] = (acc[conversation] || 0) + 1;
+				return acc;
+			},
+			{} as Record<string, number>,
+		);
 	});
 
 	const userStats = createMemo(() => {
@@ -380,11 +402,8 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 			reelsReceived: received.filter((m) => m.share?.link?.includes("/reel/")).length,
 			photosSent: sent.reduce((sum, m) => sum + (m.photos?.length || 0), 0),
 			photosReceived: received.reduce((sum, m) => sum + (m.photos?.length || 0), 0),
-			reactionsGiven: messages.filter((m) =>
-				m.reactions?.some((r) => r.actor === data.user.name),
-			).length,
-			reactionsReceived: messages.filter((m) => m.sender_name === data.user.name && m.reactions?.length)
-				.length,
+			reactionsGiven: messages.filter((m) => m.reactions?.some((r) => r.actor === data.user.name)).length,
+			reactionsReceived: messages.filter((m) => m.sender_name === data.user.name && m.reactions?.length).length,
 		};
 	});
 
@@ -395,8 +414,7 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 	});
 
 	const allConversations = createMemo(() => {
-		return Object.entries(conversationCounts())
-			.sort(([, a], [, b]) => b - a);
+		return Object.entries(conversationCounts()).sort(([, a], [, b]) => b - a);
 	});
 
 	return (
@@ -406,27 +424,19 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 					<div class="bg-blue-900 p-4 rounded-lg text-center border border-blue-700">
-						<div class="text-3xl font-bold text-blue-300">
-							{userStats().total.toLocaleString()}
-						</div>
+						<div class="text-3xl font-bold text-blue-300">{userStats().total.toLocaleString()}</div>
 						<div class="text-blue-200 font-medium">Total Messages</div>
 					</div>
 					<div class="bg-green-900 p-4 rounded-lg text-center border border-green-700">
-						<div class="text-3xl font-bold text-green-300">
-							{userStats().sent.toLocaleString()}
-						</div>
+						<div class="text-3xl font-bold text-green-300">{userStats().sent.toLocaleString()}</div>
 						<div class="text-green-200 font-medium">Messages Sent</div>
 					</div>
 					<div class="bg-purple-900 p-4 rounded-lg text-center border border-purple-700">
-						<div class="text-3xl font-bold text-purple-300">
-							{userStats().received.toLocaleString()}
-						</div>
+						<div class="text-3xl font-bold text-purple-300">{userStats().received.toLocaleString()}</div>
 						<div class="text-purple-200 font-medium">Messages Received</div>
 					</div>
 					<div class="bg-orange-900 p-4 rounded-lg text-center border border-orange-700">
-						<div class="text-3xl font-bold text-orange-300">
-							{Object.keys(conversationCounts()).length}
-						</div>
+						<div class="text-3xl font-bold text-orange-300">{Object.keys(conversationCounts()).length}</div>
 						<div class="text-orange-200 font-medium">Conversations</div>
 					</div>
 				</div>
@@ -470,11 +480,7 @@ const MessageAnalysis: Component<MessagesProps> = (props) => {
 				</div>
 			</div>
 
-			<ConversationBrowser 
-				conversations={allConversations()} 
-				messages={messages}
-				userStats={userStats()}
-			/>
+			<ConversationBrowser conversations={allConversations()} messages={messages} userStats={userStats()} />
 		</div>
 	);
 };

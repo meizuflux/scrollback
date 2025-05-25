@@ -9,9 +9,9 @@ const formatDate = (date: Date | undefined) => {
 	return date ? date.toLocaleDateString() : "Unknown";
 };
 
-const UserList: Component<{ 
-	title: string; 
-	users: StoredUser[]; 
+const UserList: Component<{
+	title: string;
+	users: StoredUser[];
 	showTimestamps?: boolean;
 	timestampKey?: keyof StoredUser;
 	emptyMessage?: string;
@@ -20,16 +20,12 @@ const UserList: Component<{
 	const [showAll, setShowAll] = createSignal(false);
 
 	const filteredUsers = createMemo(() => {
-		let filtered = props.users.filter(user => 
-			user.username.toLowerCase().includes(searchTerm().toLowerCase())
-		);
+		let filtered = props.users.filter((user) => user.username.toLowerCase().includes(searchTerm().toLowerCase()));
 		return showAll() ? filtered : filtered.slice(0, 10);
 	});
 
-	const totalFiltered = createMemo(() => 
-		props.users.filter(user => 
-			user.username.toLowerCase().includes(searchTerm().toLowerCase())
-		).length
+	const totalFiltered = createMemo(
+		() => props.users.filter((user) => user.username.toLowerCase().includes(searchTerm().toLowerCase())).length,
 	);
 
 	return (
@@ -41,12 +37,15 @@ const UserList: Component<{
 				</span>
 			</div>
 
-			<Show when={props.users.length > 0} fallback={
-				<div class="text-center py-8 text-gray-400">
-					<div class="text-4xl mb-2">👤</div>
-					<p>{props.emptyMessage || "No users in this category"}</p>
-				</div>
-			}>
+			<Show
+				when={props.users.length > 0}
+				fallback={
+					<div class="text-center py-8 text-gray-400">
+						<div class="text-4xl mb-2">👤</div>
+						<p>{props.emptyMessage || "No users in this category"}</p>
+					</div>
+				}
+			>
 				<div class="mb-4">
 					<input
 						type="text"
@@ -62,7 +61,7 @@ const UserList: Component<{
 						Showing {filteredUsers().length} of {totalFiltered()} users
 						{searchTerm() && ` matching "${searchTerm()}"`}
 					</p>
-					
+
 					<Show when={totalFiltered() > 10}>
 						<button
 							onClick={() => setShowAll(!showAll())}
@@ -96,10 +95,7 @@ const UserList: Component<{
 				<Show when={filteredUsers().length === 0 && searchTerm()}>
 					<div class="text-center py-4 text-gray-400">
 						<p>No users found matching "{searchTerm()}"</p>
-						<button
-							onClick={() => setSearchTerm("")}
-							class="mt-2 text-blue-400 hover:text-blue-300"
-						>
+						<button onClick={() => setSearchTerm("")} class="mt-2 text-blue-400 hover:text-blue-300">
 							Clear search
 						</button>
 					</div>
@@ -109,10 +105,10 @@ const UserList: Component<{
 	);
 };
 
-const MetricCard: Component<{ 
-	title: string; 
-	value: number; 
-	subtitle?: string; 
+const MetricCard: Component<{
+	title: string;
+	value: number;
+	subtitle?: string;
 	color: string;
 	icon?: string;
 }> = (props) => (
@@ -120,9 +116,7 @@ const MetricCard: Component<{
 		<Show when={props.icon}>
 			<div class="text-2xl mb-2">{props.icon}</div>
 		</Show>
-		<div class={`text-3xl font-bold text-${props.color}-300`}>
-			{props.value.toLocaleString()}
-		</div>
+		<div class={`text-3xl font-bold text-${props.color}-300`}>{props.value.toLocaleString()}</div>
 		<div class={`text-${props.color}-200 font-medium`}>{props.title}</div>
 		<Show when={props.subtitle}>
 			<div class="text-sm text-gray-400 mt-1">{props.subtitle}</div>
@@ -165,7 +159,7 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 			notFollowingYouBack,
 			mutualFollows,
 			followRatio: parseFloat(followRatio),
-			totalConnections: users.length
+			totalConnections: users.length,
 		};
 	});
 
@@ -174,15 +168,15 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
 		return {
-			recentFollowers: stats().followers.filter(u => 
-				u.follower?.timestamp && u.follower.timestamp > thirtyDaysAgo
+			recentFollowers: stats().followers.filter(
+				(u) => u.follower?.timestamp && u.follower.timestamp > thirtyDaysAgo,
 			),
-			recentFollowing: stats().following.filter(u => 
-				u.following?.timestamp && u.following.timestamp > thirtyDaysAgo
+			recentFollowing: stats().following.filter(
+				(u) => u.following?.timestamp && u.following.timestamp > thirtyDaysAgo,
 			),
-			recentUnfollowed: stats().recentlyUnfollowed.filter(u => 
-				u.recently_unfollowed?.timestamp && u.recently_unfollowed.timestamp > thirtyDaysAgo
-			)
+			recentUnfollowed: stats().recentlyUnfollowed.filter(
+				(u) => u.recently_unfollowed?.timestamp && u.recently_unfollowed.timestamp > thirtyDaysAgo,
+			),
 		};
 	});
 
@@ -191,56 +185,36 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 			{/* Overview Stats */}
 			<div class="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
 				<h2 class="text-2xl font-bold mb-6 text-white">Connection Overview</h2>
-				
+
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-					<MetricCard 
-						title="Followers" 
-						value={stats().followers.length} 
-						color="blue"
-						icon="👥"
-					/>
-					<MetricCard 
-						title="Following" 
-						value={stats().following.length} 
-						color="green"
-						icon="➕"
-					/>
-					<MetricCard 
-						title="Mutual Follows" 
-						value={stats().mutualFollows.length} 
-						color="purple"
-						icon="🤝"
-					/>
-					<MetricCard 
-						title="Close Friends" 
-						value={stats().closeFriends.length} 
-						color="pink"
-						icon="💕"
-					/>
+					<MetricCard title="Followers" value={stats().followers.length} color="blue" icon="👥" />
+					<MetricCard title="Following" value={stats().following.length} color="green" icon="➕" />
+					<MetricCard title="Mutual Follows" value={stats().mutualFollows.length} color="purple" icon="🤝" />
+					<MetricCard title="Close Friends" value={stats().closeFriends.length} color="pink" icon="💕" />
 				</div>
 
 				<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-					<MetricCard 
-						title="Follow Ratio" 
-						value={stats().followRatio} 
+					<MetricCard
+						title="Follow Ratio"
+						value={stats().followRatio}
 						subtitle="Following/Followers"
 						color="orange"
 					/>
-					<MetricCard 
-						title="Not Following Back" 
-						value={stats().notFollowingBack.length} 
+					<MetricCard
+						title="Not Following Back"
+						value={stats().notFollowingBack.length}
 						subtitle="They follow you"
 						color="red"
 					/>
-					<MetricCard 
-						title="Don't Follow Back" 
-						value={stats().notFollowingYouBack.length} 
+					<MetricCard
+						title="Don't Follow Back"
+						value={stats().notFollowingYouBack.length}
 						subtitle="You follow them"
 						color="yellow"
 					/>
-					<MetricCard 
-						title="Pending Requests" 
-						value={stats().pendingFollowRequests.length} 
+					<MetricCard
+						title="Pending Requests"
+						value={stats().pendingFollowRequests.length}
 						color="gray"
 						icon="⏳"
 					/>
@@ -252,21 +226,15 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 				<h3 class="text-xl font-bold mb-4 text-white">Recent Activity (Last 30 Days)</h3>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 					<div class="bg-green-900 border border-green-700 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-green-300">
-							{recentActivity().recentFollowers.length}
-						</div>
+						<div class="text-2xl font-bold text-green-300">{recentActivity().recentFollowers.length}</div>
 						<div class="text-green-200 font-medium">New Followers</div>
 					</div>
 					<div class="bg-blue-900 border border-blue-700 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-blue-300">
-							{recentActivity().recentFollowing.length}
-						</div>
+						<div class="text-2xl font-bold text-blue-300">{recentActivity().recentFollowing.length}</div>
 						<div class="text-blue-200 font-medium">Started Following</div>
 					</div>
 					<div class="bg-red-900 border border-red-700 p-4 rounded-lg text-center">
-						<div class="text-2xl font-bold text-red-300">
-							{recentActivity().recentUnfollowed.length}
-						</div>
+						<div class="text-2xl font-bold text-red-300">{recentActivity().recentUnfollowed.length}</div>
 						<div class="text-red-200 font-medium">Recently Unfollowed</div>
 					</div>
 				</div>
@@ -274,56 +242,56 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 
 			{/* Detailed Lists */}
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<UserList 
-					title="Followers Not Following Back" 
+				<UserList
+					title="Followers Not Following Back"
 					users={stats().notFollowingBack}
 					showTimestamps={true}
 					timestampKey="follower"
 					emptyMessage="All your followers follow you back! 🎉"
 				/>
 
-				<UserList 
-					title="Following But Not Following Back" 
+				<UserList
+					title="Following But Not Following Back"
 					users={stats().notFollowingYouBack}
 					showTimestamps={true}
 					timestampKey="following"
 					emptyMessage="Everyone you follow follows you back! 🎉"
 				/>
 
-				<UserList 
-					title="Close Friends" 
+				<UserList
+					title="Close Friends"
 					users={stats().closeFriends}
 					showTimestamps={true}
 					timestampKey="close_friends"
 					emptyMessage="No close friends added yet"
 				/>
 
-				<UserList 
-					title="Pending Follow Requests" 
+				<UserList
+					title="Pending Follow Requests"
 					users={stats().pendingFollowRequests}
 					showTimestamps={true}
 					timestampKey="pending_follow_request"
 					emptyMessage="No pending requests"
 				/>
 
-				<UserList 
-					title="Hidden From Stories" 
+				<UserList
+					title="Hidden From Stories"
 					users={stats().hiddenStory}
 					showTimestamps={true}
 					timestampKey="hidden_story_from"
 					emptyMessage="Not hiding stories from anyone"
 				/>
 
-				<UserList 
-					title="Recently Unfollowed" 
+				<UserList
+					title="Recently Unfollowed"
 					users={stats().recentlyUnfollowed}
 					showTimestamps={true}
 					timestampKey="recently_unfollowed"
 					emptyMessage="Haven't unfollowed anyone recently"
 				/>
 
-				<UserList 
-					title="Received Follow Requests" 
+				<UserList
+					title="Received Follow Requests"
 					users={stats().receivedFollowRequests}
 					showTimestamps={true}
 					timestampKey="requested_to_follow_you"
@@ -331,8 +299,8 @@ const ConnectionsAnalysis: Component<ConnectionsAnalysisProps> = (props) => {
 				/>
 
 				<Show when={stats().blocked.length > 0}>
-					<UserList 
-						title="Blocked Users" 
+					<UserList
+						title="Blocked Users"
 						users={stats().blocked}
 						showTimestamps={true}
 						timestampKey="blocked"
