@@ -5,7 +5,7 @@ import importMessages from "./messages";
 import { importPostLikes, importSavedPosts, importComments } from "./interactions";
 import { Setter } from "solid-js";
 
-interface ImportStep {
+export interface ImportStep {
 	name: string;
 	progress?: number;
 	statusText?: string;
@@ -19,53 +19,7 @@ interface ImportMetadata {
 	stepDurations: Record<string, number>;
 }
 
-const createImportWrapper = (
-	stepName: string,
-	stepFunction: (files: File[], db: any, onProgress: (progress: number, statusText?: string) => void) => Promise<void>,
-	stepIndex: number,
-	setImportSteps: Setter<ImportStep[]>
-) => {
-	return async (files: File[], database: any): Promise<{ name: string; duration: number; }> => {
-		const startTime = performance.now();
-		
-		// Initialize step
-		setImportSteps((steps) => {
-			const updatedSteps = [...steps];
-			updatedSteps[stepIndex] = {
-				name: stepName,
-				progress: 0,
-				statusText: "Starting...",
-			};
-			return updatedSteps;
-		});
-
-		const onStepProgress = (progress: number, statusText?: string) => {
-			setImportSteps((steps) => {
-				const updatedSteps = [...steps];
-				updatedSteps[stepIndex] = {
-					...updatedSteps[stepIndex],
-					progress: progress,
-					statusText: statusText || updatedSteps[stepIndex].statusText,
-				};
-				return updatedSteps;
-			});
-		};
-
-		await stepFunction(files, database, onStepProgress);
-		const duration = performance.now() - startTime;
-
-		return { name: stepName, duration };
-
-	};
-};
-
-export const importData = async (files: File[], setImportSteps: Setter<ImportStep[]>) => {
-	const importStartTime = performance.now();
-
-	await db.delete();
-	await db.open();
-
-	const importFunctionList: [string, (files: File[], db: any, onStepProgress: (progress: number, statusText?: string) => void) => Promise<void>][] = [
+const importFunctionList: [string, (files: File[], db: any, onStepProgress: (progress: number, statusText?: string) => void) => Promise<void>][] = [
 		["Importing Messages", importMessages],
 		["Importing Content", importContent],
 		["Importing Connections", importConnections],
@@ -76,9 +30,38 @@ export const importData = async (files: File[], setImportSteps: Setter<ImportSte
 		["Importing Comments", importComments],
 	];
 
+const createImportWrapper = (
+	stepName: string,
+	stepFunction: (files: File[], db: any, onProgress: (progress: number, statusText?: string) => void) => Promise<void>,
+	updateSteps: (name: string, progress: number, statusText?: string) => void
+) => {
+	return async (files: File[], database: any): Promise<{ name: string; duration: number; }> => {
+		const startTime = performance.now();
+		
+		// Initialize step
+		updateSteps(stepName, 0, "Starting...");
+
+		const onStepProgress = (progress: number, statusText?: string) => {
+			updateSteps(stepName, progress, statusText);
+		};
+
+		await stepFunction(files, database, onStepProgress);
+		const duration = performance.now() - startTime;
+
+		return { name: stepName, duration };
+
+	};
+};
+
+export const importData = async (files: File[], updateSteps: (name: string, progress: number, statusText?: string) => void, unzipped: boolean) => {
+	const importStartTime = performance.now();
+
+	await db.delete();
+	await db.open();
+
 	// Create wrapped functions for parallel execution
-	const wrappedFunctions = importFunctionList.map(([stepName, stepFunction], index) =>
-		createImportWrapper(stepName, stepFunction, index, setImportSteps)
+	const wrappedFunctions = importFunctionList.map(([stepName, stepFunction]) =>
+		createImportWrapper(stepName, stepFunction, updateSteps)
 	);
 
 	const totalFileSize = files.reduce((sum, file) => sum + file.size, 0);

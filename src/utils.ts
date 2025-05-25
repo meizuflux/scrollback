@@ -1,4 +1,8 @@
 import { unzip } from 'fflate';
+import { Setter } from 'solid-js';
+import { ImportStep } from './import/import'; // Adjust the import path as necessary
+
+// Define ImportStep type or import it from the correct module
 
 export const findFile = (files: File[], path: string): File | undefined => {
 	return files.find((file) => file.webkitRelativePath.endsWith(path));
@@ -13,7 +17,12 @@ export const loadFile = async <T>(files: File[], path: string): Promise<T | null
 	return await file.text().then(JSON.parse);
 };
 
-export const extractZipToFiles = async (zipFile: File): Promise<File[]> => {
+export const extractZipToFiles = async (
+	zipFile: File, 
+	updateSteps: (name: string, progress: number, statusText?: string) => void
+): Promise<File[]> => {
+
+	updateSteps("Unzipping files", 0, "Starting ZIP extraction...");
 	const arrayBuffer = await zipFile.arrayBuffer();
 	const uint8Array = new Uint8Array(arrayBuffer);
 	
@@ -25,21 +34,50 @@ export const extractZipToFiles = async (zipFile: File): Promise<File[]> => {
 			}
 
 			const files: File[] = [];
+			const entries = Object.entries(unzipped);
+			const totalEntries = entries.length;
+			const batchSize = Math.max(1, Math.floor(totalEntries / 10)); // Create up to 10 update points
 
-			for (const [relativePath, fileData] of Object.entries(unzipped)) {
-				const blob = new Blob([fileData]);
-				const file = new File([blob], relativePath, { type: 'application/octet-stream' });
-				// Add webkitRelativePath to mimic folder upload behavior
-				// Ensure the path starts with a slash to match expected format
-				const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-				Object.defineProperty(file, 'webkitRelativePath', {
-					value: normalizedPath,
-					writable: false
-				});
-				files.push(file);
-			}
+			// Create a separate function to process entries in batches
+			const processEntries = (startIndex: number) => {
+				const endIndex = Math.min(startIndex + batchSize, totalEntries);
+				
+				for (let i = startIndex; i < endIndex; i++) {
+					const [relativePath, fileData] = entries[i];
+					const blob = new Blob([fileData]);
+					const file = new File([blob], relativePath, { type: 'application/octet-stream' });
+					// Add webkitRelativePath to mimic folder upload behavior
+					const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+					Object.defineProperty(file, 'webkitRelativePath', {
+						value: normalizedPath,
+						writable: false
+					});
+					files.push(file);
+				}
+				
+				// Update progress after processing this batch
+				const progress = Math.round((endIndex / totalEntries) * 100);
 
-			resolve(files);
+				// Use setTimeout to break out of current execution stack,
+				// allowing SolidJS to process the state update
+				setTimeout(() => {
+					updateSteps("Unzipping files", progress, `Extracting ${endIndex}/${totalEntries} files...`);
+					
+					// Continue processing if there are more entries
+					if (endIndex < totalEntries) {
+						setTimeout(() => processEntries(endIndex), 0);
+					} else {
+						// We're done
+						setTimeout(() => {
+							updateSteps("Unzipping files", 100, `Extracted ${totalEntries} files`);
+							resolve(files);
+						}, 0);
+					}
+				}, 0);
+			};
+			
+			// Start processing from index 0
+			processEntries(0);
 		});
 	});
 };

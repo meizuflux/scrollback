@@ -1,20 +1,34 @@
 import { createSignal, Show, type Component, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { extractZipToFiles } from "../utils";
-import { importData } from "../import/import";
+import { importData, ImportStep } from "../import/import";
 import ImportProgress from "../components/ImportProgress";
 
 
-interface ImportStep {
-	name: string;
-	progress?: number;
-	statusText?: string; // Ensure this matches the definition in import.ts
-}
 const Home: Component = () => {
 	const navigate = useNavigate();
 
 	const [isImporting, setIsImporting] = createSignal(false);
 	const [importSteps, setImportSteps] = createSignal<ImportStep[]>([]);
+
+	const updateSteps = (name: string, progress: number, statusText?: string) => {
+		setImportSteps((steps) => {
+			const existingIndex = steps.findIndex(step => step.name === name);
+			if (existingIndex !== -1) {
+				// Update existing step
+				const updatedSteps = [...steps];
+				updatedSteps[existingIndex] = {
+					...updatedSteps[existingIndex],
+					progress,
+					statusText: statusText || updatedSteps[existingIndex].statusText,
+				};
+				return updatedSteps;
+			} else {
+				// Create new step
+				return [...steps, { name, progress, statusText }];
+			}
+		});
+	};
 
 	onMount(() => {
 		const loaded = localStorage.getItem("loaded");
@@ -29,18 +43,13 @@ const Home: Component = () => {
 		setIsImporting(true);
 		
 		try {
-			
+			var unzipping = false;
 			if (fileArray.length === 1 && fileArray[0].name.endsWith('.zip')) {
-				setImportSteps([
-					{ name: "Unzipping files", duration: 0, status: 'running', progress: 0, statusText: "Unzipping" }
-				]);
-				fileArray = await extractZipToFiles(fileArray[0]);
-				setImportSteps([
-					{ name: "Unzipping files", duration: 0, status: 'running', progress: 100, statusText: "Unzipping" }
-				]);
+				unzipping = true;
+				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
 			}
 			
-			await importData(fileArray, setImportSteps);
+			await importData(fileArray, updateSteps, unzipping);
 
 			localStorage.setItem("loaded", "true");
 			navigate("/analysis", { replace: true });

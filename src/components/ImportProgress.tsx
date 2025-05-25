@@ -1,10 +1,5 @@
 import { Component, For, Show } from "solid-js";
-
-interface ImportStep {
-	name: string;
-	progress?: number;
-	statusText?: string; // Ensure this matches the definition in import.ts
-}
+import { ImportStep } from "../import/import";
 
 interface ImportProgressProps {
     steps: ImportStep[];
