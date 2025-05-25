@@ -2,134 +2,108 @@ import { InstagramDatabase } from "../db/database";
 import { loadFile } from "../utils";
 import { StoredUser, TimestampedValue } from "../types/user";
 
-export default async (files: File[], database: InstagramDatabase) => {
+export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, statusText?: string) => void) => {
 	const fileData = [
-		{
-			name: "blocked_profiles.json",
-			column: "blocked",
-			stored_at: "relationships_blocked_users",
-		},
-		{
-			name: "close_friends.json",
-			column: "close_friends",
-			stored_at: "relationships_close_friends",
-		},
-		{
-			name: "follow_requests_you've_received.json",
-			column: "requested_to_follow_you",
-			stored_at: "relationships_follow_requests_received",
-		},
-		{
-			name: "followers_1.json", // the data for this isn't "relationships_following" but instead it's just an array of users
-			column: "follower",
-		},
-		{
-			name: "following.json",
-			column: "following",
-			stored_at: "relationships_following",
-		},
-		{
-			name: "hide_story_from.json",
-			column: "hidden_story_from",
-			stored_at: "relationships_hide_stories_from",
-		},
-		{
-			name: "pending_follow_requests.json",
-			column: "pending_follow_request",
-			stored_at: "relationships_follow_requests_sent",
-		},
-		{
-			name: "recently_unfollowed_profiles.json",
-			column: "recently_unfollowed",
-			stored_at: "relationships_unfollowed_users",
-		},
+		{ name: "blocked_profiles.json", column: "blocked", stored_at: "relationships_blocked_users" },
+		{ name: "close_friends.json", column: "close_friends", stored_at: "relationships_close_friends" },
+		{ name: "follow_requests_you've_received.json", column: "requested_to_follow_you", stored_at: "relationships_follow_requests_received" },
+		{ name: "followers_1.json", column: "follower" },
+		{ name: "following.json", column: "following", stored_at: "relationships_following" },
+		{ name: "hide_story_from.json", column: "hidden_story_from", stored_at: "relationships_hide_stories_from" },
+		{ name: "pending_follow_requests.json", column: "pending_follow_request", stored_at: "relationships_follow_requests_sent" },
+		{ name: "recently_unfollowed_profiles.json", column: "recently_unfollowed", stored_at: "relationships_unfollowed_users" },
 	];
 
 	const data: { [key: string]: StoredUser } = {};
+	
+	onProgress?.(0, "Loading connection files...");
+	let totalUsersToProcess = 0;
+	const loadedFilesData: any[] = [];
 
 	for (let i = 0; i < fileData.length; i++) {
-		const file = fileData[i];
-		
-		const filename = "/connections/followers_and_following/" + file.name;
+		const fileInfo = fileData[i];
+		const progressPercentage = Math.round(((i + 1) / fileData.length) * 15); // Loading files: 0-15%
+		onProgress?.(progressPercentage, `Loading ${fileInfo.name}...`);
+		const filename = "/connections/followers_and_following/" + fileInfo.name;
 		let json_file_data = await loadFile<any>(files, filename);
 		
-		// Skip if file doesn't exist or has no data
-		if (!json_file_data) {
-			continue;
+		if (json_file_data) {
+			if (fileInfo.stored_at) {
+				json_file_data = json_file_data[fileInfo.stored_at];
+			}
+			if (Array.isArray(json_file_data)) {
+				totalUsersToProcess += json_file_data.length;
+				loadedFilesData.push({ data: json_file_data, info: fileInfo });
+			}
 		}
-		
-		if (file.stored_at) {
-			json_file_data = json_file_data[file.stored_at];
-		}
+	}
+    onProgress?.(15, `Found ${totalUsersToProcess} total connection entries.`);
+    if (totalUsersToProcess === 0 && loadedFilesData.length === 0) {
+        onProgress?.(100, "No connection data found.");
+        return;
+    }
 
-		// Skip if no data after extracting stored_at property
-		if (!json_file_data || !Array.isArray(json_file_data)) {
-			continue;
-		}
-
-		for (const user of json_file_data) {
-			let user_data = user.string_list_data?.[0];
+	let processedUsersCount = 0;
+	for (const loadedFile of loadedFilesData) {
+		const { data: json_file_data, info: fileInfo } = loadedFile;
+		for (let userIndex = 0; userIndex < json_file_data.length; userIndex++) {
+			const user = json_file_data[userIndex];
+			processedUsersCount++;
+			const currentProgress = 15 + Math.round((processedUsersCount / Math.max(1, totalUsersToProcess)) * 55); // Processing connections: 15-70%
+            
+            if (processedUsersCount % Math.max(1, Math.floor(totalUsersToProcess / 20)) === 0 || processedUsersCount === totalUsersToProcess ) { // Update ~20 times
+			    onProgress?.(Math.min(70, currentProgress), `Processing ${fileInfo.column} ${userIndex + 1}/${json_file_data.length}`);
+            }
 			
-			// Skip if user data is malformed
-			if (!user_data) {
-				continue;
+			let user_data = user.string_list_data?.[0];
+			if (!user_data) continue;
+			if (!user_data.value) user_data.value = user_data.href?.split("/").pop() || "";
+			if (!user_data.value) continue;
+
+			let userData = data[user_data.value] || { username: user_data.value };
+			if (fileInfo.column) {
+				(userData as any)[fileInfo.column] = { value: true, timestamp: new Date(user_data.timestamp * 1000) };
 			}
-
-			if (!user_data.value) {
-				// blocked_profiles has a different format for each and every thing
-				user_data.value = user_data.href?.split("/").pop() || "";
-			}
-
-			// Skip if we still don't have a username
-			if (!user_data.value) {
-				continue;
-			}
-
-			let userData = data[user_data.value] || {
-				username: user_data.value,
-			};
-
-			// Set the timestamped value for the current column
-			if (file.column) {
-				const timestampedValue: TimestampedValue = {
-					value: true,
-					timestamp: new Date(user_data.timestamp * 1000)
-				};
-				(userData as any)[file.column] = timestampedValue;
-			}
-
-			data[userData.username] = userData;
+			data[user_data.value] = userData;
 		}
 	}
 
+	onProgress?.(70, "Saving connections to database...");
 	await database.users.bulkPut(Object.values(data));
+	onProgress?.(80, "Connections saved. Processing story likes...");
 
-	// this kind of shouldn't be here, but i have it here because it's updating users, so they have to be created first through the connections
 	const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
     if (storyLikesFile?.story_activities_story_likes) {
-        // Count story likes per user
+        const storyLikes = storyLikesFile.story_activities_story_likes;
+        onProgress?.(85, `Found ${storyLikes.length} story likes to process.`);
         const storyLikeCounts: Record<string, number> = {};
         
-        for (const storyLike of storyLikesFile.story_activities_story_likes) {
-            const username = storyLike.title;
-            if (username) {
-                storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
+        for(let i=0; i < storyLikes.length; i++) {
+            const storyLike = storyLikes[i];
+            if (i % Math.max(1, Math.floor(storyLikes.length / 5)) === 0) { // Update ~5 times
+                onProgress?.(85 + Math.round((i / storyLikes.length) * 5), `Counting story likes ${i+1}/${storyLikes.length}`);
             }
+            const username = storyLike.title;
+            if (username) storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
         }
         
+        onProgress?.(90, "Updating users with story likes...");
+        const usersToUpdate = Object.keys(storyLikeCounts);
         await database.transaction('rw', database.users, async () => {
-            for (const [username, count] of Object.entries(storyLikeCounts)) {
-                let user = await database.users.get(username);
-                if (!user) {
-                    user = { username };
+            for (let i=0; i < usersToUpdate.length; i++) {
+                const username = usersToUpdate[i];
+                if (i % Math.max(1, Math.floor(usersToUpdate.length / 5)) === 0) { // Update ~5 times
+                     onProgress?.(90 + Math.round((i / usersToUpdate.length) * 8), `Updating user ${username} with story likes`);
                 }
-                
-                // Update stories_liked count
-                user.stories_liked = count;
-                
-                // Upsert the user record
+                let user = await database.users.get(username);
+                if (!user) user = { username };
+                user.stories_liked = storyLikeCounts[username];
                 await database.users.put(user);
             }
         });
+        onProgress?.(98, "User story likes updated.");
+    } else {
+        onProgress?.(98, "No story likes file found or no story likes.");
     }
+    onProgress?.(100, "Connections import finished.");
 };

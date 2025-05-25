@@ -2,41 +2,105 @@ import { db } from "../db/database";
 import { importUser, importContent, importProfileChanges } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
-import interactionImporters from "./interactions";
+import { importPostLikes, importSavedPosts, importComments } from "./interactions";
+import { Setter } from "solid-js";
 
-export const importData = async (files: File[]) => {
-	// Clear existing data
+interface ImportStep {
+	name: string;
+	progress?: number;
+	statusText?: string;
+}
+
+interface ImportMetadata {
+	timestamp: number;
+	totalDuration: number;
+	fileCount: number;
+	totalFileSize: number;
+	stepDurations: Record<string, number>;
+}
+
+const createImportWrapper = (
+	stepName: string,
+	stepFunction: (files: File[], db: any, onProgress: (progress: number, statusText?: string) => void) => Promise<void>,
+	stepIndex: number,
+	setImportSteps: Setter<ImportStep[]>
+) => {
+	return async (files: File[], database: any): Promise<{ name: string; duration: number; }> => {
+		const startTime = performance.now();
+		
+		// Initialize step
+		setImportSteps((steps) => {
+			const updatedSteps = [...steps];
+			updatedSteps[stepIndex] = {
+				name: stepName,
+				progress: 0,
+				statusText: "Starting...",
+			};
+			return updatedSteps;
+		});
+
+		const onStepProgress = (progress: number, statusText?: string) => {
+			setImportSteps((steps) => {
+				const updatedSteps = [...steps];
+				updatedSteps[stepIndex] = {
+					...updatedSteps[stepIndex],
+					progress: progress,
+					statusText: statusText || updatedSteps[stepIndex].statusText,
+				};
+				return updatedSteps;
+			});
+		};
+
+		await stepFunction(files, database, onStepProgress);
+		const duration = performance.now() - startTime;
+
+		return { name: stepName, duration };
+
+	};
+};
+
+export const importData = async (files: File[], setImportSteps: Setter<ImportStep[]>) => {
+	const importStartTime = performance.now();
+
 	await db.delete();
 	await db.open();
 
-	const importers = [
-		importUser,
-		importContent,
-		importProfileChanges,
-		...interactionImporters,
-		importConnections,
-		importMessages,
+	const importFunctionList: [string, (files: File[], db: any, onStepProgress: (progress: number, statusText?: string) => void) => Promise<void>][] = [
+		["Importing Messages", importMessages],
+		["Importing Content", importContent],
+		["Importing Connections", importConnections],
+		["Importing User Data", importUser],
+		["Importing Profile Changes", importProfileChanges],
+		["Importing Post Likes", importPostLikes],
+		["Importing Saved Posts", importSavedPosts],
+		["Importing Comments", importComments],
 	];
 
-	// Run importers in parallel
-	await Promise.all(
-		importers.map(async (importer, _) => {
-			await importer(files, db);
-		})
+	// Create wrapped functions for parallel execution
+	const wrappedFunctions = importFunctionList.map(([stepName, stepFunction], index) =>
+		createImportWrapper(stepName, stepFunction, index, setImportSteps)
 	);
 
-	/* TODO: 
-		- multiple progress bars for each import since they happen in parallel?
-		- perf stats for each import, and overall indexeddb size, metadata like time of import, etc
+	const totalFileSize = files.reduce((sum, file) => sum + file.size, 0);
+	const fileCount = files.length;
+
+		
+	const results = await Promise.all(
+		wrappedFunctions.map(wrappedFn => wrappedFn(files, db))
+	);
+	const totalDuration = performance.now() - importStartTime;
+
+	const metadata: ImportMetadata = {
+		timestamp: Date.now(),
+		totalDuration,
+		fileCount,
+		totalFileSize,
+		stepDurations: {},
+	};
+
+	results.forEach(result => {
+		metadata.stepDurations[result.name] = result.duration;
+	});
 	
-	save misc stats to local storage
-        - number of saved posts
-        - number of stories
-        - profile based in
-
-    could potentially gather all the timestamps from everything and display it as a graph to determine activity over time / when most active based on number of events?
-    probably interactable, filterable graph preferably
-
-    lots of information missing on the data request zip
-    */
+	localStorage.setItem('import_metadata', JSON.stringify(metadata));
 };

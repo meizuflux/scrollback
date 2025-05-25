@@ -17,8 +17,8 @@ export interface Media {
 }
 
 export interface Message {
-	sender_name?: string;
-	timestamp_ms?: number;
+	sender_name: string;
+	timestamp_ms: number;
 	content?: string;
 	reactions?: Reaction[];
 	share?: Share;
