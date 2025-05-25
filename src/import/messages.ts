@@ -1,6 +1,5 @@
-import { InstagramDatabase } from "../db/database";
-import { StoredMedia } from "../types/data";
-import { Conversation, MessageFile, StoredMessage } from "../types/message";
+import { InstagramDatabase, StoredMessage, StoredMedia } from "../db/database";
+import { Conversation, MessageFile } from "../types/message";
 import { decodeU8String, findFile } from "../utils";
 
 export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, statusText?: string) => void) => {
@@ -74,7 +73,9 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 					const mediaFile = findFile(files, photo.uri);
 					if (mediaFile) {
 						mediaFiles.push({
-							uri: photo.uri, creation_timestamp: photo.creation_timestamp, type: 'photo',
+							uri: photo.uri,
+							timestamp: new Date(photo.creation_timestamp * 1000),
+							type: 'photo',
 							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'image/jpeg' })
 						});
 					}
@@ -86,7 +87,9 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 					const mediaFile = findFile(files, video.uri);
 					if (mediaFile) {
 						mediaFiles.push({
-							uri: video.uri, creation_timestamp: video.creation_timestamp, type: 'video',
+							uri: video.uri,
+							timestamp: new Date(video.creation_timestamp * 1000),
+							type: 'video',
 							data: new Blob([await mediaFile.arrayBuffer()], { type: mediaFile.type || 'video/mp4' })
 						});
 					}
@@ -96,24 +99,32 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
 			delete message.is_geoblocked_for_viewer;
 			// @ts-ignore
 			delete message.is_unsent_image_by_messenger_kid_parent;
+			const toStore: StoredMessage = {
+				conversation: conversationTitle,
+				sender_name: message.sender_name,
+				timestamp: new Date(message.timestamp_ms),
+				content: message.content,
+				reactions: message.reactions,
+				share: message.share,
+				photos: message.photos,
+				videos: message.videos,
+			}
 
-			messages.push({ ...message, conversation: conversationTitle });
+			messages.push(toStore);
 		}
 
 		conversations.push({
 			title: conversationTitle,
-			participants: json_file.participants.map((p) => decodeU8String(p.name)), // Ensure participant names are decoded
+			participants: json_file.participants.map((p) => decodeU8String(p.name)),
 			is_group: json_file.participants.length > 2,
 		});
 	}
 
 	onProgress?.(80, `Saving ${messages.length} messages, ${conversations.length} conversations, and ${mediaFiles.length} media items...`);
-	
 	await Promise.all([
-		mediaFiles.length > 0 ? database.media.bulkPut(mediaFiles) : Promise.resolve(),
-		messages.length > 0 ? database.messages.bulkAdd(messages) : Promise.resolve(),
-		conversations.length > 0 ? database.conversations.bulkPut(conversations) : Promise.resolve()
+		database.media.bulkPut(mediaFiles),
+		database.messages.bulkAdd(messages),
+		database.conversations.bulkPut(conversations)
 	]);
-	onProgress?.(95, "All message data saved to database.");
 	onProgress?.(100, `Imported ${messages.length} messages and ${conversations.length} conversations.`);
 };

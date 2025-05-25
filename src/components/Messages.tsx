@@ -1,6 +1,5 @@
 import { Component, createMemo, createSignal, For, Show } from "solid-js";
-import { StoredMessage } from "../types/message";
-import { StoredData } from "../types/data";
+import { StoredData, StoredMessage } from "../db/database";
 
 type MessagesProps = {
 	data: StoredData;
@@ -21,23 +20,26 @@ interface SenderStats extends ConversationStats {
 	name: string;
 }
 
-const formatDate = (timestamp: number) => {
-	return new Date(timestamp).toLocaleDateString();
+const formatDate = (date: Date | number) => {
+	if (typeof date === 'number') {
+		return new Date(date).toLocaleDateString();
+	}
+	return date.toLocaleDateString();
 };
 
 const getMessageTimeRange = (messages: StoredMessage[]) => {
 	const timestamps = messages
-		.map((m) => m.timestamp_ms)
+		.map((m) => m.timestamp)
 		.filter(Boolean)
-		.sort((a, b) => a! - b!);
+		.sort((a, b) => a!.getTime() - b!.getTime());
 
 	if (timestamps.length === 0) return null;
 
 	return {
-		first: new Date(timestamps[0]!),
-		last: new Date(timestamps[timestamps.length - 1]!),
+		first: timestamps[0]!,
+		last: timestamps[timestamps.length - 1]!,
 		span: Math.ceil(
-			(timestamps[timestamps.length - 1]! - timestamps[0]!) / (1000 * 60 * 60 * 24),
+			(timestamps[timestamps.length - 1]!.getTime() - timestamps[0]!.getTime()) / (1000 * 60 * 60 * 24),
 		),
 	};
 };
@@ -195,10 +197,10 @@ const ConversationBrowser: Component<{
 					// Get most recent message for each conversation
 					const lastMessageA = Math.max(...props.messages
 						.filter(m => m.conversation === nameA)
-						.map(m => m.timestamp_ms || 0));
+						.map(m => m.timestamp?.getTime() || 0));
 					const lastMessageB = Math.max(...props.messages
 						.filter(m => m.conversation === nameB)
-						.map(m => m.timestamp_ms || 0));
+						.map(m => m.timestamp?.getTime() || 0));
 					return lastMessageB - lastMessageA;
 				case "messages":
 				default:
@@ -302,10 +304,10 @@ const ConversationBrowser: Component<{
 									<div class="flex-1">
 										<span class="font-medium text-white">{conversation}</span>
 										<div class="text-sm text-gray-400 mt-1">
-											<Show when={props.messages.find(m => m.conversation === conversation)?.timestamp_ms}>
+											<Show when={props.messages.find(m => m.conversation === conversation)?.timestamp}>
 												Last active: {formatDate(Math.max(...props.messages
 													.filter(m => m.conversation === conversation)
-													.map(m => m.timestamp_ms || 0)))}
+													.map(m => m.timestamp?.getTime() || 0)))}
 											</Show>
 										</div>
 									</div>

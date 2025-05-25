@@ -1,10 +1,9 @@
 import { Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { db } from "../db/database";
+import { db, StoredData } from "../db/database";
 
 import MessageAnalysis from "../components/Messages";
 import UsersAnalysis from "../components/Users";
-import { StoredData } from "../types/data";
 
 const loadData = async (): Promise<StoredData> => {
 	// Use Promise.all for parallel data loading

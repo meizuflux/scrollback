@@ -26,10 +26,6 @@ export interface Message {
 	videos?: Media[];
 }
 
-export interface StoredMessage extends Message {
-	conversation: string;
-}
-
 export interface MessageFile {
 	participants: Participant[];
 	messages: Message[];

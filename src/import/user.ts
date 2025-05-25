@@ -1,4 +1,4 @@
-import { InstagramDatabase } from "../db/database";
+import { InstagramDatabase, StoredMedia } from "../db/database";
 import { User } from "../types/user";
 import { decodeU8String, findFile, loadFile } from "../utils";
 
@@ -41,22 +41,21 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
         postsViewed: postsViewedFile?.impressions_history_posts_seen?.length || 0,
         adsViewed: adsViewedFile?.impressions_history_ads_seen?.length || 0
     };
-    onProgress?.(70, "User data processed.");
+    onProgress?.(70, "Saving user data");
 
     await database.mainUser.put(user);
-    onProgress?.(80, "User data saved to database.");
 
+    onProgress?.(80, "Checking for profile photo");
     const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
     if (pfpPath) {
         const pfp = findFile(files, pfpPath)!;
         if (pfp) {
             await database.media.add({
                 uri: pfpPath,
-                creation_timestamp: Date.now(),
+                timestamp: new Date(Date.now()),
                 type: 'photo',
                 data: new Blob([await pfp.arrayBuffer()], { type: pfp.type || 'image/jpeg' })
             });
-            onProgress?.(90, "Profile photo saved.");
         }
     }
     onProgress?.(100, "User import finished.");
@@ -76,11 +75,8 @@ interface Post {
 const importContent = async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, statusText?: string) => void) => {
     onProgress?.(0, "Loading content files...");
     const postsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/posts_1.json");
-    onProgress?.(5, "Loaded posts_1.json");
     const archivedPostsFile = await loadFile<any>(files, "/your_instagram_activity/media/archived_posts.json");
-    onProgress?.(10, "Loaded archived_posts.json");
     const storiesFile = await loadFile<any>(files, "/your_instagram_activity/media/stories.json");
-    onProgress?.(15, "Loaded stories.json. Calculating totals...");
     
     const totalRegularPosts = postsFile?.length || 0;
     const totalArchivedPosts = archivedPostsFile?.ig_archived_post_media?.length || 0;
@@ -114,12 +110,12 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
             
             await database.posts.add({
                 title: decodeU8String(post.title),
-                creation_timestamp: post.creation_timestamp,
+                timestamp: new Date(post.creation_timestamp * 1000),
                 media: imageFiles.map(imageFile => (imageFile.uri)),
                 archived,
             });
 
-            let toStore = []
+            let toStore: StoredMedia[] = []
             for (const imageFile of imageFiles) {
                 const file = findFile(files, imageFile.uri);
                 if (!file) {
@@ -128,7 +124,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
                 }
                 toStore.push({
                     uri: imageFile.uri,
-                    creation_timestamp: imageFile.creation_timestamp,
+                    timestamp: new Date(imageFile.creation_timestamp * 1000),
                     type: 'photo' as 'photo',
                     data: new Blob([await file.arrayBuffer()], { type: file.type || 'image/jpeg' })
                 });
@@ -142,7 +138,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 
     const stories = storiesFile?.ig_stories?.map((story: any) => ({
         uri: story.uri,
-        creation_timestamp: story.creation_timestamp,
+        timestamp: new Date(story.creation_timestamp * 1000),
         title: decodeU8String(story.title || "Placeholder")
     })) || [];
 
@@ -162,7 +158,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
         }
         await database.media.add({
             uri: story.uri,
-            creation_timestamp: story.creation_timestamp,
+            timestamp: story.timestamp,
             type: 'photo',
             data: new Blob([await file.arrayBuffer()], { type: file.type || 'image/jpeg' })
         });

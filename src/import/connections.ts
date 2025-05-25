@@ -1,6 +1,5 @@
-import { InstagramDatabase } from "../db/database";
+import { InstagramDatabase, StoredUser } from "../db/database";
 import { loadFile } from "../utils";
-import { StoredUser, TimestampedValue } from "../types/user";
 
 export default async (files: File[], database: InstagramDatabase, onProgress?: (progress: number, statusText?: string) => void) => {
 	const fileData = [
@@ -92,18 +91,12 @@ export default async (files: File[], database: InstagramDatabase, onProgress?: (
         await database.transaction('rw', database.users, async () => {
             for (let i=0; i < usersToUpdate.length; i++) {
                 const username = usersToUpdate[i];
-                if (i % Math.max(1, Math.floor(usersToUpdate.length / 5)) === 0) { // Update ~5 times
-                     onProgress?.(90 + Math.round((i / usersToUpdate.length) * 8), `Updating user ${username} with story likes`);
-                }
                 let user = await database.users.get(username);
                 if (!user) user = { username };
                 user.stories_liked = storyLikeCounts[username];
                 await database.users.put(user);
             }
         });
-        onProgress?.(98, "User story likes updated.");
-    } else {
-        onProgress?.(98, "No story likes file found or no story likes.");
     }
     onProgress?.(100, "Connections import finished.");
 };

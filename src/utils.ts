@@ -1,8 +1,4 @@
 import { unzip } from 'fflate';
-import { Setter } from 'solid-js';
-import { ImportStep } from './import/import'; // Adjust the import path as necessary
-
-// Define ImportStep type or import it from the correct module
 
 export const findFile = (files: File[], path: string): File | undefined => {
 	return files.find((file) => file.webkitRelativePath.endsWith(path));

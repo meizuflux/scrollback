@@ -36,7 +36,6 @@ const processInteractionFile = async (
     if (itemsToSave.length > 0) {
         await dbTable.bulkAdd(itemsToSave);
     }
-    onProgress?.(95, `${itemType}s saved.`);
     onProgress?.(100, `${itemType}s import finished.`);
 };
 
@@ -54,7 +53,7 @@ export const importPostLikes = async (files: File[], database: InstagramDatabase
             return {
                 media_owner: item.title,
                 href: data.href,
-                timestamp: data.timestamp,
+                timestamp: new Date(data.timestamp * 1000),
             };
         }
     );
@@ -70,7 +69,6 @@ export const importComments = async (files: File[], database: InstagramDatabase,
         onProgress?.(100, "No comments found.");
         return;
     }
-    onProgress?.(30, `Found ${commentsFile.length} comments.`);
     
     const commentsToSave = [];
     for (let i = 0; i < commentsFile.length; i++) {
@@ -84,7 +82,7 @@ export const importComments = async (files: File[], database: InstagramDatabase,
         commentsToSave.push({
             media_owner: data["Media Owner"]?.value,
             comment: decodeU8String(data["Comment"]?.value),
-            timestamp: data["Time"]?.timestamp,
+            timestamp: new Date(data["Time"]?.timestamp * 1000),
         });
     }
 
@@ -110,7 +108,7 @@ export const importSavedPosts = async (files: File[], database: InstagramDatabas
             return {
                 media_owner: item.title,
                 href: data.href,
-                timestamp: data.timestamp,
+                timestamp: new Date(data.timestamp * 1000),
             };
         }
     );
