@@ -163,10 +163,11 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 			console.warn(`Story file not found for URI: ${story.uri}`);
 			continue;
 		}
+		const isVideo = story.uri.toLowerCase().includes('.mp4');
 		mediaToStore.push({
 			uri: story.uri,
 			timestamp: story.timestamp,
-			type: "photo",
+			type: isVideo ? "video" : "photo",
 			data: file,
 		});
 		allStories.push(story);
