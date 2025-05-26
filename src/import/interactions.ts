@@ -56,6 +56,26 @@ export const importPostLikes = async (files: File[], database: InstagramDatabase
 	);
 };
 
+export const importSavedPosts = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+	await processInteractionFile(
+		"/your_instagram_activity/saved/saved_posts.json",
+		"saved_saved_media",
+		database.savedPosts,
+		files,
+		onProgress,
+		"saved post",
+		(item: any) => {
+			const data = item.string_map_data?.["Saved on"];
+			if (!data) return null;
+			return {
+				media_owner: item.title,
+				href: data.href,
+				timestamp: new Date(data.timestamp * 1000),
+			};
+		},
+	);
+};
+
 export const importComments = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// Comments file is an array at the root, not nested under a key
 	onProgress(0, "Loading comments file: /your_instagram_activity/comments/post_comments_1.json");
@@ -86,22 +106,4 @@ export const importComments = async (files: File[], database: InstagramDatabase,
 	onProgress(100, "Comments import finished.");
 };
 
-export const importSavedPosts = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
-	await processInteractionFile(
-		"/your_instagram_activity/saved/saved_posts.json",
-		"saved_saved_media",
-		database.savedPosts,
-		files,
-		onProgress,
-		"saved post",
-		(item: any) => {
-			const data = item.string_map_data?.["Saved on"];
-			if (!data) return null;
-			return {
-				media_owner: item.title,
-				href: data.href,
-				timestamp: new Date(data.timestamp * 1000),
-			};
-		},
-	);
-};
+

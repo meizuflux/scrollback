@@ -1,4 +1,5 @@
 import { Unzip, AsyncUnzipInflate } from "fflate";
+import { StoredMedia } from "./db/database";
 
 export const findFile = (files: File[], path: string): File | undefined => {
 	return files.find((file) => file.webkitRelativePath.endsWith(path));
@@ -134,4 +135,31 @@ export const decodeU8String = (encodedText: string): string => {
 
 export const requireDataLoaded = () => {
 	return localStorage.getItem("loaded") === "true";
+};
+
+export const processMediaFiles = async <T extends { uri: string; timestamp: Date; type: "photo" | "video"; data: File }>(
+	mediaFiles: T[]
+): Promise<StoredMedia[]> => {
+	const mediaResults = await Promise.all(
+		mediaFiles.map(async (media) => {
+			if (media.data instanceof File) {
+				try {
+					const buffer = await media.data.arrayBuffer();
+					return {
+						uri: media.uri,
+						timestamp: media.timestamp,
+						type: media.type,
+						data: new Blob([buffer], { 
+							type: media.data.type || (media.type === "photo" ? "image/jpeg" : "video/mp4")
+						})
+					};
+				} catch (error) {
+					console.error(`Failed to process media file ${media.uri}:`, error);
+					return null;
+				}
+			}
+			return null;
+		})
+	);
+	return mediaResults.filter(media => media !== null);
 };

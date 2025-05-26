@@ -1,6 +1,6 @@
 import { InstagramDatabase, StoredMessage, StoredMedia } from "../db/database";
 import { MessageFile } from "../types/message";
-import { decodeU8String, findFile } from "../utils";
+import { decodeU8String, findFile, processMediaFiles } from "../utils";
 import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -21,7 +21,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
-	let allMediaFiles: StoredMedia[] = [];
+	let allMediaFiles: Array<{ uri: string; timestamp: Date; type: "photo" | "video"; data: File }> = [];
 
 	await Promise.all(
 		messageFiles.map(async (file, fileIndex) => {
@@ -116,29 +116,10 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	onProgress(65, "Processing media files...");
 	
-	// we've deferreed media processing until now, because the blob turnign into buffer is expensive
+	// we've deferred media processing until now, because the blob turning into buffer is expensive
 	let processedMediaFiles: StoredMedia[] = [];
 	if (allMediaFiles.length > 0) {
-		const mediaResults = await Promise.all(
-			allMediaFiles.map(async (media) => {
-				if (media.data instanceof File) {
-					try {
-						const buffer = await (media.data as File).arrayBuffer();
-						return {
-							...media,
-							data: new Blob([buffer], { 
-								type: (media.data as File).type || (media.type === "photo" ? "image/jpeg" : "video/mp4")
-							})
-						};
-					} catch (error) {
-						console.error(`Failed to process media file ${media.uri}:`, error);
-						return null;
-					}
-				}
-				return null;
-			})
-		);
-		processedMediaFiles = mediaResults.filter(media => media !== null) as StoredMedia[];
+		processedMediaFiles = await processMediaFiles(allMediaFiles);
 	}
 	
 

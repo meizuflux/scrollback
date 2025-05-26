@@ -86,11 +86,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		}
 	}
 
-	onProgress(70, "Saving connections to database...");
-	await database.users.bulkPut(Object.values(data));
-
-
-	onProgress(80, "Connections saved. Processing story likes...");
+	onProgress(70, "Processing story likes...");
 
 	const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
 	if (storyLikesFile?.story_activities_story_likes) {
@@ -102,7 +98,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 			if (i % Math.max(1, Math.floor(storyLikes.length / 5)) === 0) {
 				// Update ~5 times
 				onProgress(
-					85 + Math.round((i / storyLikes.length) * 5),
+					70 + Math.round((i / storyLikes.length) * 15),
 					`Counting story likes ${i + 1}/${storyLikes.length}`,
 				);
 			}
@@ -110,17 +106,17 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 			if (username) storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
 		}
 
-		onProgress(90, "Updating users with story likes...");
-		const usersToUpdate = Object.keys(storyLikeCounts);
-		await database.transaction("rw", database.users, async () => {
-			for (let i = 0; i < usersToUpdate.length; i++) {
-				const username = usersToUpdate[i];
-				let user = await database.users.get(username);
-				if (!user) user = { username };
-				user.stories_liked = storyLikeCounts[username];
-				await database.users.put(user);
+		// Add story likes to existing data or create new entries
+		for (const [username, count] of Object.entries(storyLikeCounts)) {
+			if (!data[username]) {
+				data[username] = { username };
 			}
-		});
+			data[username].stories_liked = count;
+		}
 	}
+
+	onProgress(85, "Saving all user data to database...");
+	await database.users.bulkPut(Object.values(data));
+
 	onProgress(100, "Connections import finished.");
 };

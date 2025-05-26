@@ -16,7 +16,7 @@ export interface StoredMedia {
 	data: Blob;
 }
 
-interface StoredPost {
+export interface StoredPost {
 	id?: number;
 	title: string;
 	timestamp: Date;
@@ -35,7 +35,7 @@ export interface StoredMessage {
 	videos?: Media[];
 }
 
-interface StoredStory {
+export interface StoredStory {
 	title: string;
 	timestamp: Date;
 	uri: string;

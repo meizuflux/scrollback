@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredMedia } from "../db/database";
+import { InstagramDatabase, StoredMedia, StoredPost, StoredStory } from "../db/database";
 import { User } from "../types/user";
-import { decodeU8String, findFile, loadFile } from "../utils";
+import { decodeU8String, findFile, loadFile, processMediaFiles } from "../utils";
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -94,6 +94,9 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 
 	let processedItems = 0;
 
+	let mediaToStore: Array<{ uri: string; timestamp: Date; type: "photo" | "video"; data: File }> = [];
+	let postsToStore: StoredPost[] = [];
+
 	onProgress(15, `Found ${totalItems} items. Processing...`);
 	const processPosts = async (posts: Post[], archived: boolean = false) => {
 		if (!posts || !Array.isArray(posts)) return;
@@ -102,39 +105,35 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 		for (let i = 0; i < posts.length; i++) {
 			const post = posts[i];
 			processedItems++;
-			const currentProgress = 15 + (processedItems / totalItems) * 70; // Content processing: 15-85%
+			const currentProgress = 15 + (processedItems / totalItems) * 55; // Content processing: 15-70%
 
-
-			onProgress(Math.min(85, currentProgress), `Processing ${postType} ${i + 1}/${posts.length}`);
-
+			onProgress(Math.min(70, currentProgress), `Processing ${postType} ${i + 1}/${posts.length}`);
 
 			const imageFiles: Image[] = post.media.map((media: any) => ({
 				uri: media.uri,
 				creation_timestamp: media.creation_timestamp,
 			}));
 
-			await database.posts.add({
+			postsToStore.push({
 				title: decodeU8String(post.title),
 				timestamp: new Date(post.creation_timestamp * 1000),
 				media: imageFiles.map((imageFile) => imageFile.uri),
 				archived,
 			});
 
-			let toStore: StoredMedia[] = [];
 			for (const imageFile of imageFiles) {
 				const file = findFile(files, imageFile.uri);
 				if (!file) {
 					console.warn(`File not found for URI: ${imageFile.uri}`);
 					continue;
 				}
-				toStore.push({
+				mediaToStore.push({
 					uri: imageFile.uri,
 					timestamp: new Date(imageFile.creation_timestamp * 1000),
 					type: "photo" as "photo",
-					data: new Blob([await file.arrayBuffer()], { type: file.type || "image/jpeg" }),
+					data: file,
 				});
 			}
-			await database.media.bulkAdd(toStore);
 		}
 	};
 
@@ -148,27 +147,43 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 			title: decodeU8String(story.title || "Placeholder"),
 		})) || [];
 
+	let allStories: StoredStory[] = [];
+
 	for (let i = 0; i < stories.length; i++) {
 		const story = stories[i];
 		processedItems++;
-		const currentProgress = 15 + (processedItems / totalItems) * 70; // Content processing: 15-85% TODO: this is off but wtv
+		const currentProgress = 15 + (processedItems / totalItems) * 55; // Content processing: 15-70%
 
-		onProgress(Math.min(85, currentProgress), `Processing story ${i + 1}/${stories.length}`);
-
+		onProgress(Math.min(70, currentProgress), `Processing story ${i + 1}/${stories.length}`);
 
 		const file = findFile(files, story.uri);
 		if (!file) {
 			console.warn(`Story file not found for URI: ${story.uri}`);
 			continue;
 		}
-		await database.media.add({
+		mediaToStore.push({
 			uri: story.uri,
 			timestamp: story.timestamp,
 			type: "photo",
-			data: new Blob([await file.arrayBuffer()], { type: file.type || "image/jpeg" }),
+			data: file,
 		});
-		await database.stories.add(story);
+		allStories.push(story);
 	}
+
+	onProgress(70, "Processing media files...");
+	const processedMediaFiles = await processMediaFiles(mediaToStore);
+
+	await database.transaction("rw", [database.media, database.posts, database.stories], async () => {
+		onProgress(85, `Saving ${processedMediaFiles.length} media files...`);
+		await database.media.bulkAdd(processedMediaFiles);
+
+		onProgress(90, `Saving ${postsToStore.length} posts...`);
+		await database.posts.bulkAdd(postsToStore);
+
+		onProgress(95, `Saving ${allStories.length} stories...`);
+		await database.stories.bulkAdd(allStories);
+	});
+
 	onProgress(100, "Content import finished.");
 };
 
