@@ -15,6 +15,7 @@ interface ImportMetadata {
 	totalDuration: number;
 	fileCount: number;
 	totalFileSize: number;
+	stepDurations: { [stepName: string]: number };
 }
 
 export type ProgFn = (progress: number, statusText?: string) => void;
@@ -33,6 +34,7 @@ const importSteps = [
 export const importData = async (
 	files: File[],
 	updateSteps: (name: string, progress: number, statusText?: string) => void,
+	unzipDuration?: number,
 ) => {
 	const importStartTime = performance.now();
 
@@ -41,12 +43,17 @@ export const importData = async (
 
 	const totalFileSize = files.reduce((sum, file) => sum + file.size, 0);
 	const fileCount = files.length;
+	const stepDurations: { [stepName: string]: number } = {};
+	if (unzipDuration) {
+		stepDurations["Unzipping"] = unzipDuration;
+	}
 
-	// Process all import steps in parallel
 	await Promise.all(
-		importSteps.map(({ name, fn }) =>
-			fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText)),
-		),
+		importSteps.map(async ({ name, fn }) => {
+			const stepStartTime = performance.now();
+			await fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText));
+			stepDurations[name] = performance.now() - stepStartTime;
+		}),
 	);
 
 	const totalDuration = performance.now() - importStartTime;
@@ -55,6 +62,7 @@ export const importData = async (
 		totalDuration,
 		fileCount,
 		totalFileSize,
+		stepDurations,
 	};
 
 	localStorage.setItem("import_metadata", JSON.stringify(metadata));
