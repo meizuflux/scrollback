@@ -15,9 +15,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	onProgress(10, "Processing conversations...");
 
-	// precompiled regex
-	// TODO: find more messages that can be skipped (like nicknames? idk)
-	const reactionRegex = /^(Reacted .* to your message|Liked a message)$|changed the theme to/;
+	// Expanded regex to catch system messages
+	const systemMessageRegex = /^(Reacted .* to your message|Liked a message)$|changed the theme to|changed the group photo|set their own nickname to|You missed an audio call|started an audio call|You sent an attachment\.|ended the call|joined the video chat|left the video chat|You're now connected on Messenger|Say hi to your new connection|added .* to the group|removed .* from the group|You created the group|made .* an admin|is no longer an admin/;
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
@@ -61,10 +60,11 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				}
 
 				let content: string | undefined;
+				let isSystemMessage = false;
 				if (message.content) {
 					content = decodeU8String(message.content);
-					if (reactionRegex.test(content)) {
-						continue;
+					if (systemMessageRegex.test(content)) {
+						isSystemMessage = true;
 					}
 				}
 
@@ -101,6 +101,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					share: message.share,
 					photos: message.photos,
 					videos: message.videos,
+					isSystemMessage,
 				});
 			}
 

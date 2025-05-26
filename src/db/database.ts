@@ -33,6 +33,7 @@ export interface StoredMessage {
 	share?: Share;
 	photos?: Media[];
 	videos?: Media[];
+	isSystemMessage?: boolean;
 }
 
 export interface StoredStory {

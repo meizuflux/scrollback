@@ -4,6 +4,8 @@ import { decodeU8String, findFile, loadFile, processMediaFiles } from "../utils"
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+	// TODO: use exact files names for a slight speed up + parallelize this
+
 	onProgress(0, "Loading user files...");
 	const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
 
