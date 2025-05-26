@@ -32,6 +32,16 @@ function getFileType(filename: string): string {
 		zip: "application/zip",
 		doc: "application/msword",
 		docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		mp3: "audio/mpeg",
+		wav: "audio/wav",
+		ogg: "audio/ogg",
+		m4a: "audio/mp4",
+		aac: "audio/aac",
+		flac: "audio/flac",
+		mp4: "video/mp4",
+		avi: "video/avi",
+		mov: "video/quicktime",
+		webm: "video/webm"
 	};
 	return mimeTypes[ext] || "application/octet-stream";
 }
@@ -137,7 +147,7 @@ export const requireDataLoaded = () => {
 	return localStorage.getItem("loaded") === "true";
 };
 
-export const processMediaFiles = async <T extends { uri: string; timestamp: Date; type: "photo" | "video"; data: File }>(
+export const processMediaFiles = async <T extends StoredMedia>(
 	mediaFiles: T[]
 ): Promise<StoredMedia[]> => {
 	const mediaResults = await Promise.all(
@@ -145,12 +155,27 @@ export const processMediaFiles = async <T extends { uri: string; timestamp: Date
 			if (media.data instanceof File) {
 				try {
 					const buffer = await media.data.arrayBuffer();
+					let defaultType: string;
+					switch (media.type) {
+						case "photo":
+							defaultType = "image/jpeg";
+							break;
+						case "video":
+							defaultType = "video/mp4";
+							break;
+						case "audio":
+							defaultType = "audio/mpeg";
+							break;
+						default:
+							defaultType = "application/octet-stream";
+					}
+					
 					return {
 						uri: media.uri,
 						timestamp: media.timestamp,
 						type: media.type,
 						data: new Blob([buffer], { 
-							type: media.data.type || (media.type === "photo" ? "image/jpeg" : "video/mp4")
+							type: media.data.type || defaultType
 						})
 					};
 				} catch (error) {

@@ -12,7 +12,7 @@ export interface StoredData {
 export interface StoredMedia {
 	uri: string;
 	timestamp: Date;
-	type: "photo" | "video";
+	type: "photo" | "video" | "audio";
 	data: Blob;
 }
 
@@ -33,6 +33,7 @@ export interface StoredMessage {
 	share?: Share;
 	photos?: Media[];
 	videos?: Media[];
+	audio?: Media[];
 	isSystemMessage?: boolean;
 }
 

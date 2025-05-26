@@ -24,6 +24,7 @@ export interface Message {
 	share?: Share;
 	photos?: Media[];
 	videos?: Media[];
+	audio_files?: Media[];
 }
 
 export interface MessageFile {

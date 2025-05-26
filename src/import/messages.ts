@@ -20,7 +20,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
-	let allMediaFiles: Array<{ uri: string; timestamp: Date; type: "photo" | "video"; data: File }> = [];
+	let allMediaFiles: StoredMedia[] = [];
 
 	await Promise.all(
 		messageFiles.map(async (file, fileIndex) => {
@@ -77,15 +77,19 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				}
 
 				// defer storing and processing until the very end
-				if (message.photos?.length || message.videos?.length) {
-					const mediaItems = [...(message.photos || []), ...(message.videos || [])];
+				if (message.photos?.length || message.videos?.length || message.audio_files?.length) {
+					const mediaItems = [
+						...(message.photos || []).map(media => ({ ...media, type: 'photo' as const })),
+						...(message.videos || []).map(media => ({ ...media, type: 'video' as const })),
+						...(message.audio_files || []).map(media => ({ ...media, type: 'audio' as const }))
+					];
 					for (const media of mediaItems) {
 						const mediaFile = findFile(files, media.uri);
 						if (mediaFile) {
 							allMediaFiles.push({
 								uri: media.uri,
 								timestamp: new Date(media.creation_timestamp * 1000),
-								type: message.photos?.includes(media) ? "photo" : "video", // TODO: handle audio
+								type: media.type,
 								data: mediaFile,
 							});
 						}
@@ -101,6 +105,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					share: message.share,
 					photos: message.photos,
 					videos: message.videos,
+					audio: message.audio_files,
 					isSystemMessage,
 				});
 			}
