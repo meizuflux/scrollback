@@ -15,7 +15,6 @@ const Home: Component = () => {
 		setImportSteps((steps) => {
 			const existingIndex = steps.findIndex((step) => step.name === name);
 			if (existingIndex !== -1) {
-				// Update existing step
 				const updatedSteps = [...steps];
 				updatedSteps[existingIndex] = {
 					...updatedSteps[existingIndex],
@@ -24,7 +23,6 @@ const Home: Component = () => {
 				};
 				return updatedSteps;
 			} else {
-				// Create new step
 				return [...steps, { name, progress, statusText }];
 			}
 		});
@@ -43,13 +41,11 @@ const Home: Component = () => {
 		setIsImporting(true);
 
 		try {
-			var unzipping = false;
 			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
-				unzipping = true;
 				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
 			}
 
-			await importData(fileArray, updateSteps, unzipping);
+			await importData(fileArray, updateSteps);
 
 			localStorage.setItem("loaded", "true");
 			navigate("/analysis", { replace: true });

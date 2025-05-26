@@ -1,41 +1,33 @@
 import { InstagramDatabase, StoredMessage, StoredMedia } from "../db/database";
 import { Conversation, MessageFile } from "../types/message";
 import { decodeU8String, findFile } from "../utils";
+import { ProgFn } from "./import";
 
-export default async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
+export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	const conversations: Conversation[] = [];
 	const messages: StoredMessage[] = [];
 	const mediaFiles: StoredMedia[] = [];
 
-	onProgress?.(0, "Filtering message files...");
+	onProgress(0, "Finding message files...");
 	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
 
 	if (messageFiles.length === 0) {
-		onProgress?.(100, "No message files found.");
+		onProgress(100, "No message files found.");
 		return;
 	}
-	onProgress?.(5, `Found ${messageFiles.length} message files. Calculating total messages...`);
 
 	let totalMessages = 0;
 	const parsedMessageFiles: { file: File; json: MessageFile }[] = [];
 
 	for (let i = 0; i < messageFiles.length; i++) {
 		const file = messageFiles[i];
+
 		const progress = 5 + Math.round(((i + 1) / messageFiles.length) * 10); // Reading files: 5-15%
-		onProgress?.(progress, `Reading ${file.name} (${i + 1}/${messageFiles.length})`);
+		onProgress(progress, `Reading ${file.name} (${i + 1}/${messageFiles.length})`);
+
 		const json_file = (await file.text().then(JSON.parse)) as MessageFile;
 		parsedMessageFiles.push({ file, json: json_file });
 		totalMessages += json_file.messages.length;
-	}
-
-	onProgress?.(15, `Total ${totalMessages} messages to process across ${messageFiles.length} files.`);
-	if (totalMessages === 0) {
-		onProgress?.(100, "No messages to process.");
-		return;
 	}
 
 	let processedMessages = 0;
@@ -47,18 +39,6 @@ export default async (
 		for (let msgIndex = 0; msgIndex < json_file.messages.length; msgIndex++) {
 			const message = json_file.messages[msgIndex];
 			processedMessages++;
-			const currentProgress = 15 + Math.round((processedMessages / totalMessages) * 65); // Processing messages: 15-80%
-
-			if (
-				processedMessages % Math.max(1, Math.floor(totalMessages / 50)) === 0 ||
-				processedMessages === totalMessages
-			) {
-				// Update ~50 times
-				onProgress?.(
-					Math.min(80, currentProgress),
-					`Processing message ${processedMessages}/${totalMessages} in "${conversationTitle}"`,
-				);
-			}
 
 			message.sender_name = decodeU8String(message.sender_name!);
 			if (message.content) {
@@ -106,10 +86,7 @@ export default async (
 					}
 				}
 			}
-			// @ts-ignore
-			delete message.is_geoblocked_for_viewer;
-			// @ts-ignore
-			delete message.is_unsent_image_by_messenger_kid_parent;
+
 			const toStore: StoredMessage = {
 				conversation: conversationTitle,
 				sender_name: message.sender_name,
@@ -120,7 +97,6 @@ export default async (
 				photos: message.photos,
 				videos: message.videos,
 			};
-
 			messages.push(toStore);
 		}
 
@@ -129,16 +105,22 @@ export default async (
 			participants: json_file.participants.map((p) => decodeU8String(p.name)),
 			is_group: json_file.participants.length > 2,
 		});
+
+		const progress = 15 + Math.round((processedMessages / totalMessages) * 65); // Processing messages: 15-80%
+		onProgress(progress, `Processed ${processedMessages}/${totalMessages} messages from ${json_file.title}`);
 	}
 
-	onProgress?.(
-		80,
-		`Saving ${messages.length} messages, ${conversations.length} conversations, and ${mediaFiles.length} media items...`,
-	);
+	onProgress(80, `Saving conversations, messages, and media files...`);
+
+	let progress = 80;
 	await Promise.all([
-		database.media.bulkPut(mediaFiles),
-		database.messages.bulkAdd(messages),
-		database.conversations.bulkPut(conversations),
+		database.conversations.bulkPut(conversations)
+			.then(() => onProgress((progress += 5), `Saved ${conversations.length} conversations...`)),
+		database.media.bulkPut(mediaFiles)
+			.then(() => onProgress((progress += 5), `Saved ${mediaFiles.length} media items...`)),
+		database.messages.bulkAdd(messages)
+			.then(() => onProgress((progress += 5), `Saved ${messages.length} messages...`)),
 	]);
-	onProgress?.(100, `Imported ${messages.length} messages and ${conversations.length} conversations.`);
+
+	onProgress(100, `Imported ${messages.length} messages and ${conversations.length} conversations.`);
 };

@@ -1,11 +1,8 @@
 import { InstagramDatabase, StoredUser } from "../db/database";
 import { loadFile } from "../utils";
+import { ProgFn } from "./import";
 
-export default async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
+export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	const fileData = [
 		{ name: "blocked_profiles.json", column: "blocked", stored_at: "relationships_blocked_users" },
 		{ name: "close_friends.json", column: "close_friends", stored_at: "relationships_close_friends" },
@@ -31,14 +28,13 @@ export default async (
 
 	const data: { [key: string]: StoredUser } = {};
 
-	onProgress?.(0, "Loading connection files...");
+	onProgress(0, "Loading connection files...");
 	let totalUsersToProcess = 0;
 	const loadedFilesData: any[] = [];
 
 	for (let i = 0; i < fileData.length; i++) {
 		const fileInfo = fileData[i];
-		const progressPercentage = Math.round(((i + 1) / fileData.length) * 15); // Loading files: 0-15%
-		onProgress?.(progressPercentage, `Loading ${fileInfo.name}...`);
+
 		const filename = "/connections/followers_and_following/" + fileInfo.name;
 		let json_file_data = await loadFile<any>(files, filename);
 
@@ -52,9 +48,9 @@ export default async (
 			}
 		}
 	}
-	onProgress?.(15, `Found ${totalUsersToProcess} total connection entries.`);
+	onProgress(15, `Found ${totalUsersToProcess} total connection entries.`);
 	if (totalUsersToProcess === 0 && loadedFilesData.length === 0) {
-		onProgress?.(100, "No connection data found.");
+		onProgress(100, "No connection data found.");
 		return;
 	}
 
@@ -71,7 +67,7 @@ export default async (
 				processedUsersCount === totalUsersToProcess
 			) {
 				// Update ~20 times
-				onProgress?.(
+				onProgress(
 					Math.min(70, currentProgress),
 					`Processing ${fileInfo.column} ${userIndex + 1}/${json_file_data.length}`,
 				);
@@ -90,21 +86,22 @@ export default async (
 		}
 	}
 
-	onProgress?.(70, "Saving connections to database...");
+	onProgress(70, "Saving connections to database...");
 	await database.users.bulkPut(Object.values(data));
-	onProgress?.(80, "Connections saved. Processing story likes...");
+
+
+	onProgress(80, "Connections saved. Processing story likes...");
 
 	const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
 	if (storyLikesFile?.story_activities_story_likes) {
 		const storyLikes = storyLikesFile.story_activities_story_likes;
-		onProgress?.(85, `Found ${storyLikes.length} story likes to process.`);
 		const storyLikeCounts: Record<string, number> = {};
 
 		for (let i = 0; i < storyLikes.length; i++) {
 			const storyLike = storyLikes[i];
 			if (i % Math.max(1, Math.floor(storyLikes.length / 5)) === 0) {
 				// Update ~5 times
-				onProgress?.(
+				onProgress(
 					85 + Math.round((i / storyLikes.length) * 5),
 					`Counting story likes ${i + 1}/${storyLikes.length}`,
 				);
@@ -113,7 +110,7 @@ export default async (
 			if (username) storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
 		}
 
-		onProgress?.(90, "Updating users with story likes...");
+		onProgress(90, "Updating users with story likes...");
 		const usersToUpdate = Object.keys(storyLikeCounts);
 		await database.transaction("rw", database.users, async () => {
 			for (let i = 0; i < usersToUpdate.length; i++) {
@@ -125,5 +122,5 @@ export default async (
 			}
 		});
 	}
-	onProgress?.(100, "Connections import finished.");
+	onProgress(100, "Connections import finished.");
 };

@@ -1,50 +1,42 @@
 import { InstagramDatabase } from "../db/database";
 import { decodeU8String, loadFile } from "../utils";
+import { ProgFn } from "./import";
 
 const processInteractionFile = async (
 	filePath: string,
 	dataKey: string,
 	dbTable: any, // Dexie Table instance
 	files: File[],
-	onProgress?: (progress: number, statusText?: string) => void,
+	onProgress: ProgFn,
 	itemType?: string, // e.g. "liked post", "comment"
 	transformFn?: (item: any) => any,
 ) => {
-	onProgress?.(0, `Loading ${itemType}s file: ${filePath}`);
+	onProgress(0, `Loading ${itemType}s file: ${filePath}`);
 	const fileContent = await loadFile<any>(files, filePath);
-	onProgress?.(20, `File ${filePath} loaded.`);
 
 	const items = fileContent?.[dataKey];
 	if (!items || !Array.isArray(items) || items.length === 0) {
-		onProgress?.(100, `No ${itemType}s found in ${filePath}.`);
+		onProgress(100, `No ${itemType}s found in ${filePath}.`);
 		return;
 	}
-	onProgress?.(30, `Found ${items.length} ${itemType}s.`);
+	onProgress(30, `Found ${items.length} ${itemType}s. Processing...`);
 
 	const itemsToSave = [];
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
-		const currentProgress = 30 + Math.round((i / items.length) * 50); // Processing: 30-80%
-		if (i % Math.max(1, Math.floor(items.length / 10)) === 0 || i === items.length - 1) {
-			// Update ~10 times
-			onProgress?.(currentProgress, `Processing ${itemType} ${i + 1}/${items.length}`);
-		}
+
 		const transformedItem = transformFn ? transformFn(item) : item;
 		if (transformedItem) itemsToSave.push(transformedItem);
 	}
 
-	onProgress?.(80, `Saving ${itemsToSave.length} ${itemType}s to database...`);
+	onProgress(80, `Saving ${itemsToSave.length} ${itemType}s to database...`);
 	if (itemsToSave.length > 0) {
 		await dbTable.bulkAdd(itemsToSave);
 	}
-	onProgress?.(100, `${itemType}s import finished.`);
+	onProgress(100, `${itemType}s import finished. Found ${itemsToSave.length} ${itemType}s.`);
 };
 
-export const importPostLikes = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
+export const importPostLikes = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	await processInteractionFile(
 		"/your_instagram_activity/likes/liked_posts.json",
 		"likes_media_likes",
@@ -64,29 +56,20 @@ export const importPostLikes = async (
 	);
 };
 
-export const importComments = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
+export const importComments = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// Comments file is an array at the root, not nested under a key
-	onProgress?.(0, "Loading comments file: /your_instagram_activity/comments/post_comments_1.json");
+	onProgress(0, "Loading comments file: /your_instagram_activity/comments/post_comments_1.json");
 	const commentsFile = await loadFile<any[]>(files, "/your_instagram_activity/comments/post_comments_1.json");
-	onProgress?.(20, "Comments file loaded.");
 
 	if (!commentsFile || !Array.isArray(commentsFile) || commentsFile.length === 0) {
-		onProgress?.(100, "No comments found.");
+		onProgress(100, "No comments found.");
 		return;
 	}
-
+	onProgress(30, `Found ${commentsFile.length} comments. Processing...`);
 	const commentsToSave = [];
 	for (let i = 0; i < commentsFile.length; i++) {
 		const comment = commentsFile[i];
-		const currentProgress = 30 + Math.round((i / commentsFile.length) * 50); // Processing: 30-80%
-		if (i % Math.max(1, Math.floor(commentsFile.length / 10)) === 0 || i === commentsFile.length - 1) {
-			// Update ~10 times
-			onProgress?.(currentProgress, `Processing comment ${i + 1}/${commentsFile.length}`);
-		}
+
 		const data = comment.string_map_data;
 		if (!data) continue;
 		commentsToSave.push({
@@ -96,19 +79,14 @@ export const importComments = async (
 		});
 	}
 
-	onProgress?.(80, `Saving ${commentsToSave.length} comments to database...`);
+	onProgress(80, `Saving ${commentsToSave.length} comments to database...`);
 	if (commentsToSave.length > 0) {
 		await database.comments.bulkAdd(commentsToSave);
 	}
-	onProgress?.(95, "Comments saved.");
-	onProgress?.(100, "Comments import finished.");
+	onProgress(100, "Comments import finished.");
 };
 
-export const importSavedPosts = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
+export const importSavedPosts = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	await processInteractionFile(
 		"/your_instagram_activity/saved/saved_posts.json",
 		"saved_saved_media",

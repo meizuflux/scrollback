@@ -1,40 +1,29 @@
 import { InstagramDatabase, StoredMedia } from "../db/database";
 import { User } from "../types/user";
 import { decodeU8String, findFile, loadFile } from "../utils";
+import { ProgFn } from "./import";
 
-const importUser = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
-	onProgress?.(0, "Loading user files...");
+const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+	onProgress(0, "Loading user files...");
 	const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
-	onProgress?.(10, "Loaded personal_information.json");
 
 	const basedInFile = await loadFile<any>(files, "/personal_information/information_about_you/profile_based_in.json");
-	onProgress?.(20, "Loaded profile_based_in.json");
 	const locOfInterestFile = await loadFile<any>(
 		files,
 		"/personal_information/information_about_you/locations_of_interest.json",
 	);
-	onProgress?.(30, "Loaded locations_of_interest.json");
 
 	const videosWatchedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/videos_watched.json");
-	onProgress?.(40, "Loaded videos_watched.json");
 	const notInterestedProfilesFile = await loadFile<any>(
 		files,
 		"/ads_information/ads_and_topics/profiles_you're_not_interested_in.json",
 	);
-	onProgress?.(45, "Loaded profiles_you're_not_interested_in.json");
 	const notInterestedPostsFile = await loadFile<any>(
 		files,
 		"/ads_information/ads_and_topics/posts_you're_not_interested_in.json",
 	);
-	onProgress?.(50, "Loaded posts_you're_not_interested_in.json");
 	const postsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/posts_viewed.json");
-	onProgress?.(55, "Loaded posts_viewed.json");
 	const adsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json");
-	onProgress?.(60, "All user-related files loaded.");
 
 	const user: User = {
 		username: userFileData.profile_user[0].string_map_data.Username?.value,
@@ -55,11 +44,11 @@ const importUser = async (
 		postsViewed: postsViewedFile?.impressions_history_posts_seen?.length || 0,
 		adsViewed: adsViewedFile?.impressions_history_ads_seen?.length || 0,
 	};
-	onProgress?.(70, "Saving user data");
+	onProgress(80, "Saving user data");
 
 	await database.mainUser.put(user);
 
-	onProgress?.(80, "Checking for profile photo");
+	onProgress(90, "Checking for profile photo");
 	const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath)!;
@@ -72,7 +61,7 @@ const importUser = async (
 			});
 		}
 	}
-	onProgress?.(100, "User import finished.");
+	onProgress(100, "User import finished.");
 };
 
 interface Image {
@@ -86,12 +75,9 @@ interface Post {
 	media: Image[];
 }
 
-const importContent = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
-	onProgress?.(0, "Loading content files...");
+const importContent = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+	onProgress(0, "Loading content files...");
+
 	const postsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/posts_1.json");
 	const archivedPostsFile = await loadFile<any>(files, "/your_instagram_activity/media/archived_posts.json");
 	const storiesFile = await loadFile<any>(files, "/your_instagram_activity/media/stories.json");
@@ -102,12 +88,13 @@ const importContent = async (
 	const totalItems = totalRegularPosts + totalArchivedPosts + totalStories;
 
 	if (totalItems === 0) {
-		onProgress?.(100, "No content items found.");
+		onProgress(100, "No content items found.");
 		return;
 	}
 
 	let processedItems = 0;
 
+	onProgress(15, `Found ${totalItems} items. Processing...`);
 	const processPosts = async (posts: Post[], archived: boolean = false) => {
 		if (!posts || !Array.isArray(posts)) return;
 
@@ -117,10 +104,9 @@ const importContent = async (
 			processedItems++;
 			const currentProgress = 15 + (processedItems / totalItems) * 70; // Content processing: 15-85%
 
-			if (i % Math.max(1, Math.floor(posts.length / 10)) === 0 || i === posts.length - 1) {
-				// Update ~10 times per post type
-				onProgress?.(Math.min(85, currentProgress), `Processing ${postType} ${i + 1}/${posts.length}`);
-			}
+
+			onProgress(Math.min(85, currentProgress), `Processing ${postType} ${i + 1}/${posts.length}`);
+
 
 			const imageFiles: Image[] = post.media.map((media: any) => ({
 				uri: media.uri,
@@ -148,7 +134,7 @@ const importContent = async (
 					data: new Blob([await file.arrayBuffer()], { type: file.type || "image/jpeg" }),
 				});
 			}
-			if (toStore.length > 0) await database.media.bulkAdd(toStore);
+			await database.media.bulkAdd(toStore);
 		}
 	};
 
@@ -165,12 +151,10 @@ const importContent = async (
 	for (let i = 0; i < stories.length; i++) {
 		const story = stories[i];
 		processedItems++;
-		const currentProgress = 15 + (processedItems / totalItems) * 70; // Content processing: 15-85%
+		const currentProgress = 15 + (processedItems / totalItems) * 70; // Content processing: 15-85% TODO: this is off but wtv
 
-		if (i % Math.max(1, Math.floor(stories.length / 10)) === 0 || i === stories.length - 1) {
-			// Update ~10 times for stories
-			onProgress?.(Math.min(85, currentProgress), `Processing story ${i + 1}/${stories.length}`);
-		}
+		onProgress(Math.min(85, currentProgress), `Processing story ${i + 1}/${stories.length}`);
+
 
 		const file = findFile(files, story.uri);
 		if (!file) {
@@ -185,33 +169,24 @@ const importContent = async (
 		});
 		await database.stories.add(story);
 	}
-	onProgress?.(95, "Saving content to database...");
-	onProgress?.(100, "Content import finished.");
+	onProgress(100, "Content import finished.");
 };
 
-const importProfileChanges = async (
-	files: File[],
-	database: InstagramDatabase,
-	onProgress?: (progress: number, statusText?: string) => void,
-) => {
-	onProgress?.(0, "Loading profile changes file...");
+const importProfileChanges = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+	onProgress(0, "Loading profile changes file...");
 	const profileChangesFile = await loadFile<any>(
 		files,
 		"/personal_information/personal_information/profile_changes.json",
 	);
 
 	if (!profileChangesFile?.profile_profile_change || profileChangesFile.profile_profile_change.length === 0) {
-		onProgress?.(100, "No profile changes found.");
+		onProgress(100, "No profile changes found.");
 		return;
 	}
-	onProgress?.(30, `Found ${profileChangesFile.profile_profile_change.length} profile changes.`);
+	onProgress(30, `Found ${profileChangesFile.profile_profile_change.length} profile changes. Processing...`);
 
 	const changes = profileChangesFile.profile_profile_change;
 	const profileChanges = changes.map((change: any, index: number) => {
-		if (index % Math.max(1, Math.floor(changes.length / 5)) === 0) {
-			// Update ~5 times
-			onProgress?.(30 + (index / changes.length) * 40, `Processing change ${index + 1}/${changes.length}`);
-		}
 		const stringMapData = change.string_map_data;
 		return {
 			changed: stringMapData.Changed?.value || "",
@@ -220,11 +195,11 @@ const importProfileChanges = async (
 			timestamp: new Date(stringMapData["Change Date"]?.timestamp * 1000),
 		};
 	});
-	onProgress?.(70, "All profile changes processed.");
+	onProgress(70, "All profile changes processed, saving to database...");
 
 	await database.profileChanges.bulkAdd(profileChanges);
-	onProgress?.(90, "Saving profile changes to database...");
-	onProgress?.(100, "Profile changes import finished.");
+
+	onProgress(100, "Profile changes import finished.");
 };
 
 export { importUser, importContent, importProfileChanges };

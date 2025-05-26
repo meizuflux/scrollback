@@ -14,29 +14,38 @@ export const loadFile = async <T>(files: File[], path: string): Promise<T | null
 };
 
 function getFileType(filename: string): string {
-    const ext = filename.split('.').pop()!.toLowerCase();
-    const mimeTypes: Record<string, string> = {
-        'txt': 'text/plain', 'html': 'text/html', 'css': 'text/css',
-        'js': 'application/javascript', 'json': 'application/json', 'xml': 'application/xml',
-        'pdf': 'application/pdf', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
-        'gif': 'image/gif', 'svg': 'image/svg+xml', 'zip': 'application/zip',
-        'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    };
-    return mimeTypes[ext] || 'application/octet-stream';
+	const ext = filename.split(".").pop()!.toLowerCase();
+	const mimeTypes: Record<string, string> = {
+		txt: "text/plain",
+		html: "text/html",
+		css: "text/css",
+		js: "application/javascript",
+		json: "application/json",
+		xml: "application/xml",
+		pdf: "application/pdf",
+		jpg: "image/jpeg",
+		jpeg: "image/jpeg",
+		png: "image/png",
+		gif: "image/gif",
+		svg: "image/svg+xml",
+		zip: "application/zip",
+		doc: "application/msword",
+		docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+	};
+	return mimeTypes[ext] || "application/octet-stream";
 }
 
 export const extractZipToFiles = async (
-    zipFile: File,
-    updateSteps: (name: string, progress: number, statusText?: string) => void
+	zipFile: File,
+	updateSteps: (name: string, progress: number, statusText?: string) => void,
 ): Promise<File[]> => {
-    updateSteps("Unzipping files", 0, "Reading ZIP file...");
-    const arrayBuffer = await zipFile.arrayBuffer();
-    const zipData = new Uint8Array(arrayBuffer);
+	updateSteps("Unzipping files", 0, "Reading ZIP file...");
+	const arrayBuffer = await zipFile.arrayBuffer();
+	const zipData = new Uint8Array(arrayBuffer);
 
-    return new Promise<File[]>((resolve, _) => {
+	return new Promise<File[]>((resolve, _) => {
+		const extractedFiles: File[] = [];
 
-        const extractedFiles: File[] = [];
-		
 		let totalFiles = 0;
 		let filesProcessed = 0;
 		let discoveryComplete = false;
@@ -48,19 +57,21 @@ export const extractZipToFiles = async (
 			}
 		};
 
-        const mainUnzipper = new Unzip(stream => { // stream is FFlateUnzipFile
-            const filePath = stream.name;
+		const mainUnzipper = new Unzip((stream) => {
+			// stream is FFlateUnzipFile
+			const filePath = stream.name;
 
-            if (filePath.endsWith('/')) { // Skip directories
-                return;
-            }
+			if (filePath.endsWith("/")) {
+				// Skip directories
+				return;
+			}
 
-            const chunks: Uint8Array[] = [];
+			const chunks: Uint8Array[] = [];
 			let totalSize = 0;
 
 			totalFiles++; // Increment total files count for each stream created
-            stream.ondata = (err, chunk, final) => {
-                /*if (err) {
+			stream.ondata = (err, chunk, final) => {
+				/*if (err) {
                     console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
                     // Stop further file discoveries by this Unzip instance, as state might be corrupt.
                     mainUnzipper.onfile = () => {};
@@ -69,46 +80,41 @@ export const extractZipToFiles = async (
                     return;
                 } */
 
-                if (chunk) {
-                    chunks.push(chunk);
+				if (chunk) {
+					chunks.push(chunk);
 					totalSize += chunk.length;
-                }
+				}
 
+				if (final) {
+					const completeFileBuffer = new Uint8Array(totalSize);
+					let offset = 0;
+					for (const bufferChunk of chunks) {
+						completeFileBuffer.set(bufferChunk, offset);
+						offset += bufferChunk.length;
+					}
 
-                if (final) {
-                    const completeFileBuffer = new Uint8Array(totalSize);
-                    let offset = 0;
-                    for (const bufferChunk of chunks) {
-                        completeFileBuffer.set(bufferChunk, offset);
-                        offset += bufferChunk.length;
-                    }
-
-                    const newFile = new File(
-                        [completeFileBuffer],
-                        filePath,
-                        { type: getFileType(filePath) }
-                    );
-					Object.defineProperty(newFile, 'webkitRelativePath', {
-						value: filePath.startsWith('/') ? filePath : `/${filePath}`,
-						writable: false
+					const newFile = new File([completeFileBuffer], filePath, { type: getFileType(filePath) });
+					Object.defineProperty(newFile, "webkitRelativePath", {
+						value: filePath.startsWith("/") ? filePath : `/${filePath}`,
+						writable: false,
 					}); // this was miserable to rememebr to find
-                    extractedFiles.push(newFile);
-                    filesProcessed++;
+					extractedFiles.push(newFile);
+					filesProcessed++;
 
 					checkCompletion();
-                }
-            };
+				}
+			};
 
 			stream.start();
-        });
+		});
 
-        mainUnzipper.register(AsyncUnzipInflate);
-        
-        mainUnzipper.push(zipData, true);
-        discoveryComplete = true;
+		mainUnzipper.register(AsyncUnzipInflate);
 
-        checkCompletion(); // for when no files in zip
-    });
+		mainUnzipper.push(zipData, true);
+		discoveryComplete = true;
+
+		checkCompletion(); // for when no files in zip
+	});
 };
 
 // insta messages are encoded, like urls and stuff like that so we have to parse it like this

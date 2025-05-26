@@ -17,6 +17,8 @@ interface ImportMetadata {
 	totalFileSize: number;
 }
 
+export type ProgFn = (progress: number, statusText?: string) => void;
+
 const importSteps = [
 	{ name: "Importing Messages", fn: importMessages },
 	{ name: "Importing Content", fn: importContent },
@@ -31,7 +33,6 @@ const importSteps = [
 export const importData = async (
 	files: File[],
 	updateSteps: (name: string, progress: number, statusText?: string) => void,
-	unzipped: boolean,
 ) => {
 	const importStartTime = performance.now();
 
@@ -44,7 +45,7 @@ export const importData = async (
 	// Process all import steps in parallel
 	await Promise.all(
 		importSteps.map(({ name, fn }) =>
-			fn(files, db, (progress, statusText) => updateSteps(name, progress, statusText)),
+			fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText)),
 		),
 	);
 
