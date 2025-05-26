@@ -1,4 +1,4 @@
-import { unzip } from "fflate";
+import { Unzip, AsyncUnzipInflate } from "fflate";
 
 export const findFile = (files: File[], path: string): File | undefined => {
 	return files.find((file) => file.webkitRelativePath.endsWith(path));
@@ -13,68 +13,102 @@ export const loadFile = async <T>(files: File[], path: string): Promise<T | null
 	return await file.text().then(JSON.parse);
 };
 
+function getFileType(filename: string): string {
+    const ext = filename.split('.').pop()!.toLowerCase();
+    const mimeTypes: Record<string, string> = {
+        'txt': 'text/plain', 'html': 'text/html', 'css': 'text/css',
+        'js': 'application/javascript', 'json': 'application/json', 'xml': 'application/xml',
+        'pdf': 'application/pdf', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+        'gif': 'image/gif', 'svg': 'image/svg+xml', 'zip': 'application/zip',
+        'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    };
+    return mimeTypes[ext] || 'application/octet-stream';
+}
+
 export const extractZipToFiles = async (
-	zipFile: File,
-	updateSteps: (name: string, progress: number, statusText?: string) => void,
+    zipFile: File,
+    updateSteps: (name: string, progress: number, statusText?: string) => void
 ): Promise<File[]> => {
-	updateSteps("Unzipping files", 0, "Starting ZIP extraction...");
-	const arrayBuffer = await zipFile.arrayBuffer();
-	const uint8Array = new Uint8Array(arrayBuffer);
+    updateSteps("Unzipping files", 0, "Reading ZIP file...");
+    const arrayBuffer = await zipFile.arrayBuffer();
+    const zipData = new Uint8Array(arrayBuffer);
 
-	return new Promise((resolve, reject) => {
-		unzip(uint8Array, (err, unzipped) => {
-			if (err) {
-				reject(err);
-				return;
+    return new Promise<File[]>((resolve, _) => {
+
+        const extractedFiles: File[] = [];
+		
+		let totalFiles = 0;
+		let filesProcessed = 0;
+		let discoveryComplete = false;
+
+		const checkCompletion = () => {
+			if (discoveryComplete && filesProcessed === totalFiles) {
+				updateSteps("Unzipping files", 100, "All files extracted successfully.");
+				resolve(extractedFiles);
 			}
+		};
 
-			const files: File[] = [];
-			const entries = Object.entries(unzipped);
-			const totalEntries = entries.length;
-			const batchSize = Math.max(1, Math.floor(totalEntries / 10)); // Create up to 10 update points
+        const mainUnzipper = new Unzip(stream => { // stream is FFlateUnzipFile
+            const filePath = stream.name;
 
-			// Create a separate function to process entries in batches
-			const processEntries = (startIndex: number) => {
-				const endIndex = Math.min(startIndex + batchSize, totalEntries);
+            if (filePath.endsWith('/')) { // Skip directories
+                return;
+            }
 
-				for (let i = startIndex; i < endIndex; i++) {
-					const [relativePath, fileData] = entries[i];
-					const blob = new Blob([fileData]);
-					const file = new File([blob], relativePath, { type: "application/octet-stream" });
-					// Add webkitRelativePath to mimic folder upload behavior
-					const normalizedPath = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
-					Object.defineProperty(file, "webkitRelativePath", {
-						value: normalizedPath,
-						writable: false,
-					});
-					files.push(file);
-				}
+            const chunks: Uint8Array[] = [];
+			let totalSize = 0;
 
-				// Update progress after processing this batch
-				const progress = Math.round((endIndex / totalEntries) * 100);
+			totalFiles++; // Increment total files count for each stream created
+            stream.ondata = (err, chunk, final) => {
+                /*if (err) {
+                    console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
+                    // Stop further file discoveries by this Unzip instance, as state might be corrupt.
+                    mainUnzipper.onfile = () => {};
+                    // Reject the entire operation on the first file processing error.
+                    reject(new Error(`Error decompressing file "${filePath}": ${err.message || String(err)}`));
+                    return;
+                } */
 
-				// Use setTimeout to break out of current execution stack,
-				// allowing SolidJS to process the state update
-				setTimeout(() => {
-					updateSteps("Unzipping files", progress, `Extracting ${endIndex}/${totalEntries} files...`);
+                if (chunk) {
+                    chunks.push(chunk);
+					totalSize += chunk.length;
+                }
 
-					// Continue processing if there are more entries
-					if (endIndex < totalEntries) {
-						setTimeout(() => processEntries(endIndex), 0);
-					} else {
-						// We're done
-						setTimeout(() => {
-							updateSteps("Unzipping files", 100, `Extracted ${totalEntries} files`);
-							resolve(files);
-						}, 0);
-					}
-				}, 0);
-			};
 
-			// Start processing from index 0
-			processEntries(0);
-		});
-	});
+                if (final) {
+                    const completeFileBuffer = new Uint8Array(totalSize);
+                    let offset = 0;
+                    for (const bufferChunk of chunks) {
+                        completeFileBuffer.set(bufferChunk, offset);
+                        offset += bufferChunk.length;
+                    }
+
+                    const newFile = new File(
+                        [completeFileBuffer],
+                        filePath,
+                        { type: getFileType(filePath) }
+                    );
+					Object.defineProperty(newFile, 'webkitRelativePath', {
+						value: filePath.startsWith('/') ? filePath : `/${filePath}`,
+						writable: false
+					}); // this was miserable to rememebr to find
+                    extractedFiles.push(newFile);
+                    filesProcessed++;
+
+					checkCompletion();
+                }
+            };
+
+			stream.start();
+        });
+
+        mainUnzipper.register(AsyncUnzipInflate);
+        
+        mainUnzipper.push(zipData, true);
+        discoveryComplete = true;
+
+        checkCompletion(); // for when no files in zip
+    });
 };
 
 // insta messages are encoded, like urls and stuff like that so we have to parse it like this
