@@ -41,7 +41,7 @@ function getFileType(filename: string): string {
 		mp4: "video/mp4",
 		avi: "video/avi",
 		mov: "video/quicktime",
-		webm: "video/webm"
+		webm: "video/webm",
 	};
 	return mimeTypes[ext] || "application/octet-stream";
 }
@@ -147,134 +147,72 @@ export const requireDataLoaded = () => {
 	return localStorage.getItem("loaded") === "true";
 };
 
-export const processMediaFiles = async <T extends StoredMediaMetadata>(
-	mediaFiles: T[]
+export const processMediaFilesToOPFSBatched = async (
+	mediaFiles: StoredMediaMetadata[],
 ): Promise<StoredMediaMetadata[]> => {
-	const mediaResults = await Promise.all(
-		mediaFiles.map(async (media) => {
-			if (media.data instanceof File) {
-				try {
-					const buffer = await media.data.arrayBuffer();
-					let defaultType: string;
-					switch (media.type) {
-						case "photo":
-							defaultType = "image/jpeg";
-							break;
-						case "video":
-							defaultType = "video/mp4";
-							break;
-						case "audio":
-							defaultType = "audio/mpeg";
-							break;
-						default:
-							defaultType = "application/octet-stream";
-					}
-					
-					return {
-						uri: media.uri,
-						timestamp: media.timestamp,
-						type: media.type,
-						data: new Blob([buffer], { 
-							type: media.data.type || defaultType
-						})
-					};
-				} catch (error) {
-					console.error(`Failed to process media file ${media.uri}:`, error);
-					return null;
-				}
-			}
-			return null;
-		})
-	);
-	return mediaResults.filter(media => media !== null);
+	const batchSize = 150;
+	const results: StoredMediaMetadata[] = [];
+
+	const opfs = await navigator.storage.getDirectory();
+	const mediaDir = await opfs.getDirectoryHandle("media", { create: true });
+
+	for (let i = 0; i < mediaFiles.length; i += batchSize) {
+		const batch = mediaFiles.slice(i, i + batchSize);
+
+		const batchResults = await Promise.all(
+			batch.map(async (media) => {
+				const opfsFileName = await saveMediaFile(mediaDir, media);
+
+				return {
+					uri: media.uri,
+					timestamp: media.timestamp,
+					type: media.type,
+					opfsFileName,
+				};
+			}),
+		);
+
+		results.push(...batchResults);
+	}
+
+	return results;
 };
 
-export const processMediaFilesToOPFS = async <T extends StoredMediaMetadata>(
-	mediaFiles: T[]
-): Promise<StoredMediaMetadata[]> => {
-	const mediaResults = await Promise.all(
-		mediaFiles.map(async (media) => {
-			if (media.data instanceof File) {
-				try {
-					const buffer = await media.data.arrayBuffer();
-					let defaultType: string;
-					switch (media.type) {
-						case "photo":
-							defaultType = "image/jpeg";
-							break;
-						case "video":
-							defaultType = "video/mp4";
-							break;
-						case "audio":
-							defaultType = "audio/mpeg";
-							break;
-						default:
-							defaultType = "application/octet-stream";
-					}
-					
-					const blob = new Blob([buffer], { 
-						type: media.data.type || defaultType
-					});
-					
-					// Store in OPFS and get the filename
-					const opfsFileName = await saveMediaFile({
-						uri: media.uri,
-						timestamp: media.timestamp,
-						type: media.type,
-						data: blob
-					});
-					
-					return {
-						uri: media.uri,
-						timestamp: media.timestamp,
-						type: media.type,
-						opfsFileName
-					};
-				} catch (error) {
-					console.error(`Failed to process media file ${media.uri}:`, error);
-					return null;
-				}
-			}
-			return null;
-		})
-	);
-	return mediaResults.filter(media => media !== null);
-};
-
-// "your_instagram_activity/messages/inbox/{conversation_name}_{user_id}/photos/{unique_id}.{file_extension}"	
+// "your_instagram_activity/messages/inbox/{conversation_name}_{user_id}/photos/{unique_id}.{file_extension}"
 
 // TODO: implement an abstraction where we can fallback to IndexedDB if OPFS is not available
-export const saveMediaFile = async (file: StoredMediaMetadata): Promise<string> => {
-    if (!file.data) {
-        throw new Error(`No data provided for media file: ${file.uri}`);
-    }
-    
-    const opfs = await navigator.storage.getDirectory();
-    const mediaDir = await opfs.getDirectoryHandle("media", { create: true });
+export const saveMediaFile = async (
+	mediaDir: FileSystemDirectoryHandle,
+	media: StoredMediaMetadata,
+): Promise<string> => {
+	if (!media.data || !(media.data instanceof File)) {
+		throw new Error(`No file data provided for media file: ${media.uri}`);
+	}
 
-    // Flatten the URI into a single filename
-    const flatFileName = file.uri
-        .replace(/^\/+/, '') // Remove leading slashes
-        .replace(/\//g, '_') // Replace slashes with underscores
-        .replace(/[<>:"|?*]/g, '_'); // Replace invalid filesystem chars
+	// Flatten the URI into a single filename
+	const flatFileName = media.uri
+		.replace(/^\/+/, "") // Remove leading slashes
+		.replace(/\//g, "_") // Replace slashes with underscores
+		.replace(/[<>:"|?*]/g, "_"); // Replace invalid filesystem chars
 
-    const fileHandle = await mediaDir.getFileHandle(flatFileName, { create: true });
-    
-    const writer = await fileHandle.createWritable();
-    await writer.write(file.data);
-    await writer.close();
+	const fileHandle = await mediaDir.getFileHandle(flatFileName, { create: true });
+	const writer = await fileHandle.createWritable();
 
-    return flatFileName;
-}
+	// Stream file directly without loading into memory
+	const stream = media.data.stream();
+	await stream.pipeTo(writer);
+
+	return flatFileName;
+};
 
 export const getSavedMediaFile = async (fileName: string): Promise<File | null> => {
-    try {
-        const opfs = await navigator.storage.getDirectory();
-        const mediaDir = await opfs.getDirectoryHandle("media", { create: false });
-        const fileHandle = await mediaDir.getFileHandle(fileName, { create: false });
-        return await fileHandle.getFile();
-    } catch (error) {
-        console.warn(`File ${fileName} not found in OPFS:`, error);
-        return null;
-    }
-}
+	try {
+		const opfs = await navigator.storage.getDirectory();
+		const mediaDir = await opfs.getDirectoryHandle("media", { create: false });
+		const fileHandle = await mediaDir.getFileHandle(fileName, { create: false });
+		return await fileHandle.getFile();
+	} catch (error) {
+		console.warn(`File ${fileName} not found in OPFS:`, error);
+		return null;
+	}
+};

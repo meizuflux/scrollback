@@ -100,7 +100,7 @@ export class InstagramDatabase extends Dexie {
 		this.version(1).stores({
 			users: "username, stories_liked",
 			mainUser: "username",
-			messages: "++id, conversation, sender_name, timestamp, *content",
+			messages: "++id, [conversation+timestamp], sender_name, timestamp",
 			conversations: "title, *participants",
 			media_metadata: "uri, type, timestamp",
 			posts: "++id, title, timestamp, archived",

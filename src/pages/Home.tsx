@@ -41,7 +41,7 @@ const Home: Component = () => {
 		setIsImporting(true);
 
 		try {
-			let zipDuration = undefined
+			let zipDuration = undefined;
 			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
 				const zipStartTime = performance.now();
 				fileArray = await extractZipToFiles(fileArray[0], updateSteps);

@@ -105,5 +105,3 @@ export const importComments = async (files: File[], database: InstagramDatabase,
 	}
 	onProgress(100, "Comments import finished.");
 };
-
-

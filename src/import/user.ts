@@ -1,31 +1,31 @@
 import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "../db/database";
 import { User } from "../types/user";
-import { decodeU8String, findFile, loadFile, processMediaFilesToOPFS, saveMediaFile } from "../utils";
+import { decodeU8String, findFile, loadFile, processMediaFilesToOPFSBatched, saveMediaFile } from "../utils";
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
-	// TODO: use exact files names for a slight speed up + parallelize this
+	// TODO: use exact files names for a slight speed up
 
 	onProgress(0, "Loading user files...");
-	const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
-
-	const basedInFile = await loadFile<any>(files, "/personal_information/information_about_you/profile_based_in.json");
-	const locOfInterestFile = await loadFile<any>(
-		files,
-		"/personal_information/information_about_you/locations_of_interest.json",
-	);
-
-	const videosWatchedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/videos_watched.json");
-	const notInterestedProfilesFile = await loadFile<any>(
-		files,
-		"/ads_information/ads_and_topics/profiles_you're_not_interested_in.json",
-	);
-	const notInterestedPostsFile = await loadFile<any>(
-		files,
-		"/ads_information/ads_and_topics/posts_you're_not_interested_in.json",
-	);
-	const postsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/posts_viewed.json");
-	const adsViewedFile = await loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json");
+	const [
+		userFileData,
+		basedInFile,
+		locOfInterestFile,
+		videosWatchedFile,
+		notInterestedProfilesFile,
+		notInterestedPostsFile,
+		postsViewedFile,
+		adsViewedFile
+	] = await Promise.all([
+		loadFile<any>(files, "/personal_information/personal_information.json"),
+		loadFile<any>(files, "/personal_information/information_about_you/profile_based_in.json"),
+		loadFile<any>(files, "/personal_information/information_about_you/locations_of_interest.json"),
+		loadFile<any>(files, "/ads_information/ads_and_topics/videos_watched.json"),
+		loadFile<any>(files, "/ads_information/ads_and_topics/profiles_you're_not_interested_in.json"),
+		loadFile<any>(files, "/ads_information/ads_and_topics/posts_you're_not_interested_in.json"),
+		loadFile<any>(files, "/ads_information/ads_and_topics/posts_viewed.json"),
+		loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json")
+	]);
 
 	const user: User = {
 		username: userFileData.profile_user[0].string_map_data.Username?.value,
@@ -55,12 +55,14 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath)!;
 		if (pfp) {
-			const blob = new Blob([await pfp.arrayBuffer()], { type: pfp.type || "image/jpeg" });
-			const opfsFileName = await saveMediaFile({
+			const opfs = await navigator.storage.getDirectory();
+			const mediaDir = await opfs.getDirectoryHandle("media", { create: true });
+
+			const opfsFileName = await saveMediaFile(mediaDir, {
 				uri: pfpPath,
 				timestamp: new Date(Date.now()),
 				type: "photo",
-				data: blob,
+				data: pfp,
 			});
 
 			await database.media_metadata.add({
@@ -171,7 +173,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 			console.warn(`Story file not found for URI: ${story.uri}`);
 			continue;
 		}
-		const isVideo = story.uri.toLowerCase().includes('.mp4');
+		const isVideo = story.uri.toLowerCase().includes(".mp4");
 		mediaToStore.push({
 			uri: story.uri,
 			timestamp: story.timestamp,
@@ -182,7 +184,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 	}
 
 	onProgress(70, "Processing media files...");
-	const processedMediaFiles = await processMediaFilesToOPFS(mediaToStore);
+	const processedMediaFiles = await processMediaFilesToOPFSBatched(mediaToStore);
 
 	await database.transaction("rw", [database.media_metadata, database.posts, database.stories], async () => {
 		onProgress(85, `Saving ${processedMediaFiles.length} media files...`);
