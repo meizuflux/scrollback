@@ -9,11 +9,12 @@ export interface StoredData {
 	conversations: Conversation[];
 }
 
-export interface StoredMedia {
+export interface StoredMediaMetadata {
 	uri: string;
 	timestamp: Date;
 	type: "photo" | "video" | "audio";
-	data: Blob;
+	opfsFileName?: string; // OPFS filename for stored media
+	data?: Blob; // Keep for backwards compatibility, but prefer OPFS
 }
 
 export interface StoredPost {
@@ -85,7 +86,7 @@ export class InstagramDatabase extends Dexie {
 	mainUser!: Table<User>;
 	messages!: Table<StoredMessage>;
 	conversations!: Table<Conversation>;
-	media!: Table<StoredMedia>;
+	media_metadata!: Table<StoredMediaMetadata>;
 	posts!: Table<StoredPost>;
 	stories!: Table<StoredStory>;
 	comments!: Table<StoredComment>;
@@ -101,7 +102,7 @@ export class InstagramDatabase extends Dexie {
 			mainUser: "username",
 			messages: "++id, conversation, sender_name, timestamp, *content",
 			conversations: "title, *participants",
-			media: "uri, type, timestamp",
+			media_metadata: "uri, type, timestamp",
 			posts: "++id, title, timestamp, archived",
 			stories: "++id, title, timestamp",
 			comments: "++id, media_owner, comment, timestamp",

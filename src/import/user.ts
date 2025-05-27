@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredMedia, StoredPost, StoredStory } from "../db/database";
+import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "../db/database";
 import { User } from "../types/user";
-import { decodeU8String, findFile, loadFile, processMediaFiles } from "../utils";
+import { decodeU8String, findFile, loadFile, processMediaFilesToOPFS, saveMediaFile } from "../utils";
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -55,11 +55,19 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath)!;
 		if (pfp) {
-			await database.media.add({
+			const blob = new Blob([await pfp.arrayBuffer()], { type: pfp.type || "image/jpeg" });
+			const opfsFileName = await saveMediaFile({
 				uri: pfpPath,
 				timestamp: new Date(Date.now()),
 				type: "photo",
-				data: new Blob([await pfp.arrayBuffer()], { type: pfp.type || "image/jpeg" }),
+				data: blob,
+			});
+
+			await database.media_metadata.add({
+				uri: pfpPath,
+				timestamp: new Date(Date.now()),
+				type: "photo",
+				opfsFileName,
 			});
 		}
 	}
@@ -174,11 +182,11 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 	}
 
 	onProgress(70, "Processing media files...");
-	const processedMediaFiles = await processMediaFiles(mediaToStore);
+	const processedMediaFiles = await processMediaFilesToOPFS(mediaToStore);
 
-	await database.transaction("rw", [database.media, database.posts, database.stories], async () => {
+	await database.transaction("rw", [database.media_metadata, database.posts, database.stories], async () => {
 		onProgress(85, `Saving ${processedMediaFiles.length} media files...`);
-		await database.media.bulkAdd(processedMediaFiles);
+		await database.media_metadata.bulkAdd(processedMediaFiles);
 
 		onProgress(90, `Saving ${postsToStore.length} posts...`);
 		await database.posts.bulkAdd(postsToStore);

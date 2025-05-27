@@ -29,6 +29,10 @@ const ClearButton: Component = () => {
 	const handleClear = async () => {
 		setIsClearing(true);
 		localStorage.clear();
+		
+		// @ts-ignore: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
+		await (await navigator.storage.getDirectory())?.remove({ recursive: true });
+		
 		await db.delete();
 		navigate("/", { replace: true });
 	};

@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredMessage, StoredMedia } from "../db/database";
+import { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "../db/database";
 import { MessageFile } from "../types/message";
-import { decodeU8String, findFile, processMediaFiles } from "../utils";
+import { decodeU8String, findFile, processMediaFilesToOPFS } from "../utils";
 import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -20,7 +20,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
-	let allMediaFiles: StoredMedia[] = [];
+	let allMediaFiles: StoredMediaMetadata[] = [];
 
 	await Promise.all(
 		messageFiles.map(async (file, fileIndex) => {
@@ -123,15 +123,15 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	onProgress(65, "Processing media files...");
 	
 	// we've deferred media processing until now, because the blob turning into buffer is expensive
-	let processedMediaFiles: StoredMedia[] = [];
+	let processedMediaFiles: StoredMediaMetadata[] = [];
 	if (allMediaFiles.length > 0) {
-		processedMediaFiles = await processMediaFiles(allMediaFiles);
+		processedMediaFiles = await processMediaFilesToOPFS(allMediaFiles);
 	}
 	
 
 	onProgress(75, "Saving all data...");
 
-	await database.transaction('rw', [database.conversations, database.messages, database.media], async () => {
+	await database.transaction('rw', [database.conversations, database.messages, database.media_metadata], async () => {
 		onProgress(80, `Saving ${conversations.length} conversations...`);
 		await database.conversations.bulkPut(conversations);
 		
@@ -139,8 +139,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		await database.messages.bulkAdd(allMessages);
 		
 		if (processedMediaFiles.length > 0) {
-			onProgress(90, `Saving ${processedMediaFiles.length} media files...`);
-			await database.media.bulkPut(processedMediaFiles); // TODO: store in OPFS
+			onProgress(90, `Saving ${processedMediaFiles.length} media files metadata...`);
+			await database.media_metadata.bulkPut(processedMediaFiles);
 		}
 	});
 	
