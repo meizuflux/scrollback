@@ -1,7 +1,7 @@
 import { Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { db, StoredData } from "../db/database";
-import { opfsSupported, requireDataLoaded } from "../utils";
+import { requireDataLoaded, clearData } from "../utils";
 import Layout from "../components/Layout";
 
 import MessageAnalysis from "../components/Messages";
@@ -29,14 +29,7 @@ const ClearButton: Component = () => {
 
 	const handleClear = async () => {
 		setIsClearing(true);
-		localStorage.clear();
-
-		if (opfsSupported()) {
-		    // @ts-ignore: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
-			await (await navigator.storage.getDirectory())?.remove({ recursive: true });
-		}
-
-		await db.delete();
+		await clearData();
 		navigate("/", { replace: true });
 	};
 

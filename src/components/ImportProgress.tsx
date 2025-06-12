@@ -3,6 +3,7 @@ import { ImportStep } from "../import/import";
 
 interface ImportProgressProps {
 	steps: ImportStep[];
+	onStop?: () => void;
 }
 
 const StepProgressBar: Component<{ step: ImportStep }> = (props) => {
@@ -48,11 +49,27 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 			<div class="mb-6">
 				<div class="flex justify-between items-center mb-2">
 					<h2 class="text-xl font-semibold text-white">Importing Data...</h2>
-					<Show when={totalSteps() > 0}>
-						<span class="text-sm text-gray-300">
-							{completedSteps()} / {totalSteps()} steps completed
-						</span>
-					</Show>
+					<div class="flex items-center gap-3">
+						<Show when={totalSteps() > 0}>
+							<span class="text-sm text-gray-300">
+								{completedSteps()} / {totalSteps()} steps completed
+							</span>
+						</Show>
+						<Show when={props.onStop}>
+							<button
+								class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-1"
+								onClick={() => {
+									if (confirm("Are you sure you want to stop the import process? This will lose all progress.")) {
+										props.onStop!();
+									}
+								}}
+								title="Stop import process"
+							>
+								<span>⏹️</span>
+								Stop
+							</button>
+						</Show>
+					</div>
 				</div>
 
 				<div class="w-full bg-gray-700 rounded-full h-3 border border-gray-600 mb-2">

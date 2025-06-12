@@ -373,3 +373,14 @@ export const createMediaURL = async (
 
     return URL.createObjectURL(file);
 };
+
+export const clearData = async (): Promise<void> => {
+    localStorage.clear();
+
+    if (opfsSupported()) {
+        // @ts-ignore: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
+        await (await navigator.storage.getDirectory())?.remove({ recursive: true });
+    }
+
+    await db.delete();
+};
