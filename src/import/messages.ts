@@ -9,7 +9,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	onProgress(0, "Finding message files...");
 
-	const messageFiles = files.filter((file) => file.name.endsWith("message_1.json"));
+	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
+	const messageFiles = files.filter(file => file.name.endsWith(".json") && file.name.lastIndexOf("/message_") !== -1)
 
 	if (messageFiles.length === 0) {
 		onProgress(100, "No message files found.");
@@ -156,7 +157,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		onProgress(80, `Saving ${allMessages.length} messages...`);
 		await database.messages.bulkAdd(allMessages);
 
-		
+
 	});
 
 	console.log(`🏁 completed in ${(performance.now() - totalStartTime).toFixed(2)}ms`);
