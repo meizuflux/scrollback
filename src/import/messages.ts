@@ -5,8 +5,6 @@ import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// TODO: perf timing to figure out the correct progress percentages (for everything, tbh)
-	const totalStartTime = performance.now();
-
 	onProgress(0, "Finding message files...");
 
 	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
@@ -19,9 +17,30 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	onProgress(10, "Processing conversations...");
 
-	// Precompile regex
-	const systemMessageRegex =
-		/^(Reacted .* to your message|Liked a message)$|changed the theme to|changed the group photo|set their own nickname to|You missed an audio call|started an audio call|You sent an attachment\.|ended the call|joined the video chat|left the video chat|You're now connected on Messenger|Say hi to your new connection|added .* to the group|removed .* from the group|You created the group|made .* an admin|is no longer an admin/;
+	// TODO: find all of these
+	const exactSystemMessages = new Set([
+		'You missed an audio call',
+		'started an audio call',
+		'ended the call',
+		'joined the video chat',
+		'left the video chat',
+		'Say hi to your new connection',
+		'You created the group',
+		'Liked a message'
+	]);
+
+	const patternRegex = new RegExp([
+		'^Reacted .* to your message$',
+		'changed the theme to',
+		'changed the group photo',
+		'set their own nickname to',
+		'You sent an attachment\\.',
+		'added .* to the group',
+		'removed .* from the group',
+	].join('|'));
+
+	const checkSystemMessage = (content: string) =>
+		exactSystemMessages.has(content) || patternRegex.test(content);
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
@@ -76,9 +95,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				let isSystemMessage = false;
 				if (message.content) {
 					content = decodeU8String(message.content);
-					if (systemMessageRegex.test(content)) {
-						isSystemMessage = true;
-					}
+					isSystemMessage = checkSystemMessage(content);
 				}
 
 				let reactions;
@@ -159,8 +176,6 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 
 	});
-
-	console.log(`🏁 completed in ${(performance.now() - totalStartTime).toFixed(2)}ms`);
 
 	onProgress(100, `Imported ${allMessages.length} messages and ${conversations.length} conversations.`);
 };
