@@ -4,6 +4,7 @@ import { extractZipToFiles } from "../utils";
 import { importData, ImportStep } from "../import/import";
 import ImportProgress from "../components/ImportProgress";
 import logo from "../assets/logo.svg";
+import Layout from "../components/Layout";
 
 const Home: Component = () => {
 	const navigate = useNavigate();
@@ -58,7 +59,7 @@ const Home: Component = () => {
 	};
 
 	return (
-		<div class="min-h-screen bg-gray-900">
+	    <Layout>
 			<div class="container mx-auto p-4">
 				<div class="max-w-3xl mx-auto">
 					<div class="flex flex-col items-center mb-8">
@@ -121,7 +122,7 @@ const Home: Component = () => {
 					</Show>
 				</div>
 			</div>
-		</div>
+		</Layout>
 	);
 };
 

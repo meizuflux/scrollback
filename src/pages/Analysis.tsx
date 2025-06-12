@@ -2,6 +2,7 @@ import { Component, createResource, createSignal, Show, onMount } from "solid-js
 import { useNavigate } from "@solidjs/router";
 import { db, StoredData } from "../db/database";
 import { requireDataLoaded } from "../utils";
+import Layout from "../components/Layout";
 
 import MessageAnalysis from "../components/Messages";
 import UsersAnalysis from "../components/Users";
@@ -66,7 +67,7 @@ const Analysis: Component = () => {
 	});
 
 	return (
-		<div class="min-h-screen bg-gray-900">
+		<Layout>
 			<div class="container mx-auto p-4">
 				<div class="flex justify-between items-center mb-6">
 					<div>
@@ -101,7 +102,7 @@ const Analysis: Component = () => {
 					<UsersAnalysis data={data()!} />
 				</Show>
 			</div>
-		</div>
+		</Layout>
 	);
 };
 

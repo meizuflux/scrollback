@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { Component, onMount } from "solid-js";
 import { requireDataLoaded } from "../utils";
+import Layout from "../components/Layout";
 
 const Export: Component = () => {
 	const navigate = useNavigate();
@@ -12,7 +13,7 @@ const Export: Component = () => {
 	});
 
 	return (
-		<div class="min-h-screen bg-gray-900">
+		<Layout>
 			<div class="container mx-auto p-4">
 				<h1 class="text-4xl font-bold mb-6 text-white">Export Data</h1>
 				<p class="text-gray-300 mb-4">This feature is not yet implemented. Stay tuned for updates!</p>
@@ -23,7 +24,7 @@ const Export: Component = () => {
 					← Back to Analysis
 				</button>
 			</div>
-		</div>
+		</Layout>
 	);
 };
 
