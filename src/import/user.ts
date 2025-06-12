@@ -1,6 +1,6 @@
 import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "../db/database";
 import { User } from "../types/user";
-import { decodeU8String, findFile, loadFile, processMediaFilesToOPFSBatched, saveMediaFile } from "../utils";
+import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "../utils";
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -53,24 +53,17 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	onProgress(90, "Checking for profile photo");
 	const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
 	if (pfpPath) {
-		const pfp = findFile(files, pfpPath)!;
+		const pfp = findFile(files, pfpPath);
 		if (pfp) {
-			const opfs = await navigator.storage.getDirectory();
-			const mediaDir = await opfs.getDirectoryHandle("media", { create: true });
-
-			const opfsFileName = await saveMediaFile(mediaDir, {
+			const mediaToStore = [{
 				uri: pfpPath,
 				timestamp: new Date(Date.now()),
-				type: "photo",
+				type: "photo" as const,
 				data: pfp,
-			});
+			}];
 
-			await database.media_metadata.add({
-				uri: pfpPath,
-				timestamp: new Date(Date.now()),
-				type: "photo",
-				opfsFileName,
-			});
+			const processedMediaFiles = await processMediaFilesBatched(mediaToStore);
+			await database.media_metadata.bulkAdd(processedMediaFiles);
 		}
 	}
 	onProgress(100, "User import finished.");
@@ -184,7 +177,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 	}
 
 	onProgress(70, "Processing media files...");
-	const processedMediaFiles = await processMediaFilesToOPFSBatched(mediaToStore);
+	const processedMediaFiles = await processMediaFilesBatched(mediaToStore);
 
 	await database.transaction("rw", [database.media_metadata, database.posts, database.stories], async () => {
 		onProgress(85, `Saving ${processedMediaFiles.length} media files...`);

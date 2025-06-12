@@ -1,6 +1,6 @@
 import { createSignal, Show, type Component, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { extractZipToFiles } from "../utils";
+import { extractZipToFiles, opfsSupported } from "../utils";
 import { importData, ImportStep } from "../import/import";
 import ImportProgress from "../components/ImportProgress";
 import logo from "../assets/logo.svg";
@@ -86,7 +86,7 @@ const Home: Component = () => {
 								multiple
 								id="folderPicker"
 								class="hidden"
-								disabled={isImporting()}
+								disabled={isImporting() || opfsSupported() == undefined}
 								onChange={(e) => handleFiles(e.currentTarget.files!)}
 							/>
 							<input
@@ -94,7 +94,7 @@ const Home: Component = () => {
 								accept=".zip"
 								id="zipPicker"
 								class="hidden"
-								disabled={isImporting()}
+								disabled={isImporting() || opfsSupported() == undefined}
 								onChange={(e) => handleFiles(e.currentTarget.files!)}
 							/>
 
@@ -103,7 +103,6 @@ const Home: Component = () => {
 							<div class="text-gray-300 mb-6">
 								Upload your data folder or the zip file you downloaded from Instagram
 							</div>
-
 							<div class="space-x-4">
 								<label
 									for="folderPicker"

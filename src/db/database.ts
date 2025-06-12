@@ -13,8 +13,8 @@ export interface StoredMediaMetadata {
 	uri: string;
 	timestamp: Date;
 	type: "photo" | "video" | "audio";
-	opfsFileName?: string; // OPFS filename for stored media
-	data?: Blob; // Keep for backwards compatibility, but prefer OPFS
+	fileName?: string;
+	data?: File; // Original file data for processing
 }
 
 export interface StoredPost {
@@ -68,6 +68,13 @@ export interface TimestampedValue<T = boolean> {
 }
 
 // TODO: adjust for timezone
+export interface StoredVirtualFile {
+	fileName: string;
+	blob: Blob;
+	timestamp: Date;
+	size: number;
+}
+
 export interface StoredUser {
 	username: string;
 	blocked?: TimestampedValue; // you blocked them
@@ -87,6 +94,7 @@ export class InstagramDatabase extends Dexie {
 	messages!: Table<StoredMessage>;
 	conversations!: Table<Conversation>;
 	media_metadata!: Table<StoredMediaMetadata>;
+	virtualFS!: Table<StoredVirtualFile>;
 	posts!: Table<StoredPost>;
 	stories!: Table<StoredStory>;
 	comments!: Table<StoredComment>;
@@ -102,7 +110,8 @@ export class InstagramDatabase extends Dexie {
 			mainUser: "username",
 			messages: "++id, [conversation+timestamp], sender_name, timestamp",
 			conversations: "title, *participants",
-			media_metadata: "uri, type, timestamp",
+			media_metadata: "uri, type, timestamp, fileName",
+			virtualFS: "fileName, timestamp, size",
 			posts: "++id, title, timestamp, archived",
 			stories: "++id, title, timestamp",
 			comments: "++id, media_owner, comment, timestamp",

@@ -1,88 +1,114 @@
 import { Unzip, AsyncUnzipInflate } from "fflate";
-import { StoredMediaMetadata } from "./db/database";
+import { StoredMediaMetadata, StoredVirtualFile, db } from "./db/database";
+import { createResource } from "solid-js";
+
+export const [opfsSupported] = createResource(async () => {
+    try {
+        const dir = await navigator.storage.getDirectory();
+        const fileHandle = await dir.getFileHandle("opfs_support.txt", {
+            create: true,
+        });
+        const writer = await fileHandle.createWritable();
+
+        await writer.write("");
+        await writer.close();
+
+        return true;
+    } catch {
+        return false;
+    }
+});
+
 
 export const findFile = (files: File[], path: string): File | undefined => {
-	return files.find((file) => file.webkitRelativePath.endsWith(path));
+    return files.find((file) => file.webkitRelativePath.endsWith(path));
 };
 
-export const loadFile = async <T>(files: File[], path: string): Promise<T | null> => {
-	const file = findFile(files, path);
-	if (!file) {
-		return null;
-	}
+export const loadFile = async <T>(
+    files: File[],
+    path: string,
+): Promise<T | null> => {
+    const file = findFile(files, path);
+    if (!file) {
+        return null;
+    }
 
-	return await file.text().then(JSON.parse);
+    return await file.text().then(JSON.parse);
 };
 
 function getFileType(filename: string): string {
-	const ext = filename.split(".").pop()!.toLowerCase();
-	const mimeTypes: Record<string, string> = {
-		txt: "text/plain",
-		html: "text/html",
-		css: "text/css",
-		js: "application/javascript",
-		json: "application/json",
-		xml: "application/xml",
-		pdf: "application/pdf",
-		jpg: "image/jpeg",
-		jpeg: "image/jpeg",
-		png: "image/png",
-		gif: "image/gif",
-		svg: "image/svg+xml",
-		zip: "application/zip",
-		doc: "application/msword",
-		docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		mp3: "audio/mpeg",
-		wav: "audio/wav",
-		ogg: "audio/ogg",
-		m4a: "audio/mp4",
-		aac: "audio/aac",
-		flac: "audio/flac",
-		mp4: "video/mp4",
-		avi: "video/avi",
-		mov: "video/quicktime",
-		webm: "video/webm",
-	};
-	return mimeTypes[ext] || "application/octet-stream";
+    const ext = filename.split(".").pop()!.toLowerCase();
+    const mimeTypes: Record<string, string> = {
+        txt: "text/plain",
+        html: "text/html",
+        css: "text/css",
+        js: "application/javascript",
+        json: "application/json",
+        xml: "application/xml",
+        pdf: "application/pdf",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        svg: "image/svg+xml",
+        zip: "application/zip",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mp3: "audio/mpeg",
+        wav: "audio/wav",
+        ogg: "audio/ogg",
+        m4a: "audio/mp4",
+        aac: "audio/aac",
+        flac: "audio/flac",
+        mp4: "video/mp4",
+        avi: "video/avi",
+        mov: "video/quicktime",
+        webm: "video/webm",
+    };
+    return mimeTypes[ext] || "application/octet-stream";
 }
 
 export const extractZipToFiles = async (
-	zipFile: File,
-	updateSteps: (name: string, progress: number, statusText?: string) => void,
+    zipFile: File,
+    updateSteps: (name: string, progress: number, statusText?: string) => void,
 ): Promise<File[]> => {
-	updateSteps("Unzipping files", 0, "Reading ZIP file...");
-	const arrayBuffer = await zipFile.arrayBuffer();
-	const zipData = new Uint8Array(arrayBuffer);
+    updateSteps("Unzipping files", 0, "Reading ZIP file...");
+    const arrayBuffer = await zipFile.arrayBuffer();
+    const zipData = new Uint8Array(arrayBuffer);
 
-	return new Promise<File[]>((resolve, _) => {
-		const extractedFiles: File[] = [];
+    return new Promise<File[]>((resolve, _) => {
+        const extractedFiles: File[] = [];
 
-		let totalFiles = 0;
-		let filesProcessed = 0;
-		let discoveryComplete = false;
+        let totalFiles = 0;
+        let filesProcessed = 0;
+        let discoveryComplete = false;
 
-		const checkCompletion = () => {
-			if (discoveryComplete && filesProcessed === totalFiles) {
-				updateSteps("Unzipping files", 100, "All files extracted successfully.");
-				resolve(extractedFiles);
-			}
-		};
+        const checkCompletion = () => {
+            if (discoveryComplete && filesProcessed === totalFiles) {
+                updateSteps(
+                    "Unzipping files",
+                    100,
+                    "All files extracted successfully.",
+                );
+                resolve(extractedFiles);
+            }
+        };
 
-		const mainUnzipper = new Unzip((stream) => {
-			// stream is FFlateUnzipFile
-			const filePath = stream.name;
+        const mainUnzipper = new Unzip((stream) => {
+            // stream is FFlateUnzipFile
+            const filePath = stream.name;
 
-			if (filePath.endsWith("/")) {
-				// Skip directories
-				return;
-			}
+            if (filePath.endsWith("/")) {
+                // Skip directories
+                return;
+            }
 
-			const chunks: Uint8Array[] = [];
-			let totalSize = 0;
+            const chunks: Uint8Array[] = [];
+            let totalSize = 0;
 
-			totalFiles++; // Increment total files count for each stream created
-			stream.ondata = (err, chunk, final) => {
-				/*if (err) {
+            totalFiles++; // Increment total files count for each stream created
+            stream.ondata = (err, chunk, final) => {
+                /*if (err) {
                     console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
                     // Stop further file discoveries by this Unzip instance, as state might be corrupt.
                     mainUnzipper.onfile = () => {};
@@ -91,128 +117,259 @@ export const extractZipToFiles = async (
                     return;
                 } */
 
-				if (chunk) {
-					chunks.push(chunk);
-					totalSize += chunk.length;
-				}
+                if (chunk) {
+                    chunks.push(chunk);
+                    totalSize += chunk.length;
+                }
 
-				if (final) {
-					const completeFileBuffer = new Uint8Array(totalSize);
-					let offset = 0;
-					for (const bufferChunk of chunks) {
-						completeFileBuffer.set(bufferChunk, offset);
-						offset += bufferChunk.length;
-					}
+                if (final) {
+                    const completeFileBuffer = new Uint8Array(totalSize);
+                    let offset = 0;
+                    for (const bufferChunk of chunks) {
+                        completeFileBuffer.set(bufferChunk, offset);
+                        offset += bufferChunk.length;
+                    }
 
-					const newFile = new File([completeFileBuffer], filePath, { type: getFileType(filePath) });
-					Object.defineProperty(newFile, "webkitRelativePath", {
-						value: filePath.startsWith("/") ? filePath : `/${filePath}`,
-						writable: false,
-					}); // this was miserable to rememebr to find
-					extractedFiles.push(newFile);
-					filesProcessed++;
+                    const newFile = new File([completeFileBuffer], filePath, {
+                        type: getFileType(filePath),
+                    });
+                    Object.defineProperty(newFile, "webkitRelativePath", {
+                        value: filePath.startsWith("/")
+                            ? filePath
+                            : `/${filePath}`,
+                        writable: false,
+                    }); // this was miserable to rememebr to find
+                    extractedFiles.push(newFile);
+                    filesProcessed++;
 
-					checkCompletion();
-				}
-			};
+                    checkCompletion();
+                }
+            };
 
-			stream.start();
-		});
+            stream.start();
+        });
 
-		mainUnzipper.register(AsyncUnzipInflate);
+        mainUnzipper.register(AsyncUnzipInflate);
 
-		mainUnzipper.push(zipData, true);
-		discoveryComplete = true;
+        mainUnzipper.push(zipData, true);
+        discoveryComplete = true;
 
-		checkCompletion(); // for when no files in zip
-	});
+        checkCompletion(); // for when no files in zip
+    });
 };
 
 // insta messages are encoded, like urls and stuff like that so we have to parse it like this
 export const decodeU8String = (encodedText: string): string => {
-	try {
-		const decoder = new TextDecoder("utf-8");
-		const bytes = new Uint8Array(encodedText.length);
-		for (let i = 0; i < encodedText.length; i++) {
-			bytes[i] = encodedText.charCodeAt(i);
-		}
-		return decoder.decode(bytes);
-	} catch (error) {
-		console.error("Decoding error:", error);
-		return encodedText; // Fallback in case of errors
-	}
+    try {
+        const decoder = new TextDecoder("utf-8");
+        const bytes = new Uint8Array(encodedText.length);
+        for (let i = 0; i < encodedText.length; i++) {
+            bytes[i] = encodedText.charCodeAt(i);
+        }
+        return decoder.decode(bytes);
+    } catch (error) {
+        console.error("Decoding error:", error);
+        return encodedText; // Fallback in case of errors
+    }
 };
 
 export const requireDataLoaded = () => {
-	return localStorage.getItem("loaded") === "true";
+    return localStorage.getItem("loaded") === "true";
 };
 
-export const processMediaFilesToOPFSBatched = async (
-	mediaFiles: StoredMediaMetadata[],
+export const processMediaFilesBatched = async (
+    mediaFiles: StoredMediaMetadata[],
+    updateProgress?: (progress: number, statusText?: string) => void,
 ): Promise<StoredMediaMetadata[]> => {
-	const batchSize = 150;
-	const results: StoredMediaMetadata[] = [];
+    const isOPFS = opfsSupported();
 
-	const opfs = await navigator.storage.getDirectory();
-	const mediaDir = await opfs.getDirectoryHandle("media", { create: true });
+    const batchSize = isOPFS ? 150 : 50; // Smaller batches for IndexedDB
+    const results: StoredMediaMetadata[] = [];
 
-	for (let i = 0; i < mediaFiles.length; i += batchSize) {
-		const batch = mediaFiles.slice(i, i + batchSize);
+    let mediaDir: FileSystemDirectoryHandle | undefined;
+    if (isOPFS) {
+        const opfs = await navigator.storage.getDirectory();
+        mediaDir = await opfs.getDirectoryHandle("media", { create: true });
+    }
 
-		const batchResults = await Promise.all(
-			batch.map(async (media) => {
-				const opfsFileName = await saveMediaFile(mediaDir, media);
+    for (let i = 0; i < mediaFiles.length; i += batchSize) {
+        const batch = mediaFiles.slice(i, i + batchSize);
 
-				return {
-					uri: media.uri,
-					timestamp: media.timestamp,
-					type: media.type,
-					opfsFileName,
-				};
-			}),
-		);
+        if (updateProgress) {
+            const progress = (i / mediaFiles.length) * 100;
+            updateProgress(progress, `Processing batch ${Math.floor(i / batchSize) + 1}...`);
+        }
 
-		results.push(...batchResults);
-	}
+        if (isOPFS) {
+            // OPFS batch processing
+            const batchResults = await Promise.all(
+                batch.map(async (media) => {
+                    const opfsFileName = await saveMediaFile(mediaDir!, media);
+                    return {
+                        uri: media.uri,
+                        timestamp: media.timestamp,
+                        type: media.type,
+                        fileName: opfsFileName,
+                    };
+                }),
+            );
+            results.push(...batchResults);
+        } else {
+            // indexeddb
+            const virtualFiles: StoredVirtualFile[] = [];
+            const processedMedia: StoredMediaMetadata[] = [];
 
-	return results;
+            for (const media of batch) {
+                if (!media.data || !(media.data instanceof File)) {
+                    continue;
+                }
+
+                const flatFileName = media.uri
+                    .replace(/^\/+/, "")
+                    .replace(/\//g, "_")
+                    .replace(/[<>:"|?*]/g, "_");
+
+                const blob = new Blob([await media.data.arrayBuffer()], {
+                    type: media.data.type,
+                });
+
+                virtualFiles.push({
+                    fileName: flatFileName,
+                    blob,
+                    timestamp: media.timestamp,
+                    size: blob.size,
+                });
+
+                processedMedia.push({
+                    uri: media.uri,
+                    timestamp: media.timestamp,
+                    type: media.type,
+                    fileName: flatFileName,
+                });
+            }
+
+            // Bulk insert virtual files
+            if (virtualFiles.length > 0) {
+                await db.virtualFS.bulkPut(virtualFiles);
+            }
+            results.push(...processedMedia);
+        }
+    }
+
+    if (updateProgress) {
+        updateProgress(100, "Media processing complete");
+    }
+
+    return results;
 };
 
 // "your_instagram_activity/messages/inbox/{conversation_name}_{user_id}/photos/{unique_id}.{file_extension}"
 
-// TODO: implement an abstraction where we can fallback to IndexedDB if OPFS is not available
 export const saveMediaFile = async (
-	mediaDir: FileSystemDirectoryHandle,
-	media: StoredMediaMetadata,
+    mediaDir: FileSystemDirectoryHandle,
+    media: StoredMediaMetadata,
 ): Promise<string> => {
-	if (!media.data || !(media.data instanceof File)) {
-		throw new Error(`No file data provided for media file: ${media.uri}`);
-	}
+    if (!media.data || !(media.data instanceof File)) {
+        throw new Error(`No file data provided for media file: ${media.uri}`);
+    }
 
-	// Flatten the URI into a single filename
-	const flatFileName = media.uri
-		.replace(/^\/+/, "") // Remove leading slashes
-		.replace(/\//g, "_") // Replace slashes with underscores
-		.replace(/[<>:"|?*]/g, "_"); // Replace invalid filesystem chars
+    // Flatten the URI into a single filename
+    const flatFileName = media.uri
+        .replace(/^\/+/, "") // Remove leading slashes
+        .replace(/\//g, "_") // Replace slashes with underscores
+        .replace(/[<>:"|?*]/g, "_"); // Replace invalid filesystem chars
 
-	const fileHandle = await mediaDir.getFileHandle(flatFileName, { create: true });
-	const writer = await fileHandle.createWritable();
+    const fileHandle = await mediaDir.getFileHandle(flatFileName, {
+        create: true,
+    });
+    const writer = await fileHandle.createWritable();
 
-	// Stream file directly without loading into memory
-	const stream = media.data.stream();
-	await stream.pipeTo(writer);
+    // Stream file directly without loading into memory
+    const stream = media.data.stream();
+    await stream.pipeTo(writer);
 
-	return flatFileName;
+    return flatFileName;
 };
 
-export const getSavedMediaFile = async (fileName: string): Promise<File | null> => {
-	try {
-		const opfs = await navigator.storage.getDirectory();
-		const mediaDir = await opfs.getDirectoryHandle("media", { create: false });
-		const fileHandle = await mediaDir.getFileHandle(fileName, { create: false });
-		return await fileHandle.getFile();
-	} catch (error) {
-		console.warn(`File ${fileName} not found in OPFS:`, error);
-		return null;
-	}
+export const saveMediaFileToIndexedDB = async (
+    media: StoredMediaMetadata,
+): Promise<string> => {
+    if (!media.data || !(media.data instanceof File)) {
+        throw new Error(`No file data provided for media file: ${media.uri}`);
+    }
+
+    const flatFileName = media.uri
+        .replace(/^\/+/, "")
+        .replace(/\//g, "_")
+        .replace(/[<>:"|?*]/g, "_");
+
+    const blob = new Blob([await media.data.arrayBuffer()], {
+        type: media.data.type,
+    });
+
+    const virtualFile: StoredVirtualFile = {
+        fileName: flatFileName,
+        blob,
+        timestamp: media.timestamp,
+        size: blob.size,
+    };
+
+    await db.virtualFS.put(virtualFile);
+    return flatFileName;
+};
+
+export const getSavedMediaFile = async (
+    fileName: string,
+): Promise<File | null> => {
+    if (opfsSupported()) {
+        try {
+            const opfs = await navigator.storage.getDirectory();
+            const mediaDir = await opfs.getDirectoryHandle("media", {
+                create: false,
+            });
+            const fileHandle = await mediaDir.getFileHandle(fileName, {
+                create: false,
+            });
+            return await fileHandle.getFile();
+        } catch (error) {
+            console.warn(`File ${fileName} not found in OPFS:`, error);
+            return null;
+        }
+    } else {
+        try {
+            const virtualFile = await db.virtualFS.get(fileName);
+            if (virtualFile) {
+                return new File([virtualFile.blob], fileName, {
+                    type: virtualFile.blob.type,
+                    lastModified: virtualFile.timestamp.getTime(),
+                });
+            }
+            return null;
+        } catch (error) {
+            console.warn(`File ${fileName} not found in IndexedDB:`, error);
+            return null;
+        }
+    }
+};
+
+export const getMediaFileFromMetadata = async (
+    media: StoredMediaMetadata,
+): Promise<File | null> => {
+    if (!media.fileName) {
+        console.warn("No storage filename found for media:", media.uri);
+        return null;
+    }
+
+    return await getSavedMediaFile(media.fileName);
+};
+
+export const createMediaURL = async (
+    media: StoredMediaMetadata,
+): Promise<string | null> => {
+    const file = await getMediaFileFromMetadata(media);
+    if (!file) {
+        return null;
+    }
+
+    return URL.createObjectURL(file);
 };

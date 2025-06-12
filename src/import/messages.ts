@@ -1,6 +1,6 @@
 import { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "../db/database";
 import { MessageFile } from "../types/message";
-import { decodeU8String, findFile, processMediaFilesToOPFSBatched } from "../utils";
+import { decodeU8String, findFile, processMediaFilesBatched } from "../utils";
 import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
@@ -158,7 +158,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	let processedMediaFiles: StoredMediaMetadata[] = [];
 	if (allMediaFiles.length > 0) {
-		processedMediaFiles = await processMediaFilesToOPFSBatched(allMediaFiles);
+		processedMediaFiles = await processMediaFilesBatched(allMediaFiles);
 	}
 
 	await database.transaction("rw", [database.conversations, database.messages, database.media_metadata], async () => {
