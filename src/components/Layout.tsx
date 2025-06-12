@@ -1,8 +1,30 @@
-import { type ParentComponent } from "solid-js";
+import { type ParentComponent, createSignal, onMount } from "solid-js";
 import { A } from "@solidjs/router";
+import { requireDataLoaded } from "../utils";
 import logo from "../assets/logo.svg";
 
 const Layout: ParentComponent = (props) => {
+	const [dataLoaded, setDataLoaded] = createSignal(false);
+
+	onMount(() => {
+		const loaded = requireDataLoaded();
+		setDataLoaded(loaded);
+		
+		// Listen for storage changes to update the state
+		const handleStorageChange = () => {
+			setDataLoaded(requireDataLoaded());
+		};
+		
+		window.addEventListener('storage', handleStorageChange);
+		// Also check periodically since localStorage changes in same tab don't trigger storage event
+		const interval = setInterval(handleStorageChange, 1000);
+		
+		return () => {
+			window.removeEventListener('storage', handleStorageChange);
+			clearInterval(interval);
+		};
+	});
+
 	return (
 		<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col">
 			<header class="bg-gray-800/80 backdrop-blur border-b border-gray-700">
@@ -14,18 +36,36 @@ const Layout: ParentComponent = (props) => {
 						</A>
 
 						<div class="flex items-center space-x-6">
-							<A
-								href="/analysis"
-								class="text-gray-300 hover:text-white transition-colors font-medium"
-							>
-								Analysis
-							</A>
-							<A
-								href="/export"
-								class="text-gray-300 hover:text-white transition-colors font-medium"
-							>
-								Export
-							</A>
+							{dataLoaded() ? (
+								<A
+									href="/analysis"
+									class="text-gray-300 hover:text-white transition-colors font-medium"
+								>
+									Analysis
+								</A>
+							) : (
+								<span
+									class="text-gray-500 cursor-not-allowed font-medium"
+									title="Import data first to access analysis"
+								>
+									Analysis
+								</span>
+							)}
+							{dataLoaded() ? (
+								<A
+									href="/export"
+									class="text-gray-300 hover:text-white transition-colors font-medium"
+								>
+									Export
+								</A>
+							) : (
+								<span
+									class="text-gray-500 cursor-not-allowed font-medium"
+									title="Import data first to access export"
+								>
+									Export
+								</span>
+							)}
 						</div>
 					</nav>
 				</div>

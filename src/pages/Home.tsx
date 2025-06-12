@@ -78,118 +78,213 @@ const Home: Component = () => {
 	};
 
 	return (
-	    <Layout>
-			<div class="container mx-auto p-4">
-				<div class="max-w-3xl mx-auto">
-					<div class="flex flex-col items-center mb-8">
-						<img src={logo} alt="Instagram Data Explorer Logo" class="w-24 h-24 mb-4" />
-						<h1 class="text-4xl font-bold text-center mb-2 text-white">Instagram Data Explorer</h1>
-						<p class="text-gray-300 text-center">
-							Upload your Instagram data package to analyze your account activity
+		<Layout>
+			<div class="container mx-auto p-6 max-w-4xl">
+				{/* Header */}
+				<div class="text-center mb-12">
+					<img src={logo} alt="Scrollback Logo" class="w-20 h-20 mx-auto mb-6" />
+					<h1 class="text-4xl font-bold text-white mb-4">Scrollback</h1>
+					<p class="text-xl text-gray-300 max-w-2xl mx-auto">
+					    Upload your Instagram data package to analyze your account activity
+					</p>
+				</div>
+
+				{/* Import Progress */}
+				<Show when={isImporting()}>
+					<div class="mb-8 p-6 bg-gray-800 rounded-lg border border-gray-700">
+						<ImportProgress steps={importSteps()} onStop={handleStopImport} />
+					</div>
+				</Show>
+
+				{/* Abort Message */}
+				<Show when={showAbortMessage()}>
+					<div class="mb-8 p-4 bg-yellow-900/30 rounded-lg border border-yellow-700/50">
+						<div class="flex items-center space-x-3">
+							<div class="text-yellow-400 text-xl">⚠️</div>
+							<div>
+								<h3 class="text-lg font-semibold text-yellow-400 mb-1">Import Stopped</h3>
+								<p class="text-yellow-200 text-sm">The import process was cancelled. You can try again with your data files.</p>
+							</div>
+						</div>
+					</div>
+				</Show>
+
+				{/* Data Ready State */}
+				<Show when={dataLoaded() && !isImporting()}>
+					<div class="mb-8 p-8 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/30">
+						<div class="text-center">
+							<div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+								<div class="text-2xl">✨</div>
+							</div>
+							<h2 class="text-2xl font-bold text-white mb-3">Data Ready!</h2>
+							<p class="text-gray-300 mb-6 max-w-md mx-auto">
+								Your Instagram data has been successfully imported and is ready for analysis.
+							</p>
+							<div class="flex flex-col sm:flex-row gap-3 justify-center">
+								<button
+									class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+									onClick={() => navigate("/analysis")}
+								>
+									📊 View Analysis
+								</button>
+								<button
+									class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-gray-600"
+									onClick={async () => {
+										setIsClearing(true);
+										await clearData();
+										setDataLoaded(false);
+										setIsClearing(false);
+									}}
+									disabled={isClearing()}
+								>
+									{isClearing() ? (
+										<div class="flex items-center justify-center">
+											<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+											Clearing...
+										</div>
+									) : (
+										"🗑️ Clear Data"
+									)}
+								</button>
+							</div>
+						</div>
+					</div>
+				</Show>
+
+				{/* Upload Section */}
+				<Show when={!dataLoaded() && !isImporting()}>
+					{/* Upload Area */}
+					<div class="mb-8 border-2 border-dashed border-gray-600 bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-12 text-center rounded-lg hover:border-gray-500 transition-all duration-300">
+						<input
+							type="file"
+							accept=".zip"
+							id="zipPicker"
+							class="hidden"
+							disabled={isImporting() || opfsSupported() == undefined}
+							onChange={(e) => handleFiles(e.currentTarget.files!)}
+						/>
+						<input
+							type="file"
+							/* @ts-expect-error */
+							webkitdirectory
+							directory
+							multiple
+							id="folderPicker"
+							class="hidden"
+							disabled={isImporting() || opfsSupported() == undefined}
+							onChange={(e) => handleFiles(e.currentTarget.files!)}
+						/>
+
+						<div class="text-6xl mb-6 text-gray-500">📁</div>
+						<h3 class="text-2xl font-bold text-white mb-4">Upload Your Instagram Data</h3>
+						<p class="text-gray-400 mb-8 max-w-md mx-auto">
+							Upload the zip file or extracted folder from your Instagram data download
 						</p>
+
+						<div class="flex flex-col sm:flex-row gap-4 justify-center">
+							<label
+								for="zipPicker"
+								class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+							>
+								<span class="mr-2">📦</span>
+								Select Zip File
+							</label>
+							<label
+								for="folderPicker"
+								class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+							>
+								<span class="mr-2">📂</span>
+								Select Folder
+							</label>
+						</div>
 					</div>
 
-					<Show when={isImporting()}>
-						<div class="mb-6 p-6 bg-gray-800 rounded-lg border border-gray-700">
-							<ImportProgress steps={importSteps()} onStop={handleStopImport} />
-						</div>
-					</Show>
-
-					<Show when={showAbortMessage()}>
-						<div class="mb-6 p-4 bg-yellow-800 rounded-lg border border-yellow-700">
-							<div class="text-center">
-								<div class="text-2xl mb-2">⚠️</div>
-								<h3 class="text-lg font-bold text-white mb-1">Import Stopped</h3>
-								<p class="text-yellow-300">The import process was cancelled. You can try again with your data files.</p>
+					{/* How to Get Instagram Data */}
+					<div class="mb-8 p-6 bg-blue-900/20 rounded-lg border border-blue-700/30">
+						<h2 class="text-xl font-semibold text-blue-400 mb-4 flex items-center">
+							<span class="mr-2">📋</span>
+							How to Download Your Instagram Data
+						</h2>
+						<div class="space-y-3 text-gray-300 text-sm">
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">1.</span>
+								<div>
+									Go to{" "}
+									<a href="https://accountscenter.instagram.com/info_and_permissions/"
+									   target="_blank" rel="noopener noreferrer"
+									   class="text-blue-400 hover:text-blue-300 underline">
+										Instagram Account Center
+									</a>
+								</div>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">2.</span>
+								<span>Click "Download your information"</span>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">3.</span>
+								<span>Select "All available information" or choose specific data types</span>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">4.</span>
+								<span>Choose your preferred date range</span>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">5.</span>
+								<span>Select "Low" media quality for better performance</span>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">6.</span>
+								<span class="font-semibold text-blue-300">
+									IMPORTANT: Make sure the format is set to JSON (not HTML)
+								</span>
+							</div>
+							<div class="flex items-start space-x-3">
+								<span class="text-blue-400 font-semibold">6.</span>
+								<span>Check your email for a notification that your data package is ready for download</span>
 							</div>
 						</div>
-					</Show>
+					</div>
 
-					<Show when={dataLoaded() && !isImporting()}>
-						<div class="mb-6 p-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-blue-500/20 shadow-xl">
-							<div class="text-center">
-								<div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-									<div class="text-2xl">✨</div>
-								</div>
-								<h2 class="text-2xl font-bold mb-3 text-white">Data Ready!</h2>
-								<p class="text-gray-300 mb-6 text-lg max-w-md mx-auto">
-									Your Instagram data has been successfully imported and is ready for analysis.
+					{/* Limitations */}
+					<div class="mb-8 p-6 bg-orange-900/20 rounded-lg border border-orange-700/30">
+						<h2 class="text-xl font-semibold text-orange-400 mb-4 flex items-center">
+							<span class="mr-2">⚠️</span>
+							Known Limitations
+						</h2>
+						<ul class="space-y-2 text-gray-300 text-sm">
+							<li class="flex items-start space-x-2">
+								<span class="text-orange-400">•</span>
+								<span>Instagram frequently changes their data format - we try to stay updated but some files may not parse correctly</span>
+							</li>
+							<li class="flex items-start space-x-2">
+								<span class="text-orange-400">•</span>
+								<span>Processing large datasets can be slow and memory-intensive</span>
+							</li>
+							<li class="flex items-start space-x-2">
+								<span class="text-orange-400">•</span>
+								<span>Instagram's data export can be incomplete or contain inconsistencies</span>
+							</li>
+							<li class="flex items-start space-x-2">
+								<span class="text-orange-400">•</span>
+								<span>Some features may not work on older browsers or mobile devices</span>
+							</li>
+						</ul>
+					</div>
+
+					{/* Privacy & Open Source Notice */}
+					<div class="mb-8 p-6 bg-green-900/20 rounded-lg border border-green-700/30">
+						<div class="flex items-start space-x-3">
+							<div class="text-green-400 text-xl">🔒</div>
+							<div>
+								<h3 class="text-lg font-semibold text-green-400 mb-2">Privacy First</h3>
+								<p class="text-gray-300 text-sm leading-relaxed">
+									Your data never leaves your device. All processing happens locally in your browser.
 								</p>
-								<div class="flex flex-col sm:flex-row gap-3 justify-center">
-									<button
-										class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-										onClick={() => navigate("/analysis")}
-									>
-										📊 View Analysis
-									</button>
-									<button
-										class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 border border-gray-600"
-										onClick={async () => {
-											setIsClearing(true);
-											await clearData();
-											setDataLoaded(false);
-											setIsClearing(false);
-										}}
-										disabled={isClearing()}
-									>
-										{isClearing() ? (
-											<div class="flex items-center justify-center">
-												<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-												Clearing...
-											</div>
-										) : (
-											"🗑️ Clear Data"
-										)}
-									</button>
-								</div>
 							</div>
 						</div>
-					</Show>
-
-					<Show when={!dataLoaded() && !isImporting()}>
-						<div class="border-2 border-dashed border-gray-500 bg-gradient-to-br from-gray-800 to-gray-900 p-12 text-center rounded-xl hover:border-blue-400 transition-all duration-300 shadow-lg">
-							<input
-								type="file"
-								/* @ts-expect-error */
-								webkitdirectory
-								directory
-								multiple
-								id="folderPicker"
-								class="hidden"
-								disabled={isImporting() || opfsSupported() == undefined}
-								onChange={(e) => handleFiles(e.currentTarget.files!)}
-							/>
-							<input
-								type="file"
-								accept=".zip"
-								id="zipPicker"
-								class="hidden"
-								disabled={isImporting() || opfsSupported() == undefined}
-								onChange={(e) => handleFiles(e.currentTarget.files!)}
-							/>
-
-							<div class="text-7xl mb-6 animate-pulse">📁</div>
-							<div class="text-2xl font-bold mb-4 text-white">Upload your Instagram data</div>
-							<div class="text-gray-300 mb-8 text-lg max-w-md mx-auto">
-								Upload your data folder or the zip file you downloaded from Instagram to get started
-							</div>
-							<div class="flex flex-col sm:flex-row gap-4 justify-center">
-								<label
-									for="folderPicker"
-									class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-								>
-									📂 Select Folder
-								</label>
-								<label
-									for="zipPicker"
-									class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-								>
-									📦 Select Zip File
-								</label>
-							</div>
-						</div>
-					</Show>
-				</div>
+					</div>
+				</Show>
 			</div>
 		</Layout>
 	);

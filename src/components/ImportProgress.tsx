@@ -65,8 +65,7 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 								}}
 								title="Stop import process"
 							>
-								<span>⏹️</span>
-								Stop
+								Cancel
 							</button>
 						</Show>
 					</div>
