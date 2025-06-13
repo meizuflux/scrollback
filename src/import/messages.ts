@@ -8,7 +8,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	onProgress(0, "Finding message files...");
 
 	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
-	const messageFiles = files.filter(file => file.name.endsWith(".json") && file.name.lastIndexOf("/message_") !== -1)
+	const messageFiles = files.filter(file => file.name.endsWith(".json") && file.name.lastIndexOf("message_") !== -1)
 
 	if (messageFiles.length === 0) {
 		onProgress(100, "No message files found.");

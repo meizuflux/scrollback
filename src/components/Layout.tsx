@@ -9,20 +9,6 @@ const Layout: ParentComponent = (props) => {
 	onMount(() => {
 		const loaded = isDataLoaded();
 		setDataLoaded(loaded);
-
-		// Listen for storage changes to update the state
-		const handleStorageChange = () => {
-			setDataLoaded(isDataLoaded());
-		};
-
-		window.addEventListener('storage', handleStorageChange);
-		// Also check periodically since localStorage changes in same tab don't trigger storage event
-		const interval = setInterval(handleStorageChange, 1000);
-
-		return () => {
-			window.removeEventListener('storage', handleStorageChange);
-			clearInterval(interval);
-		};
 	});
 
 	return (
