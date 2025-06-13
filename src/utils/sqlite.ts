@@ -12,7 +12,7 @@ interface TableDefinition {
 	name: string;
 	label: string;
 	description: string;
-	defaultEnabled: boolean;
+	default: boolean;
 	schema: string;
 	indexes?: string[];
 	fetchData: () => Promise<any[]>;
@@ -24,7 +24,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "main_user",
 		label: "Main User",
 		description: "Your account information",
-		defaultEnabled: true,
+		default: true,
 		schema: `CREATE TABLE main_user (
 			username TEXT PRIMARY KEY,
 			name TEXT,
@@ -78,7 +78,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "users",
 		label: "Users",
 		description: "All users and their relationship data",
-		defaultEnabled: true,
+		default: true,
 		schema: `CREATE TABLE users (
 			username TEXT PRIMARY KEY,
 			is_blocked BOOLEAN,
@@ -145,7 +145,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "conversations",
 		label: "Conversations",
 		description: "Conversation metadata",
-		defaultEnabled: true,
+		default: true,
 		schema: `CREATE TABLE conversations (
 			title TEXT PRIMARY KEY,
 			participants TEXT,
@@ -174,7 +174,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "messages",
 		label: "Messages",
 		description: "All messages with content and media",
-		defaultEnabled: true,
+		default: true,
 		schema: `CREATE TABLE messages (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			conversation_title TEXT,
@@ -224,7 +224,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "media_metadata",
 		label: "Media Metadata",
 		description: "Photo, video, and audio file information",
-		defaultEnabled: true,
+		default: true,
 		schema: `CREATE TABLE media_metadata (
 			uri TEXT PRIMARY KEY,
 			timestamp TIMESTAMP,
@@ -257,7 +257,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "posts",
 		label: "Posts",
 		description: "Your posts and archived content",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE posts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			title TEXT,
@@ -289,7 +289,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "stories",
 		label: "Stories",
 		description: "Your story content",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE stories (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			title TEXT,
@@ -319,7 +319,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "comments",
 		label: "Comments",
 		description: "Comments you've made",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE comments (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			media_owner TEXT,
@@ -349,7 +349,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "liked_posts",
 		label: "Liked Posts",
 		description: "Posts you've liked",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE liked_posts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			media_owner TEXT,
@@ -379,7 +379,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "saved_posts",
 		label: "Saved Posts",
 		description: "Posts you've saved",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE saved_posts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			media_owner TEXT,
@@ -409,7 +409,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		name: "profile_changes",
 		label: "Profile Changes",
 		description: "History of profile modifications",
-		defaultEnabled: true,
+		default: false,
 		schema: `CREATE TABLE profile_changes (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			changed TEXT,
@@ -444,7 +444,7 @@ export const getDefaultTables = (): TableOption[] => {
 			name: table.name,
 			label: table.label,
 			description: table.description,
-			enabled: table.defaultEnabled
+			enabled: table.default
 		}));
 };
 
