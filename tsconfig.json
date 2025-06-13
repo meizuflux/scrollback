@@ -17,6 +17,20 @@
 
     /* Bundler mode */
     "moduleDetection": "force",
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/components/*": ["src/components/*"],
+      "@/assets/*": ["src/assets/*"],
+      "@/db/*": ["src/db/*"],
+      "@/import/*": ["src/import/*"],
+      "@/pages/*": ["src/pages/*"],
+      "@/types/*": ["src/types/*"],
+      "@/utils/*": ["src/utils/*"]
+    }
   },
-  "exclude": ["src/old/"]
+  "exclude": ["src/old/"],
+
 }

@@ -1,4 +1,4 @@
-import { db } from "../db/database";
+import { db } from "@/db/database";
 import { importUser, importContent, importProfileChanges } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";

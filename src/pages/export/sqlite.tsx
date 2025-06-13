@@ -1,18 +1,19 @@
-import { Component, createSignal, onMount, Show } from "solid-js";
+import { Component, createSignal, onMount, Show, For, createResource } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { db, StoredMediaMetadata, StoredMessage, StoredUser } from "../../db/database";
-import { Conversation } from "../../types/message";
-import Layout from "../../components/Layout";
-import { requireDataLoaded } from "../../utils";
+import Layout from "@/components/Layout";
 import initSqlJs from "sql.js";
 import sqliteWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
-import { Media } from "../../types/message";
+import {
+	TableOption,
+	getDefaultTables,
+	generateSchemaFromDb,
+	createTableStatements,
+	createIndexStatements,
+	fetchAllData,
+	insertTableData
+} from "@/utils/sqlite";
+import { opfsSupported, requireDataLoaded } from "@/utils";
 
-// TODO: allow for more granular control over what data is exported.
-// TODO: repl to allow user to inspect data without downloading it
-// TODO: add error handling
-// TODO: allow embedding of media files as blobs? might run into memory limits.
-// TODO: allow for customizing the output file name
 const SqliteExport: Component = () => {
 	const navigate = useNavigate();
 	const [exportProgress, setExportProgress] = createSignal(0);
@@ -20,210 +21,138 @@ const SqliteExport: Component = () => {
 	const [isExporting, setIsExporting] = createSignal(false);
 	const [isComplete, setIsComplete] = createSignal(false);
 	const [downloadUrl, setDownloadUrl] = createSignal<string>("");
+	const [fileName, setFileName] = createSignal("instagram-data.sqlite");
+	const [fileSize, setFileSize] = createSignal<number>(0);
+	const [showAdvanced, setShowAdvanced] = createSignal(false);
+	const [showSchema, setShowSchema] = createSignal(false);
+	const [generatedSchema, setGeneratedSchema] = createSignal("");
+	const [sqlInstance, setSqlInstance] = createSignal<any>(null);
+	const [copyButtonText, setCopyButtonText] = createSignal("Copy");
+
+	// Preload SQL.js WASM
+	const [wasmLoaded] = createResource(async () => {
+		try {
+			const SQL = await initSqlJs({
+				locateFile: () => sqliteWasmUrl
+			});
+			setSqlInstance(SQL);
+			return true;
+		} catch (error) {
+			console.error("Failed to load SQL.js:", error);
+			return false;
+		}
+	});
+
+	const [tableOptions, setTableOptions] = createSignal<TableOption[]>(getDefaultTables());
+
+	// Update schema whenever table options change
+	const updateSchema = () => {
+		const enabledTables = tableOptions().filter(t => t.enabled).map(t => t.name);
+		setGeneratedSchema(generateSchemaFromDb(enabledTables));
+	};
 
 	onMount(() => {
 		if (!requireDataLoaded()) {
 			navigate("/", { replace: true });
 		}
+		// Initialize schema
+		updateSchema();
 	});
+
+	const toggleTable = (tableName: string) => {
+		setTableOptions(prev => prev.map(table =>
+			table.name === tableName
+				? { ...table, enabled: !table.enabled }
+				: table
+		));
+		updateSchema();
+	};
+
+	const selectAllTables = () => {
+		setTableOptions(prev => prev.map(table => ({ ...table, enabled: true })));
+		updateSchema();
+	};
+
+	const selectNoTables = () => {
+		setTableOptions(prev => prev.map(table => ({ ...table, enabled: false })));
+		updateSchema();
+	};
 
 	const exportToSqlite = async () => {
 		setIsExporting(true);
 		setIsComplete(false);
 		setExportProgress(0);
-		setExportStatus("Loading SQL.js...");
+		setExportStatus("Initializing...");
+		setFileSize(0);
+
+		const enabledTables = tableOptions().filter(t => t.enabled).map(t => t.name);
+		if (enabledTables.length === 0) {
+			setExportStatus("Error: No tables selected for export");
+			setIsExporting(false);
+			return;
+		}
+
+		if (!wasmLoaded()) {
+			setExportStatus("Error: SQL.js WASM not loaded yet");
+			setIsExporting(false);
+			return;
+		}
 
 		try {
-			const SQL = await initSqlJs({
-				locateFile: () => sqliteWasmUrl
-			});
-			setExportProgress(10);
+			const SQL = sqlInstance();
+			setExportProgress(5);
 
 			setExportStatus("Creating database...");
 			const sqliteDb = new SQL.Database();
-			setExportProgress(15);
+			setExportProgress(10);
 
 			setExportStatus("Creating tables...");
-			sqliteDb.run(`
-				CREATE TABLE users (
-					username TEXT PRIMARY KEY,
-					is_blocked BOOLEAN,
-					blocked_timestamp TIMESTAMP,
-					is_close_friend BOOLEAN,
-					close_friend_timestamp TIMESTAMP,
-					requested_to_follow_you BOOLEAN,
-					requested_to_follow_you_timestamp TIMESTAMP,
-					is_follower BOOLEAN,
-					follower_timestamp TIMESTAMP,
-					is_following BOOLEAN,
-					following_timestamp TIMESTAMP,
-					hidden_story_from BOOLEAN,
-					hidden_story_from_timestamp TIMESTAMP,
-					pending_follow_request BOOLEAN,
-					pending_follow_request_timestamp TIMESTAMP,
-					recently_unfollowed BOOLEAN,
-					recently_unfollowed_timestamp TIMESTAMP,
-					stories_liked INTEGER
-				);
-			`);
+			const tableStatements = createTableStatements(enabledTables);
+			tableStatements.forEach(statement => sqliteDb.run(statement));
 
-			sqliteDb.run(`
-				CREATE TABLE messages (
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					conversation_title TEXT,
-					sender_name TEXT,
-					timestamp TIMESTAMP,
-					content TEXT,
-					is_system_message BOOLEAN,
-					media_files TEXT,
-					reactions TEXT,
-					share_link TEXT,
-					share_text TEXT
-				);
-			`);
+			const indexStatements = createIndexStatements(enabledTables);
+			indexStatements.forEach(statement => sqliteDb.run(statement));
 
-			sqliteDb.run(`
-				CREATE TABLE conversations (
-					title TEXT PRIMARY KEY,
-					participants TEXT,
-					is_group BOOLEAN
-				);
-			`);
-			setExportProgress(20);
+			// Generate and store the actual schema
+			setGeneratedSchema(generateSchemaFromDb(enabledTables));
+			setExportProgress(15);
 
 			setExportStatus("Fetching data from local database...");
-			const allUsers: StoredUser[] = await db.users.toArray();
-			const allMessages: StoredMessage[] = await db.messages.toArray();
-			const allMediaMetadata: StoredMediaMetadata[] = await db.media_metadata.toArray();
-			const allConversations: Conversation[] = await db.conversations.toArray();
+			const data = await fetchAllData(enabledTables);
 
-			const mediaMetadataMap = new Map<string, StoredMediaMetadata>();
-			for (const meta of allMediaMetadata) {
-				mediaMetadataMap.set(meta.uri, meta);
-			}
-			setExportProgress(30);
+			const mediaMetadataMap = new Map(data.mediaMetadata.map(m => [m.uri, m]));
+			setExportProgress(20);
 
-			// Wait for the next tick to ensure the UI updates
-			await new Promise(resolve => setTimeout(resolve, 0));
+			// Export data for each enabled table with progress updates
+			setExportProgress(25);
 
-			setExportStatus("Exporting users...");
-			const userInsert = sqliteDb.prepare(`
-				INSERT INTO users (
-					username, is_blocked, blocked_timestamp, is_close_friend, close_friend_timestamp,
-					requested_to_follow_you, requested_to_follow_you_timestamp, is_follower, follower_timestamp,
-					is_following, following_timestamp, hidden_story_from, hidden_story_from_timestamp,
-					pending_follow_request, pending_follow_request_timestamp, recently_unfollowed, recently_unfollowed_timestamp,
-					stories_liked
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-			`);
-
-			for (let i = 0; i < allUsers.length; i++) {
-				const user = allUsers[i];
-				userInsert.run([
-					user.username,
-					user.blocked?.value ? 1 : 0,
-					user.blocked?.timestamp?.toISOString() || null,
-					user.close_friends?.value ? 1 : 0,
-					user.close_friends?.timestamp?.toISOString() || null,
-					user.requested_to_follow_you?.value ? 1 : 0,
-					user.requested_to_follow_you?.timestamp?.toISOString() || null,
-					user.follower?.value ? 1 : 0,
-					user.follower?.timestamp?.toISOString() || null,
-					user.following?.value ? 1 : 0,
-					user.following?.timestamp?.toISOString() || null,
-					user.hidden_story_from?.value ? 1 : 0,
-					user.hidden_story_from?.timestamp?.toISOString() || null,
-					user.pending_follow_request?.value ? 1 : 0,
-					user.pending_follow_request?.timestamp?.toISOString() || null,
-					user.recently_unfollowed?.value ? 1 : 0,
-					user.recently_unfollowed?.timestamp?.toISOString() || null,
-					user.stories_liked || 0
-				]);
-				if (i % 50 === 0 || i === allUsers.length - 1) {
-					setExportProgress(30 + Math.round(((i + 1) / allUsers.length) * 30));
-					await new Promise(resolve => setTimeout(resolve, 0));
+			await insertTableData(
+				sqliteDb,
+				enabledTables,
+				data,
+				mediaMetadataMap,
+				(tableName, progress) => {
+					setExportStatus(`Exporting ${tableName.toLowerCase()}...`);
+					// Map table progress (0-100) to overall progress (25-85)
+					const overallProgress = 25 + (progress * 0.6);
+					setExportProgress(Math.round(overallProgress));
 				}
-			}
-			userInsert.free();
-			setExportProgress(50);
+			);
 
-			setExportStatus("Exporting conversations...");
-			const conversationInsert = sqliteDb.prepare(`
-				INSERT INTO conversations (title, participants, is_group)
-				VALUES (?, ?, ?)
-			`);
-
-			for (let i = 0; i < allConversations.length; i++) {
-				const conversation = allConversations[i];
-				conversationInsert.run([
-					conversation.title,
-					JSON.stringify(conversation.participants),
-					conversation.is_group ? 1 : 0
-				]);
-				if (i % 25 === 0 || i === allConversations.length - 1) {
-					const progress = 50 + Math.round(((i + 1) / allConversations.length) * 10);
-					setExportProgress(progress);
-					await new Promise(resolve => setTimeout(resolve, 0));
-				}
-			}
-			conversationInsert.free();
-			setExportProgress(60);
-
-			setExportStatus("Exporting messages...");
-			const messageInsert = sqliteDb.prepare(`
-				INSERT INTO messages (
-					conversation_title, sender_name, timestamp, content, is_system_message,
-					media_files, reactions, share_link, share_text
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-			`);
-
-			for (let i = 0; i < allMessages.length; i++) {
-				const message = allMessages[i];
-				const mediaFileNames: string[] = [];
-
-				const processMediaArray = (mediaArray?: Media[]) => {
-					if (mediaArray) {
-						for (const mediaItem of mediaArray) {
-							const metadata = mediaMetadataMap.get(mediaItem.uri);
-							if (metadata?.fileName) {
-								mediaFileNames.push(metadata.fileName);
-							} else {
-								const uriParts = mediaItem.uri.split('/');
-								mediaFileNames.push(uriParts[uriParts.length - 1]);
-							}
-						}
-					}
-				};
-
-				processMediaArray(message.photos);
-				processMediaArray(message.videos);
-				processMediaArray(message.audio);
-
-				messageInsert.run([
-					message.conversation,
-					message.sender_name,
-					message.timestamp.toISOString(),
-					message.content || null,
-					message.isSystemMessage ? 1 : 0,
-					mediaFileNames.length > 0 ? JSON.stringify(mediaFileNames) : null,
-					message.reactions ? JSON.stringify(message.reactions) : null,
-					message.share?.link || null,
-				]);
-				if (i % 1000 === 0 || i === allMessages.length - 1) {
-					setExportProgress(60 + Math.round(((i + 1) / allMessages.length) * 30));
-					await new Promise(resolve => setTimeout(resolve, 0));
-				}
-			}
-			messageInsert.free();
 			setExportProgress(90);
+			setExportStatus("Finalizing database...");
 
-			setExportStatus("Serializing database...");
+			// Run VACUUM to optimize the database
+			sqliteDb.run("VACUUM;");
+
 			const binaryArray = sqliteDb.export();
 			sqliteDb.close();
 			setExportProgress(95);
 
+			setExportStatus("Preparing download...");
 			const blob = new Blob([binaryArray], { type: "application/x-sqlite3" });
 			setDownloadUrl(URL.createObjectURL(blob));
+			setFileSize(blob.size);
 
 			setExportProgress(100);
 			setExportStatus("Database ready for download!");
@@ -238,15 +167,51 @@ const SqliteExport: Component = () => {
 		}
 	};
 
+	const formatFileSize = (bytes: number): string => {
+		if (bytes === 0) return '0 B';
+		const k = 1024;
+		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	};
+
 	const downloadDatabase = () => {
 		if (!downloadUrl()) return;
 
 		const a = document.createElement("a");
 		a.href = downloadUrl();
-		a.download = "instagram-data.sqlite";
+		a.download = fileName();
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
+
+		// Show success feedback
+		setExportStatus("Download started!");
+		setTimeout(() => {
+			if (downloadUrl()) {
+				URL.revokeObjectURL(downloadUrl());
+				setDownloadUrl("");
+			}
+		}, 1000);
+	};
+
+	const copySchemaToClipboard = async () => {
+		const schema = generatedSchema();
+		if (!schema) {
+			setCopyButtonText("No schema");
+			setTimeout(() => setCopyButtonText("Copy"), 2000);
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(schema);
+			setCopyButtonText("Copied!");
+			setTimeout(() => setCopyButtonText("Copy"), 2000);
+		} catch (error) {
+			console.error("Failed to copy to clipboard:", error);
+			setCopyButtonText("Failed");
+			setTimeout(() => setCopyButtonText("Copy"), 2000);
+		}
 	};
 
 	return (
@@ -265,28 +230,172 @@ const SqliteExport: Component = () => {
 					</p>
 				</div>
 
-				<Show when={!isComplete() && !isExporting()}>
-					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-						<h3 class="text-xl font-semibold text-white mb-4">Generate SQL Database</h3>
-						<p class="text-gray-300 mb-6">
-							This will create a complete SQL dump of your imported Instagram data.
-						</p>
-						<button
-							class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded transition-colors"
-							onClick={exportToSqlite}
-						>
-							Generate Database
-						</button>
+				{/* WASM Loading Status */}
+				<Show when={wasmLoaded() === false}>
+					<div class="bg-red-800 border border-red-600 rounded-lg p-4 mb-6">
+						<span class="text-red-200">Failed to load SQL.js. Please refresh the page.</span>
 					</div>
 				</Show>
 
+				<div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+					{/* Table Selection */}
+					<div class="mb-6">
+						<div class="flex items-center justify-between mb-4">
+							<h4 class="text-lg font-medium text-white">Select Tables to Export</h4>
+							<div class="text-sm text-gray-400">
+								{tableOptions().filter(t => t.enabled).length} of {tableOptions().length} selected
+							</div>
+						</div>
+
+						<div class="flex gap-2 mb-6">
+							<button
+								class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+								onClick={selectAllTables}
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+								</svg>
+								Select All
+							</button>
+							<button
+								class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+								onClick={selectNoTables}
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+								</svg>
+								Clear All
+							</button>
+						</div>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<For each={tableOptions()}>
+								{(table) => (
+									<div
+										class="relative p-4 rounded-lg cursor-pointer transition-all duration-200 border-2"
+										classList={{
+											"bg-gray-700 border-blue-500 shadow-lg shadow-blue-500/10": table.enabled,
+											"bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500": !table.enabled
+										}}
+										onClick={() => toggleTable(table.name)}
+									>
+										<input
+											type="checkbox"
+											checked={table.enabled}
+											onChange={() => toggleTable(table.name)}
+											class="sr-only"
+										/>
+										<div class="flex items-start justify-between">
+											<div class="flex-1 min-w-0">
+												<div class="flex items-center gap-2 mb-2">
+													<div
+														class="font-semibold text-sm transition-colors text-gray-200"
+													>
+														{table.label}
+													</div>
+													{table.enabled && (
+														<svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+															<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+														</svg>
+													)}
+												</div>
+												<div
+													class="text-xs leading-relaxed transition-colors"
+													classList={{
+														"text-gray-300": table.enabled,
+														"text-gray-400": !table.enabled
+													}}
+												>
+													{table.description}
+												</div>
+											</div>
+										</div>
+									</div>
+								)}
+							</For>
+						</div>
+					</div>
+
+					{/* Advanced Options */}
+					<div class="mb-4">
+						<button
+							class="text-blue-400 hover:text-blue-300 mb-3 flex items-center"
+							onClick={() => setShowAdvanced(!showAdvanced())}
+						>
+							<svg class="w-4 h-4 mr-2 transition-transform" classList={{"rotate-90": showAdvanced()}} fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+							</svg>
+							Advanced Options
+						</button>
+						<Show when={showAdvanced()}>
+							<div class="bg-gray-700 rounded p-4 space-y-4">
+								<div>
+									<label class="block text-sm font-medium text-gray-300 mb-2">
+										Output Filename
+									</label>
+									<input
+										type="text"
+										value={fileName()}
+										onInput={(e) => setFileName(e.target.value)}
+										class="w-full p-2 bg-gray-600 border border-gray-500 rounded text-white"
+										placeholder="instagram-data.sqlite"
+									/>
+								</div>
+							</div>
+						</Show>
+					</div>
+
+					{/* Schema Preview */}
+					<div class="mb-4">
+						<button
+							class="text-blue-400 hover:text-blue-300 mb-3 flex items-center disabled:text-gray-500 disabled:cursor-not-allowed"
+							onClick={() => setShowSchema(!showSchema())}
+						>
+							<svg class="w-4 h-4 mr-2 transition-transform" classList={{"rotate-90": showSchema()}} fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+							</svg>
+							View Generated SQL Schema
+						</button>
+						<Show when={showSchema()}>
+							<div class="bg-gray-900 rounded-lg p-4 relative border border-gray-700">
+								<button
+									class="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm z-10 transition-colors"
+									onClick={copySchemaToClipboard}
+								>
+									{copyButtonText()}
+								</button>
+								<Show when={generatedSchema()}>
+									<pre class="text-green-400 text-sm overflow-x-auto whitespace-pre pr-20 max-h-[70vh] md:max-h-[60vh] font-mono">
+										<code class="text-green-400">{generatedSchema()}</code>
+									</pre>
+								</Show>
+								<Show when={!generatedSchema()}>
+									<div class="text-gray-500 text-center py-8">
+										<p>No tables selected</p>
+										<p class="text-xs mt-1">Select tables above to see the generated schema</p>
+									</div>
+								</Show>
+							</div>
+						</Show>
+					</div>
+
+					<button
+						class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+						onClick={exportToSqlite}
+						disabled={tableOptions().filter(t => t.enabled).length === 0 || isExporting() || wasmLoaded() !== true}
+					>
+						{wasmLoaded() !== true ? "Loading..." : isExporting() ? "Generating..." : "Generate Database"}
+					</button>
+				</div>
+
+				{/* Export Status */}
 				<Show when={isExporting()}>
-					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-4">
 						<h3 class="text-xl font-semibold text-white mb-4">Generating Database...</h3>
 						<div class="mb-4">
 							<div class="bg-gray-700 rounded-full h-4 mb-2">
 								<div
-									class="bg-blue-600 h-4 rounded-full transition-all duration-300"
+									class="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-out"
 									style={`width: ${exportProgress()}%`}
 								></div>
 							</div>
@@ -295,18 +404,26 @@ const SqliteExport: Component = () => {
 					</div>
 				</Show>
 
+				{/* Download Ready */}
 				<Show when={isComplete() && downloadUrl()}>
-					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+					<div class="bg-green-800 rounded-lg p-6 border border-green-600 mb-4">
 						<div class="text-center">
-							<h3 class="text-2xl font-semibold text-white mb-4">Download Ready!</h3>
+							<div class="mb-4">
+								<div class="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
+									<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+									</svg>
+								</div>
+							</div>
+							<h3 class="text-2xl font-semibold text-white mb-4">Database Ready!</h3>
 							<p class="text-gray-300 mb-6">
-								Your SQL database has been generated. Click the button below to download it.
+								Your SQLite database has been generated successfully. Click the button below to download it.
 							</p>
 							<button
 								class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded transition-colors text-lg"
 								onClick={downloadDatabase}
 							>
-								Download SQL Database
+								Download {fileName()} ({formatFileSize(fileSize())})
 							</button>
 						</div>
 					</div>

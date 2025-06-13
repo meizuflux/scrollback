@@ -1,24 +1,24 @@
 import { type ParentComponent, createSignal, onMount } from "solid-js";
 import { A } from "@solidjs/router";
-import { requireDataLoaded } from "../utils";
-import logo from "../assets/logo.svg";
+import { isDataLoaded } from "@/utils/storage";
+import logo from "@/assets/logo.svg";
 
 const Layout: ParentComponent = (props) => {
 	const [dataLoaded, setDataLoaded] = createSignal(false);
 
 	onMount(() => {
-		const loaded = requireDataLoaded();
+		const loaded = isDataLoaded();
 		setDataLoaded(loaded);
-		
+
 		// Listen for storage changes to update the state
 		const handleStorageChange = () => {
-			setDataLoaded(requireDataLoaded());
+			setDataLoaded(isDataLoaded());
 		};
-		
+
 		window.addEventListener('storage', handleStorageChange);
 		// Also check periodically since localStorage changes in same tab don't trigger storage event
 		const interval = setInterval(handleStorageChange, 1000);
-		
+
 		return () => {
 			window.removeEventListener('storage', handleStorageChange);
 			clearInterval(interval);

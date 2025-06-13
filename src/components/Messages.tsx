@@ -1,5 +1,5 @@
 import { Component, createMemo, createSignal, For, Show } from "solid-js";
-import { StoredData, StoredMessage } from "../db/database";
+import { StoredData, StoredMessage } from "@/db/database";
 
 type MessagesProps = {
 	data: StoredData;

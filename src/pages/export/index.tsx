@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { Component, onMount } from "solid-js";
-import { requireDataLoaded } from "../../utils";
-import Layout from "../../components/Layout";
+import { requireDataLoaded } from "@/utils";
+import Layout from "@/components/Layout";
 
 const Export: Component = () => {
 	const navigate = useNavigate();

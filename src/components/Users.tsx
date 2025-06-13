@@ -1,5 +1,5 @@
 import { Component, For, createMemo, createSignal, Show } from "solid-js";
-import { StoredData, StoredUser } from "../db/database";
+import { StoredData, StoredUser } from "@/db/database";
 
 interface ConnectionsAnalysisProps {
 	data: StoredData;

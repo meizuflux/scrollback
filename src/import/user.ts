@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "../db/database";
-import { User } from "../types/user";
-import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "../utils";
+import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "@/db/database";
+import { User } from "@/types/user";
+import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "@/utils";
 import { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {

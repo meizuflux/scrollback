@@ -1,5 +1,5 @@
-import { InstagramDatabase, StoredUser } from "../db/database";
-import { loadFile } from "../utils";
+import { InstagramDatabase, StoredUser } from "@/db/database";
+import { loadFile } from "@/utils";
 import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {

@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "../db/database";
-import { MessageFile } from "../types/message";
-import { decodeU8String, findFile, processMediaFilesBatched } from "../utils";
+import { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
+import { MessageFile } from "@/types/message";
+import { decodeU8String, findFile, processMediaFilesBatched } from "@/utils";
 import { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {

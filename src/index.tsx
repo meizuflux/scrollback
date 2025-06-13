@@ -5,10 +5,10 @@ import "./index.css";
 import { Router, Route } from "@solidjs/router";
 import { lazy } from "solid-js";
 
-const Home = lazy(() => import("./pages/Home"));
-const Analysis = lazy(() => import("./pages/Analysis"));
-const ExportIndex = lazy(() => import("./pages/export/index"));
-const SqliteExport = lazy(() => import("./pages/export/sqlite"));
+const Home = lazy(() => import("@/pages/Home"));
+const Analysis = lazy(() => import("@/pages/Analysis"));
+const ExportIndex = lazy(() => import("@/pages/export/index"));
+const SqliteExport = lazy(() => import("@/pages/export/sqlite"));
 
 const App = () => {
 	return (

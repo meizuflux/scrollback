@@ -1,5 +1,5 @@
 import { Component, For, Show } from "solid-js";
-import { ImportStep } from "../import/import";
+import { ImportStep } from "@/import/import";
 
 interface ImportProgressProps {
 	steps: ImportStep[];

@@ -1,6 +1,6 @@
 import Dexie, { Table } from "dexie";
-import { Conversation, Media, Reaction, Share } from "../types/message";
-import { ProfileChange, User } from "../types/user";
+import { Conversation, Media, Reaction, Share } from "@/types/message";
+import { ProfileChange, User } from "@/types/user";
 
 export interface StoredData {
 	user: User;

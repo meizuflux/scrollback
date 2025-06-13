@@ -1,10 +1,102 @@
 import { createSignal, Show, type Component, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { extractZipToFiles, opfsSupported, requireDataLoaded, clearData } from "../utils";
-import { importData, ImportStep } from "../import/import";
-import ImportProgress from "../components/ImportProgress";
-import logo from "../assets/logo.svg";
-import Layout from "../components/Layout";
+import { opfsSupported, requireDataLoaded, clearData } from "@/utils";
+import { Unzip, AsyncUnzipInflate } from "fflate";
+import { importData, ImportStep } from "@/import/import";
+import ImportProgress from "@/components/ImportProgress";
+import { getFileType } from "@/utils";
+import logo from "@/assets/logo.svg";
+import Layout from "@/components/Layout";
+
+const extractZipToFiles = async (
+    zipFile: File,
+    updateSteps: (name: string, progress: number, statusText?: string) => void,
+): Promise<File[]> => {
+    updateSteps("Unzipping files", 0, "Reading ZIP file...");
+    const arrayBuffer = await zipFile.arrayBuffer();
+    const zipData = new Uint8Array(arrayBuffer);
+
+    return new Promise<File[]>((resolve, _) => {
+        const extractedFiles: File[] = [];
+
+        let totalFiles = 0;
+        let filesProcessed = 0;
+        let discoveryComplete = false;
+
+        const checkCompletion = () => {
+            if (discoveryComplete && filesProcessed === totalFiles) {
+                updateSteps(
+                    "Unzipping files",
+                    100,
+                    "All files extracted successfully.",
+                );
+                resolve(extractedFiles);
+            }
+        };
+
+        const mainUnzipper = new Unzip((stream) => {
+            // stream is FFlateUnzipFile
+            const filePath = stream.name;
+
+            if (filePath.endsWith("/")) {
+                // Skip directories
+                return;
+            }
+
+            const chunks: Uint8Array[] = [];
+            let totalSize = 0;
+
+            totalFiles++; // Increment total files count for each stream created
+            stream.ondata = (err, chunk, final) => {
+                /*if (err) {
+                    console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
+                    // Stop further file discoveries by this Unzip instance, as state might be corrupt.
+                    mainUnzipper.onfile = () => {};
+                    // Reject the entire operation on the first file processing error.
+                    reject(new Error(`Error decompressing file "${filePath}": ${err.message || String(err)}`));
+                    return;
+                } */
+
+                if (chunk) {
+                    chunks.push(chunk);
+                    totalSize += chunk.length;
+                }
+
+                if (final) {
+                    const completeFileBuffer = new Uint8Array(totalSize);
+                    let offset = 0;
+                    for (const bufferChunk of chunks) {
+                        completeFileBuffer.set(bufferChunk, offset);
+                        offset += bufferChunk.length;
+                    }
+
+                    const newFile = new File([completeFileBuffer], filePath, {
+                        type: getFileType(filePath),
+                    });
+                    Object.defineProperty(newFile, "webkitRelativePath", {
+                        value: filePath.startsWith("/")
+                            ? filePath
+                            : `/${filePath}`,
+                        writable: false,
+                    }); // this was miserable to rememebr to find
+                    extractedFiles.push(newFile);
+                    filesProcessed++;
+
+                    checkCompletion();
+                }
+            };
+
+            stream.start();
+        });
+
+        mainUnzipper.register(AsyncUnzipInflate);
+
+        mainUnzipper.push(zipData, true);
+        discoveryComplete = true;
+
+        checkCompletion(); // for when no files in zip
+    });
+};
 
 const Home: Component = () => {
 	const navigate = useNavigate();
