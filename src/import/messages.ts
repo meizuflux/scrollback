@@ -30,7 +30,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	]);
 
 	const patternRegex = new RegExp([
-		'^Reacted .* to your message$',
+		'^Reacted .* to your message\\s*$',
 		'changed the theme to',
 		'changed the group photo',
 		'set their own nickname to',
