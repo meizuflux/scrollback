@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@types/sql.js": "^1.4.9",
     "vite": "^6.3.5",
     "vite-plugin-solid": "^2.11.6"
   },
@@ -20,6 +21,7 @@
     "dexie": "^4.0.11",
     "fflate": "^0.8.2",
     "solid-js": "^1.9.7",
+    "sql.js": "^1.13.0",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.8.3"
   }

@@ -291,33 +291,6 @@ export const saveMediaFile = async (
     return flatFileName;
 };
 
-export const saveMediaFileToIndexedDB = async (
-    media: StoredMediaMetadata,
-): Promise<string> => {
-    if (!media.data || !(media.data instanceof File)) {
-        throw new Error(`No file data provided for media file: ${media.uri}`);
-    }
-
-    const flatFileName = media.uri
-        .replace(/^\/+/, "")
-        .replace(/\//g, "_")
-        .replace(/[<>:"|?*]/g, "_");
-
-    const blob = new Blob([await media.data.arrayBuffer()], {
-        type: media.data.type,
-    });
-
-    const virtualFile: StoredVirtualFile = {
-        fileName: flatFileName,
-        blob,
-        timestamp: media.timestamp,
-        size: blob.size,
-    };
-
-    await db.virtualFS.put(virtualFile);
-    return flatFileName;
-};
-
 export const getSavedMediaFile = async (
     fileName: string,
 ): Promise<File | null> => {
