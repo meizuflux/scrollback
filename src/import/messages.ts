@@ -1,14 +1,16 @@
-import { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
-import { MessageFile } from "@/types/message";
+import type { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
+import type { MessageFile } from "@/types/message";
 import { decodeU8String, findFile, processMediaFilesBatched } from "@/utils/media";
-import { ProgFn } from "./import";
+import type { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// TODO: perf timing to figure out the correct progress percentages (for everything, tbh)
 	onProgress(0, "Finding message files...");
 
 	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
-	const messageFiles = files.filter(file => file.name.endsWith(".json") && file.name.lastIndexOf("message_") !== -1)
+	const messageFiles = files.filter(
+		(file) => file.name.endsWith(".json") && file.name.lastIndexOf("message_") !== -1,
+	);
 
 	if (messageFiles.length === 0) {
 		onProgress(100, "No message files found.");
@@ -19,32 +21,33 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	// TODO: find all of these
 	const exactSystemMessages = new Set([
-		'You missed an audio call',
-		'started an audio call',
-		'ended the call',
-		'joined the video chat',
-		'left the video chat',
-		'Say hi to your new connection',
-		'You created the group',
-		'Liked a message'
+		"You missed an audio call",
+		"started an audio call",
+		"ended the call",
+		"joined the video chat",
+		"left the video chat",
+		"Say hi to your new connection",
+		"You created the group",
+		"Liked a message",
 	]);
 
-	const patternRegex = new RegExp([
-		'^Reacted .* to your message\\s*$',
-		'changed the theme to',
-		'changed the group photo',
-		'set their own nickname to',
-		'You sent an attachment\\.',
-		'added .* to the group',
-		'removed .* from the group',
-	].join('|'));
+	const patternRegex = new RegExp(
+		[
+			"^Reacted .* to your message\\s*$",
+			"changed the theme to",
+			"changed the group photo",
+			"set their own nickname to",
+			"You sent an attachment\\.",
+			"added .* to the group",
+			"removed .* from the group",
+		].join("|"),
+	);
 
-	const checkSystemMessage = (content: string) =>
-		exactSystemMessages.has(content) || patternRegex.test(content);
+	const checkSystemMessage = (content: string) => exactSystemMessages.has(content) || patternRegex.test(content);
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
-	let allMediaFiles: StoredMediaMetadata[] = [];
+	const allMediaFiles: StoredMediaMetadata[] = [];
 
 	// Pre-allocate arrays
 	conversations.length = messageFiles.length;
@@ -173,8 +176,6 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 		onProgress(80, `Saving ${allMessages.length} messages...`);
 		await database.messages.bulkAdd(allMessages);
-
-
 	});
 
 	onProgress(100, `Imported ${allMessages.length} messages and ${conversations.length} conversations.`);

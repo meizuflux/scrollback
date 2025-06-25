@@ -1,7 +1,7 @@
-import { InstagramDatabase, StoredMediaMetadata, StoredPost, StoredStory } from "@/db/database";
-import { User } from "@/types/user";
+import { type InstagramDatabase, StoredMediaMetadata, type StoredPost, type StoredStory } from "@/db/database";
+import type { User } from "@/types/user";
 import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "@/utils/media";
-import { ProgFn } from "./import";
+import type { ProgFn } from "./import";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// TODO: use exact files names for a slight speed up
@@ -15,7 +15,7 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 		notInterestedProfilesFile,
 		notInterestedPostsFile,
 		postsViewedFile,
-		adsViewedFile
+		adsViewedFile,
 	] = await Promise.all([
 		loadFile<any>(files, "/personal_information/personal_information.json"),
 		loadFile<any>(files, "/personal_information/information_about_you/profile_based_in.json"),
@@ -24,7 +24,7 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 		loadFile<any>(files, "/ads_information/ads_and_topics/profiles_you're_not_interested_in.json"),
 		loadFile<any>(files, "/ads_information/ads_and_topics/posts_you're_not_interested_in.json"),
 		loadFile<any>(files, "/ads_information/ads_and_topics/posts_viewed.json"),
-		loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json")
+		loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json"),
 	]);
 
 	const user: User = {
@@ -55,12 +55,14 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath);
 		if (pfp) {
-			const mediaToStore = [{
-				uri: pfpPath,
-				timestamp: new Date(Date.now()),
-				type: "photo" as const,
-				data: pfp,
-			}];
+			const mediaToStore = [
+				{
+					uri: pfpPath,
+					timestamp: new Date(Date.now()),
+					type: "photo" as const,
+					data: pfp,
+				},
+			];
 
 			const processedMediaFiles = await processMediaFilesBatched(mediaToStore);
 			await database.media_metadata.bulkAdd(processedMediaFiles);
@@ -99,8 +101,8 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 
 	let processedItems = 0;
 
-	let mediaToStore: Array<{ uri: string; timestamp: Date; type: "photo" | "video"; data: File }> = [];
-	let postsToStore: StoredPost[] = [];
+	const mediaToStore: Array<{ uri: string; timestamp: Date; type: "photo" | "video"; data: File }> = [];
+	const postsToStore: StoredPost[] = [];
 
 	onProgress(15, `Found ${totalItems} items. Processing...`);
 	const processPosts = async (posts: Post[], archived: boolean = false) => {
@@ -152,7 +154,7 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 			title: decodeU8String(story.title || "Placeholder"),
 		})) || [];
 
-	let allStories: StoredStory[] = [];
+	const allStories: StoredStory[] = [];
 
 	for (let i = 0; i < stories.length; i++) {
 		const story = stories[i];

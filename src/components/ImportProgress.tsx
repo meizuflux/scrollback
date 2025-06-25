@@ -1,5 +1,5 @@
-import { Component, For, Show } from "solid-js";
-import { ImportStep } from "@/import/import";
+import { type Component, For, Show } from "solid-js";
+import type { ImportStep } from "@/import/import";
 
 interface ImportProgressProps {
 	steps: ImportStep[];
@@ -59,7 +59,11 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 							<button
 								class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-1"
 								onClick={() => {
-									if (confirm("Are you sure you want to stop the import process? This will lose all progress.")) {
+									if (
+										confirm(
+											"Are you sure you want to stop the import process? This will lose all progress.",
+										)
+									) {
 										props.onStop!();
 									}
 								}}

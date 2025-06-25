@@ -1,5 +1,6 @@
-import { db, StoredMediaMetadata, StoredMessage } from "@/db/database";
-import { Media } from "@/types/message";
+import { db, type StoredMediaMetadata, type StoredMessage } from "@/db/database";
+import type { Media } from "@/types/message";
+import type { Database } from "sql.js";
 
 export interface TableOption {
 	name: string;
@@ -16,7 +17,7 @@ interface TableDefinition {
 	schema: string;
 	indexes?: string[];
 	fetchData: () => Promise<any[]>;
-	insertData: (db: any, data: any[], mediaMetadataMap?: Map<string, any>) => void;
+	insertData: (db: Database, data: any[], mediaMetadataMap?: Map<string, any>) => void;
 }
 
 const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
@@ -43,7 +44,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.mainUser.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO main_user (
 					username, name, email, bio, gender, private_account, date_of_birth,
@@ -67,11 +68,11 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 					user.notInterestedProfiles || 0,
 					user.notInterestedPosts || 0,
 					user.postsViewed || 0,
-					user.adsViewed || 0
+					user.adsViewed || 0,
 				]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	users: {
@@ -101,10 +102,10 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [
 			"CREATE INDEX idx_users_following ON users(is_following)",
-			"CREATE INDEX idx_users_follower ON users(is_follower)"
+			"CREATE INDEX idx_users_follower ON users(is_follower)",
 		],
 		fetchData: () => db.users.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO users (
 					username, is_blocked, blocked_timestamp, is_close_friend, close_friend_timestamp,
@@ -134,11 +135,11 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 					safeISOString(user.pending_follow_request?.timestamp),
 					user.recently_unfollowed?.value ? 1 : 0,
 					safeISOString(user.recently_unfollowed?.timestamp),
-					user.stories_liked || 0
+					user.stories_liked || 0,
 				]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	conversations: {
@@ -153,7 +154,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.conversations.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO conversations (title, participants, is_group)
 				VALUES (?, ?, ?)
@@ -163,11 +164,11 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 				insert.run([
 					conversation.title,
 					JSON.stringify(conversation.participants),
-					conversation.is_group ? 1 : 0
+					conversation.is_group ? 1 : 0,
 				]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	messages: {
@@ -191,7 +192,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		indexes: [
 			"CREATE INDEX idx_messages_conversation ON messages(conversation_title)",
 			"CREATE INDEX idx_messages_timestamp ON messages(timestamp)",
-			"CREATE INDEX idx_messages_sender ON messages(sender_name)"
+			"CREATE INDEX idx_messages_sender ON messages(sender_name)",
 		],
 		fetchData: () => db.messages.toArray(),
 		insertData: (sqliteDb: any, data: any[], mediaMetadataMap?: Map<string, any>) => {
@@ -213,11 +214,11 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 					mediaFileNames.length > 0 ? JSON.stringify(mediaFileNames) : null,
 					message.reactions ? JSON.stringify(message.reactions) : null,
 					message.share?.link || null,
-					null // share_text placeholder
+					null, // share_text placeholder
 				]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	media_metadata: {
@@ -231,26 +232,19 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 			type TEXT CHECK(type IN ('photo', 'video', 'audio')),
 			file_name TEXT
 		)`,
-		indexes: [
-			"CREATE INDEX idx_media_type ON media_metadata(type)"
-		],
+		indexes: ["CREATE INDEX idx_media_type ON media_metadata(type)"],
 		fetchData: () => db.media_metadata.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO media_metadata (uri, timestamp, type, file_name)
 				VALUES (?, ?, ?, ?)
 			`);
 
 			for (const media of data) {
-				insert.run([
-					media.uri,
-					safeISOString(media.timestamp),
-					media.type,
-					media.fileName || null
-				]);
+				insert.run([media.uri, safeISOString(media.timestamp), media.type, media.fileName || null]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	posts: {
@@ -267,7 +261,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.posts.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO posts (title, timestamp, media_uris, archived)
 				VALUES (?, ?, ?, ?)
@@ -278,11 +272,11 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 					post.title,
 					safeISOString(post.timestamp),
 					JSON.stringify(post.media || []),
-					post.archived ? 1 : 0
+					post.archived ? 1 : 0,
 				]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	stories: {
@@ -298,21 +292,17 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.stories.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO stories (title, timestamp, uri)
 				VALUES (?, ?, ?)
 			`);
 
 			for (const story of data) {
-				insert.run([
-					story.title,
-					safeISOString(story.timestamp),
-					story.uri
-				]);
+				insert.run([story.title, safeISOString(story.timestamp), story.uri]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	comments: {
@@ -328,21 +318,17 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.comments.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO comments (media_owner, comment, timestamp)
 				VALUES (?, ?, ?)
 			`);
 
 			for (const comment of data) {
-				insert.run([
-					comment.media_owner,
-					comment.comment,
-					safeISOString(comment.timestamp)
-				]);
+				insert.run([comment.media_owner, comment.comment, safeISOString(comment.timestamp)]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	liked_posts: {
@@ -358,21 +344,17 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.likedPosts.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO liked_posts (media_owner, href, timestamp)
 				VALUES (?, ?, ?)
 			`);
 
 			for (const liked of data) {
-				insert.run([
-					liked.media_owner,
-					liked.href,
-					safeISOString(liked.timestamp)
-				]);
+				insert.run([liked.media_owner, liked.href, safeISOString(liked.timestamp)]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	saved_posts: {
@@ -388,21 +370,17 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.savedPosts.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO saved_posts (media_owner, href, timestamp)
 				VALUES (?, ?, ?)
 			`);
 
 			for (const saved of data) {
-				insert.run([
-					saved.media_owner,
-					saved.href,
-					safeISOString(saved.timestamp)
-				]);
+				insert.run([saved.media_owner, saved.href, safeISOString(saved.timestamp)]);
 			}
 			insert.free();
-		}
+		},
 	},
 
 	profile_changes: {
@@ -419,33 +397,27 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 		)`,
 		indexes: [],
 		fetchData: () => db.profileChanges.toArray(),
-		insertData: (sqliteDb: any, data: any[]) => {
+		insertData: (sqliteDb, data) => {
 			const insert = sqliteDb.prepare(`
 				INSERT INTO profile_changes (changed, previous_value, new_value, timestamp)
 				VALUES (?, ?, ?, ?)
 			`);
 
 			for (const change of data) {
-				insert.run([
-					change.changed,
-					change.previousValue,
-					change.newValue,
-					safeISOString(change.timestamp)
-				]);
+				insert.run([change.changed, change.previousValue, change.newValue, safeISOString(change.timestamp)]);
 			}
 			insert.free();
-		}
-	}
+		},
+	},
 };
 
 export const getDefaultTables = (): TableOption[] => {
-	return Object.values(TABLE_DEFINITIONS)
-		.map(table => ({
-			name: table.name,
-			label: table.label,
-			description: table.description,
-			enabled: table.default
-		}));
+	return Object.values(TABLE_DEFINITIONS).map((table) => ({
+		name: table.name,
+		label: table.label,
+		description: table.description,
+		enabled: table.default,
+	}));
 };
 
 export const safeISOString = (date: Date | null | undefined): string | null => {
@@ -461,31 +433,32 @@ export const generateSchemaFromDb = (enabledTables: string[]): string => {
 
 		// Add tables
 		const tableSchemas = enabledTables
-			.map(tableName => TABLE_DEFINITIONS[tableName]?.schema)
-			.filter(schema => schema !== undefined)
-			.map(schema => {
+			.map((tableName) => TABLE_DEFINITIONS[tableName]?.schema)
+			.filter((schema) => schema !== undefined)
+			.map((schema) => {
 				// Clean up indentation for better formatting
-				return schema.trim()
-					.replace(/\s+/g, ' ') // Replace multiple spaces with single space
-					.replace(/\(\s+/g, '(\n    ') // Fix opening parenthesis
-					.replace(/,\s+/g, ',\n    ') // Add line breaks after commas
-					.replace(/\s+\)/g, '\n)'); // Fix closing parenthesis
+				return schema
+					.trim()
+					.replace(/\s+/g, " ") // Replace multiple spaces with single space
+					.replace(/\(\s+/g, "(\n    ") // Fix opening parenthesis
+					.replace(/,\s+/g, ",\n    ") // Add line breaks after commas
+					.replace(/\s+\)/g, "\n)"); // Fix closing parenthesis
 			});
 
-		sections.push(...tableSchemas.map(schema => schema + ';'));
+		sections.push(...tableSchemas.map((schema) => schema + ";"));
 		sections.unshift(tableSchemas.length > 0 ? "-- Tables" : "-- No tables selected");
 		sections.push("");
 
 		const allIndexes = enabledTables
-			.flatMap(tableName => TABLE_DEFINITIONS[tableName]?.indexes || [])
-			.filter(index => index !== undefined);
+			.flatMap((tableName) => TABLE_DEFINITIONS[tableName]?.indexes || [])
+			.filter((index) => index !== undefined);
 
 		if (allIndexes.length > 0) {
 			sections.push("-- Indexes");
-			sections.push(...allIndexes.map(index => index + ';'));
+			sections.push(...allIndexes.map((index) => index + ";"));
 		}
 
-		return sections.join('\n');
+		return sections.join("\n");
 	} catch (error) {
 		console.error("Error generating schema:", error);
 		return "-- Error generating schema";
@@ -494,8 +467,8 @@ export const generateSchemaFromDb = (enabledTables: string[]): string => {
 
 export const createTableStatements = (enabledTables: string[]): string[] => {
 	return enabledTables
-		.map(tableName => TABLE_DEFINITIONS[tableName]?.schema)
-		.filter(schema => schema !== undefined);
+		.map((tableName) => TABLE_DEFINITIONS[tableName]?.schema)
+		.filter((schema) => schema !== undefined);
 };
 
 export const createIndexStatements = (enabledTables: string[]): string[] => {
@@ -539,11 +512,14 @@ export const fetchAllData = async (enabledTables: string[]) => {
 		likedPosts: data.liked_posts || [],
 		savedPosts: data.saved_posts || [],
 		profileChanges: data.profile_changes || [],
-		virtualFiles: data.virtual_files || []
+		virtualFiles: data.virtual_files || [],
 	};
 };
 
-export const processMediaFileNames = (message: StoredMessage, mediaMetadataMap: Map<string, StoredMediaMetadata>): string[] => {
+export const processMediaFileNames = (
+	message: StoredMessage,
+	mediaMetadataMap: Map<string, StoredMediaMetadata>,
+): string[] => {
 	const mediaFileNames: string[] = [];
 
 	const processMediaArray = (mediaArray?: Media[]) => {
@@ -553,7 +529,7 @@ export const processMediaFileNames = (message: StoredMessage, mediaMetadataMap: 
 				if (metadata?.fileName) {
 					mediaFileNames.push(metadata.fileName);
 				} else {
-					const uriParts = mediaItem.uri.split('/');
+					const uriParts = mediaItem.uri.split("/");
 					mediaFileNames.push(uriParts[uriParts.length - 1]);
 				}
 			}
@@ -577,9 +553,7 @@ export const getAllTableNames = (): string[] => {
 };
 
 export const getEnabledTableDefinitions = (enabledTables: string[]): TableDefinition[] => {
-	return enabledTables
-		.map(name => TABLE_DEFINITIONS[name])
-		.filter(def => def !== undefined);
+	return enabledTables.map((name) => TABLE_DEFINITIONS[name]).filter((def) => def !== undefined);
 };
 
 // Helper function to insert data for enabled tables
@@ -588,7 +562,7 @@ export const insertTableData = async (
 	enabledTables: string[],
 	data: any,
 	mediaMetadataMap?: Map<string, any>,
-	onProgress?: (tableName: string, progress: number) => void
+	onProgress?: (tableName: string, progress: number) => void,
 ) => {
 	const tableCount = enabledTables.length;
 	let currentTable = 0;
@@ -608,7 +582,7 @@ export const insertTableData = async (
 
 			currentTable++;
 			// Small delay to allow UI updates
-			await new Promise(resolve => setTimeout(resolve, 0));
+			await new Promise((resolve) => setTimeout(resolve, 0));
 		}
 	}
 };
@@ -616,20 +590,20 @@ export const insertTableData = async (
 // Helper to extract table data from the fetch result
 const getTableDataFromFetchResult = (data: any, tableName: string): any[] => {
 	const mappings: Record<string, string> = {
-		'main_user': 'mainUsers',
-		'users': 'users',
-		'conversations': 'conversations',
-		'messages': 'messages',
-		'media_metadata': 'mediaMetadata',
-		'posts': 'posts',
-		'stories': 'stories',
-		'comments': 'comments',
-		'liked_posts': 'likedPosts',
-		'saved_posts': 'savedPosts',
-		'profile_changes': 'profileChanges',
-		'virtual_files': 'virtualFiles'
+		main_user: "mainUsers",
+		users: "users",
+		conversations: "conversations",
+		messages: "messages",
+		media_metadata: "mediaMetadata",
+		posts: "posts",
+		stories: "stories",
+		comments: "comments",
+		liked_posts: "likedPosts",
+		saved_posts: "savedPosts",
+		profile_changes: "profileChanges",
+		virtual_files: "virtualFiles",
 	};
 
 	const dataKey = mappings[tableName];
-	return dataKey ? (data[dataKey] || []) : [];
+	return dataKey ? data[dataKey] || [] : [];
 };

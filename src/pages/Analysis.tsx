@@ -1,6 +1,6 @@
-import { Component, createResource, createSignal, Show, onMount } from "solid-js";
+import { type Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { db, StoredData } from "@/db/database";
+import { db, type StoredData } from "@/db/database";
 import Layout from "@/components/Layout";
 
 import MessageAnalysis from "@/components/Messages";

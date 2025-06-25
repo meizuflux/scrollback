@@ -1,5 +1,5 @@
-import { Component, For, createMemo, createSignal, Show } from "solid-js";
-import { StoredData, StoredUser } from "@/db/database";
+import { type Component, For, createMemo, createSignal, Show } from "solid-js";
+import type { StoredData, StoredUser } from "@/db/database";
 
 interface ConnectionsAnalysisProps {
 	data: StoredData;
@@ -20,7 +20,7 @@ const UserList: Component<{
 	const [showAll, setShowAll] = createSignal(false);
 
 	const filteredUsers = createMemo(() => {
-		let filtered = props.users.filter((user) => user.username.toLowerCase().includes(searchTerm().toLowerCase()));
+		const filtered = props.users.filter((user) => user.username.toLowerCase().includes(searchTerm().toLowerCase()));
 		return showAll() ? filtered : filtered.slice(0, 10);
 	});
 

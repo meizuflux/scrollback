@@ -1,5 +1,5 @@
-import { Component, createMemo, createSignal, For, Show } from "solid-js";
-import { StoredData, StoredMessage } from "@/db/database";
+import { type Component, createMemo, createSignal, For, Show } from "solid-js";
+import type { StoredData, StoredMessage } from "@/db/database";
 
 type MessagesProps = {
 	data: StoredData;
@@ -181,7 +181,7 @@ const ConversationBrowser: Component<{
 	const [expandedConversations, setExpandedConversations] = createSignal(new Set<string>());
 
 	const filteredAndSortedConversations = createMemo(() => {
-		let filtered = props.conversations.filter(([name, count]) => {
+		const filtered = props.conversations.filter(([name, count]) => {
 			const matchesSearch = name.toLowerCase().includes(searchTerm().toLowerCase());
 			const meetsMinMessages = count >= minMessages();
 			return matchesSearch && meetsMinMessages;
@@ -192,7 +192,7 @@ const ConversationBrowser: Component<{
 			switch (sortBy()) {
 				case "name":
 					return nameA.localeCompare(nameB);
-				case "recent":
+				case "recent": {
 					// Get most recent message for each conversation
 					const lastMessageA = Math.max(
 						...props.messages
@@ -205,6 +205,7 @@ const ConversationBrowser: Component<{
 							.map((m) => m.timestamp?.getTime() || 0),
 					);
 					return lastMessageB - lastMessageA;
+				}
 				case "messages":
 				default:
 					return countB - countA;

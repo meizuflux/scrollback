@@ -2,7 +2,7 @@ import { createSignal, Show, type Component, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { isDataLoaded } from "@/utils/storage";
 import { Unzip, AsyncUnzipInflate } from "fflate";
-import { importData, ImportStep } from "@/import/import";
+import { importData, type ImportStep } from "@/import/import";
 import ImportProgress from "@/components/ImportProgress";
 import { getFileType } from "@/utils/media";
 import { opfsSupported, clearData } from "@/utils/storage";
@@ -10,46 +10,42 @@ import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
 
 const extractZipToFiles = async (
-    zipFile: File,
-    updateSteps: (name: string, progress: number, statusText?: string) => void,
+	zipFile: File,
+	updateSteps: (name: string, progress: number, statusText?: string) => void,
 ): Promise<File[]> => {
-    updateSteps("Unzipping files", 0, "Reading ZIP file...");
-    const arrayBuffer = await zipFile.arrayBuffer();
-    const zipData = new Uint8Array(arrayBuffer);
+	updateSteps("Unzipping files", 0, "Reading ZIP file...");
+	const arrayBuffer = await zipFile.arrayBuffer();
+	const zipData = new Uint8Array(arrayBuffer);
 
-    return new Promise<File[]>((resolve, _) => {
-        const extractedFiles: File[] = [];
+	return new Promise<File[]>((resolve, _) => {
+		const extractedFiles: File[] = [];
 
-        let totalFiles = 0;
-        let filesProcessed = 0;
-        let discoveryComplete = false;
+		let totalFiles = 0;
+		let filesProcessed = 0;
+		let discoveryComplete = false;
 
-        const checkCompletion = () => {
-            if (discoveryComplete && filesProcessed === totalFiles) {
-                updateSteps(
-                    "Unzipping files",
-                    100,
-                    "All files extracted successfully.",
-                );
-                resolve(extractedFiles);
-            }
-        };
+		const checkCompletion = () => {
+			if (discoveryComplete && filesProcessed === totalFiles) {
+				updateSteps("Unzipping files", 100, "All files extracted successfully.");
+				resolve(extractedFiles);
+			}
+		};
 
-        const mainUnzipper = new Unzip((stream) => {
-            // stream is FFlateUnzipFile
-            const filePath = stream.name;
+		const mainUnzipper = new Unzip((stream) => {
+			// stream is FFlateUnzipFile
+			const filePath = stream.name;
 
-            if (filePath.endsWith("/")) {
-                // Skip directories
-                return;
-            }
+			if (filePath.endsWith("/")) {
+				// Skip directories
+				return;
+			}
 
-            const chunks: Uint8Array[] = [];
-            let totalSize = 0;
+			const chunks: Uint8Array[] = [];
+			let totalSize = 0;
 
-            totalFiles++; // Increment total files count for each stream created
-            stream.ondata = (err, chunk, final) => {
-                /*if (err) {
+			totalFiles++; // Increment total files count for each stream created
+			stream.ondata = (err, chunk, final) => {
+				/*if (err) {
                     console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
                     // Stop further file discoveries by this Unzip instance, as state might be corrupt.
                     mainUnzipper.onfile = () => {};
@@ -58,45 +54,43 @@ const extractZipToFiles = async (
                     return;
                 } */
 
-                if (chunk) {
-                    chunks.push(chunk);
-                    totalSize += chunk.length;
-                }
+				if (chunk) {
+					chunks.push(chunk);
+					totalSize += chunk.length;
+				}
 
-                if (final) {
-                    const completeFileBuffer = new Uint8Array(totalSize);
-                    let offset = 0;
-                    for (const bufferChunk of chunks) {
-                        completeFileBuffer.set(bufferChunk, offset);
-                        offset += bufferChunk.length;
-                    }
+				if (final) {
+					const completeFileBuffer = new Uint8Array(totalSize);
+					let offset = 0;
+					for (const bufferChunk of chunks) {
+						completeFileBuffer.set(bufferChunk, offset);
+						offset += bufferChunk.length;
+					}
 
-                    const newFile = new File([completeFileBuffer], filePath, {
-                        type: getFileType(filePath),
-                    });
-                    Object.defineProperty(newFile, "webkitRelativePath", {
-                        value: filePath.startsWith("/")
-                            ? filePath
-                            : `/${filePath}`,
-                        writable: false,
-                    }); // this was miserable to rememebr to find
-                    extractedFiles.push(newFile);
-                    filesProcessed++;
+					const newFile = new File([completeFileBuffer], filePath, {
+						type: getFileType(filePath),
+					});
+					Object.defineProperty(newFile, "webkitRelativePath", {
+						value: filePath.startsWith("/") ? filePath : `/${filePath}`,
+						writable: false,
+					}); // this was miserable to rememebr to find
+					extractedFiles.push(newFile);
+					filesProcessed++;
 
-                    checkCompletion();
-                }
-            };
+					checkCompletion();
+				}
+			};
 
-            stream.start();
-        });
+			stream.start();
+		});
 
-        mainUnzipper.register(AsyncUnzipInflate);
+		mainUnzipper.register(AsyncUnzipInflate);
 
-        mainUnzipper.push(zipData, true);
-        discoveryComplete = true;
+		mainUnzipper.push(zipData, true);
+		discoveryComplete = true;
 
-        checkCompletion(); // for when no files in zip
-    });
+		checkCompletion(); // for when no files in zip
+	});
 };
 
 const Home: Component = () => {
@@ -139,7 +133,7 @@ const Home: Component = () => {
 		setImportSteps([]);
 
 		try {
-			let zipDuration = undefined;
+			let zipDuration ;
 			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
 				const zipStartTime = performance.now();
 				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
@@ -178,7 +172,7 @@ const Home: Component = () => {
 					<img src={logo} alt="Scrollback Logo" class="w-20 h-20 mx-auto mb-6" />
 					<h1 class="text-4xl font-bold text-white mb-4">Scrollback</h1>
 					<p class="text-xl text-gray-300 max-w-2xl mx-auto">
-					    Upload your Instagram data package to analyze your account activity
+						Upload your Instagram data package to analyze your account activity
 					</p>
 				</div>
 
@@ -196,7 +190,9 @@ const Home: Component = () => {
 							<div class="text-yellow-400 text-xl">⚠️</div>
 							<div>
 								<h3 class="text-lg font-semibold text-yellow-400 mb-1">Import Stopped</h3>
-								<p class="text-yellow-200 text-sm">The import process was cancelled. You can try again with your data files.</p>
+								<p class="text-yellow-200 text-sm">
+									The import process was cancelled. You can try again with your data files.
+								</p>
 							</div>
 						</div>
 					</div>
@@ -303,9 +299,12 @@ const Home: Component = () => {
 								<span class="text-blue-400 font-semibold">1.</span>
 								<div>
 									Go to{" "}
-									<a href="https://accountscenter.instagram.com/info_and_permissions/"
-									   target="_blank" rel="noopener noreferrer"
-									   class="text-blue-400 hover:text-blue-300 underline">
+									<a
+										href="https://accountscenter.instagram.com/info_and_permissions/"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="text-blue-400 hover:text-blue-300 underline"
+									>
 										Instagram Account Center
 									</a>
 								</div>
@@ -334,7 +333,9 @@ const Home: Component = () => {
 							</div>
 							<div class="flex items-start space-x-3">
 								<span class="text-blue-400 font-semibold">6.</span>
-								<span>Check your email for a notification that your data package is ready for download</span>
+								<span>
+									Check your email for a notification that your data package is ready for download
+								</span>
 							</div>
 						</div>
 					</div>
@@ -348,7 +349,10 @@ const Home: Component = () => {
 						<ul class="space-y-2 text-gray-300 text-sm">
 							<li class="flex items-start space-x-2">
 								<span class="text-orange-400">•</span>
-								<span>Instagram frequently changes their data format - we try to stay updated but some files may not parse correctly</span>
+								<span>
+									Instagram frequently changes their data format - we try to stay updated but some
+									files may not parse correctly
+								</span>
 							</li>
 							<li class="flex items-start space-x-2">
 								<span class="text-orange-400">•</span>

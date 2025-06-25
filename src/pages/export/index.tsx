@@ -1,5 +1,5 @@
 import { useNavigate } from "@solidjs/router";
-import { Component, onMount } from "solid-js";
+import { type Component, onMount } from "solid-js";
 import { isDataLoaded } from "@/utils/storage";
 import Layout from "@/components/Layout";
 
@@ -16,8 +16,8 @@ const Export: Component = () => {
 		{
 			title: "SQLite Database",
 			description: "Complete portable database with all your data",
-			route: "/export/sqlite"
-		}
+			route: "/export/sqlite",
+		},
 	];
 
 	return (

@@ -1,16 +1,16 @@
-import { Component, createSignal, onMount, Show, For, createResource } from "solid-js";
+import { type Component, createSignal, onMount, Show, For, createResource } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import Layout from "@/components/Layout";
-import initSqlJs from "sql.js";
+import initSqlJs, { type Database, type SqlJsStatic } from "sql.js";
 import sqliteWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import {
-	TableOption,
+	type TableOption,
 	getDefaultTables,
 	generateSchemaFromDb,
 	createTableStatements,
 	createIndexStatements,
 	fetchAllData,
-	insertTableData
+	insertTableData,
 } from "@/utils/sqlite";
 import { isDataLoaded } from "@/utils/storage";
 
@@ -26,14 +26,14 @@ const SqliteExport: Component = () => {
 	const [showAdvanced, setShowAdvanced] = createSignal(false);
 	const [showSchema, setShowSchema] = createSignal(false);
 	const [generatedSchema, setGeneratedSchema] = createSignal("");
-	const [sqlInstance, setSqlInstance] = createSignal<any>(null);
+	const [sqlInstance, setSqlInstance] = createSignal<SqlJsStatic | null>(null);
 	const [copyButtonText, setCopyButtonText] = createSignal("Copy");
 
 	// Preload SQL.js WASM
 	const [wasmLoaded] = createResource(async () => {
 		try {
 			const SQL = await initSqlJs({
-				locateFile: () => sqliteWasmUrl
+				locateFile: () => sqliteWasmUrl,
 			});
 			setSqlInstance(SQL);
 			return true;
@@ -47,7 +47,9 @@ const SqliteExport: Component = () => {
 
 	// Update schema whenever table options change
 	const updateSchema = () => {
-		const enabledTables = tableOptions().filter(t => t.enabled).map(t => t.name);
+		const enabledTables = tableOptions()
+			.filter((t) => t.enabled)
+			.map((t) => t.name);
 		setGeneratedSchema(generateSchemaFromDb(enabledTables));
 	};
 
@@ -60,21 +62,19 @@ const SqliteExport: Component = () => {
 	});
 
 	const toggleTable = (tableName: string) => {
-		setTableOptions(prev => prev.map(table =>
-			table.name === tableName
-				? { ...table, enabled: !table.enabled }
-				: table
-		));
+		setTableOptions((prev) =>
+			prev.map((table) => (table.name === tableName ? { ...table, enabled: !table.enabled } : table)),
+		);
 		updateSchema();
 	};
 
 	const selectAllTables = () => {
-		setTableOptions(prev => prev.map(table => ({ ...table, enabled: true })));
+		setTableOptions((prev) => prev.map((table) => ({ ...table, enabled: true })));
 		updateSchema();
 	};
 
 	const selectNoTables = () => {
-		setTableOptions(prev => prev.map(table => ({ ...table, enabled: false })));
+		setTableOptions((prev) => prev.map((table) => ({ ...table, enabled: false })));
 		updateSchema();
 	};
 
@@ -85,7 +85,9 @@ const SqliteExport: Component = () => {
 		setExportStatus("Initializing...");
 		setFileSize(0);
 
-		const enabledTables = tableOptions().filter(t => t.enabled).map(t => t.name);
+		const enabledTables = tableOptions()
+			.filter((t) => t.enabled)
+			.map((t) => t.name);
 		if (enabledTables.length === 0) {
 			setExportStatus("Error: No tables selected for export");
 			setIsExporting(false);
@@ -100,18 +102,23 @@ const SqliteExport: Component = () => {
 
 		try {
 			const SQL = sqlInstance();
+			if (!SQL) {
+				setExportStatus("Error: SQL.js not initialized");
+				setIsExporting(false);
+				return;
+			}
 			setExportProgress(5);
 
 			setExportStatus("Creating database...");
-			const sqliteDb = new SQL.Database();
+			const sqliteDb: Database = new SQL.Database();
 			setExportProgress(10);
 
 			setExportStatus("Creating tables...");
 			const tableStatements = createTableStatements(enabledTables);
-			tableStatements.forEach(statement => sqliteDb.run(statement));
+			tableStatements.forEach((statement) => sqliteDb.run(statement));
 
 			const indexStatements = createIndexStatements(enabledTables);
-			indexStatements.forEach(statement => sqliteDb.run(statement));
+			indexStatements.forEach((statement) => sqliteDb.run(statement));
 
 			// Generate and store the actual schema
 			setGeneratedSchema(generateSchemaFromDb(enabledTables));
@@ -120,24 +127,18 @@ const SqliteExport: Component = () => {
 			setExportStatus("Fetching data from local database...");
 			const data = await fetchAllData(enabledTables);
 
-			const mediaMetadataMap = new Map(data.mediaMetadata.map(m => [m.uri, m]));
+			const mediaMetadataMap = new Map(data.mediaMetadata.map((m) => [m.uri, m]));
 			setExportProgress(20);
 
 			// Export data for each enabled table with progress updates
 			setExportProgress(25);
 
-			await insertTableData(
-				sqliteDb,
-				enabledTables,
-				data,
-				mediaMetadataMap,
-				(tableName, progress) => {
-					setExportStatus(`Exporting ${tableName.toLowerCase()}...`);
-					// Map table progress (0-100) to overall progress (25-85)
-					const overallProgress = 25 + (progress * 0.6);
-					setExportProgress(Math.round(overallProgress));
-				}
-			);
+			await insertTableData(sqliteDb, enabledTables, data, mediaMetadataMap, (tableName, progress) => {
+				setExportStatus(`Exporting ${tableName.toLowerCase()}...`);
+				// Map table progress (0-100) to overall progress (25-85)
+				const overallProgress = 25 + progress * 0.6;
+				setExportProgress(Math.round(overallProgress));
+			});
 
 			setExportProgress(90);
 			setExportStatus("Finalizing database...");
@@ -157,7 +158,6 @@ const SqliteExport: Component = () => {
 			setExportProgress(100);
 			setExportStatus("Database ready for download!");
 			setIsComplete(true);
-
 		} catch (error) {
 			console.error("Export error:", error);
 			setExportStatus(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -168,11 +168,11 @@ const SqliteExport: Component = () => {
 	};
 
 	const formatFileSize = (bytes: number): string => {
-		if (bytes === 0) return '0 B';
+		if (bytes === 0) return "0 B";
 		const k = 1024;
-		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const sizes = ["B", "KB", "MB", "GB"];
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+		return parseFloat((bytes / k ** i).toFixed(1)) + " " + sizes[i];
 	};
 
 	const downloadDatabase = () => {
@@ -243,7 +243,7 @@ const SqliteExport: Component = () => {
 						<div class="flex items-center justify-between mb-4">
 							<h4 class="text-lg font-medium text-white">Select Tables to Export</h4>
 							<div class="text-sm text-gray-400">
-								{tableOptions().filter(t => t.enabled).length} of {tableOptions().length} selected
+								{tableOptions().filter((t) => t.enabled).length} of {tableOptions().length} selected
 							</div>
 						</div>
 
@@ -253,7 +253,12 @@ const SqliteExport: Component = () => {
 								onClick={selectAllTables}
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M5 13l4 4L19 7"
+									></path>
 								</svg>
 								Select All
 							</button>
@@ -262,7 +267,12 @@ const SqliteExport: Component = () => {
 								onClick={selectNoTables}
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									></path>
 								</svg>
 								Clear All
 							</button>
@@ -275,7 +285,8 @@ const SqliteExport: Component = () => {
 										class="relative p-4 rounded-lg cursor-pointer transition-all duration-200 border-2"
 										classList={{
 											"bg-gray-700 border-blue-500 shadow-lg shadow-blue-500/10": table.enabled,
-											"bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500": !table.enabled
+											"bg-gray-700 border-gray-600 hover:bg-gray-650 hover:border-gray-500":
+												!table.enabled,
 										}}
 										onClick={() => toggleTable(table.name)}
 									>
@@ -288,14 +299,20 @@ const SqliteExport: Component = () => {
 										<div class="flex items-start justify-between">
 											<div class="flex-1 min-w-0">
 												<div class="flex items-center gap-2 mb-2">
-													<div
-														class="font-semibold text-sm transition-colors text-gray-200"
-													>
+													<div class="font-semibold text-sm transition-colors text-gray-200">
 														{table.label}
 													</div>
 													{table.enabled && (
-														<svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-															<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+														<svg
+															class="w-4 h-4 text-blue-400"
+															fill="currentColor"
+															viewBox="0 0 20 20"
+														>
+															<path
+																fill-rule="evenodd"
+																d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+																clip-rule="evenodd"
+															/>
 														</svg>
 													)}
 												</div>
@@ -303,7 +320,7 @@ const SqliteExport: Component = () => {
 													class="text-xs leading-relaxed transition-colors"
 													classList={{
 														"text-gray-300": table.enabled,
-														"text-gray-400": !table.enabled
+														"text-gray-400": !table.enabled,
 													}}
 												>
 													{table.description}
@@ -322,17 +339,24 @@ const SqliteExport: Component = () => {
 							class="text-blue-400 hover:text-blue-300 mb-3 flex items-center"
 							onClick={() => setShowAdvanced(!showAdvanced())}
 						>
-							<svg class="w-4 h-4 mr-2 transition-transform" classList={{"rotate-90": showAdvanced()}} fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+							<svg
+								class="w-4 h-4 mr-2 transition-transform"
+								classList={{ "rotate-90": showAdvanced() }}
+								fill="currentColor"
+								viewBox="0 0 20 20"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+									clip-rule="evenodd"
+								/>
 							</svg>
 							Advanced Options
 						</button>
 						<Show when={showAdvanced()}>
 							<div class="bg-gray-700 rounded p-4 space-y-4">
 								<div>
-									<label class="block text-sm font-medium text-gray-300 mb-2">
-										Output Filename
-									</label>
+									<label class="block text-sm font-medium text-gray-300 mb-2">Output Filename</label>
 									<input
 										type="text"
 										value={fileName()}
@@ -351,8 +375,17 @@ const SqliteExport: Component = () => {
 							class="text-blue-400 hover:text-blue-300 mb-3 flex items-center disabled:text-gray-500 disabled:cursor-not-allowed"
 							onClick={() => setShowSchema(!showSchema())}
 						>
-							<svg class="w-4 h-4 mr-2 transition-transform" classList={{"rotate-90": showSchema()}} fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+							<svg
+								class="w-4 h-4 mr-2 transition-transform"
+								classList={{ "rotate-90": showSchema() }}
+								fill="currentColor"
+								viewBox="0 0 20 20"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+									clip-rule="evenodd"
+								/>
 							</svg>
 							View Generated SQL Schema
 						</button>
@@ -382,7 +415,11 @@ const SqliteExport: Component = () => {
 					<button
 						class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
 						onClick={exportToSqlite}
-						disabled={tableOptions().filter(t => t.enabled).length === 0 || isExporting() || wasmLoaded() !== true}
+						disabled={
+							tableOptions().filter((t) => t.enabled).length === 0 ||
+							isExporting() ||
+							wasmLoaded() !== true
+						}
 					>
 						{wasmLoaded() !== true ? "Loading..." : isExporting() ? "Generating..." : "Generate Database"}
 					</button>
@@ -399,7 +436,9 @@ const SqliteExport: Component = () => {
 									style={`width: ${exportProgress()}%`}
 								></div>
 							</div>
-							<p class="text-gray-300 text-sm">{exportProgress()}% - {exportStatus()}</p>
+							<p class="text-gray-300 text-sm">
+								{exportProgress()}% - {exportStatus()}
+							</p>
 						</div>
 					</div>
 				</Show>
@@ -410,14 +449,25 @@ const SqliteExport: Component = () => {
 						<div class="text-center">
 							<div class="mb-4">
 								<div class="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
-									<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+									<svg
+										class="w-8 h-8 text-white"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M5 13l4 4L19 7"
+										></path>
 									</svg>
 								</div>
 							</div>
 							<h3 class="text-2xl font-semibold text-white mb-4">Database Ready!</h3>
 							<p class="text-gray-300 mb-6">
-								Your SQLite database has been generated successfully. Click the button below to download it.
+								Your SQLite database has been generated successfully. Click the button below to download
+								it.
 							</p>
 							<button
 								class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded transition-colors text-lg"

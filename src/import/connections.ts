@@ -1,6 +1,6 @@
-import { InstagramDatabase, StoredUser } from "@/db/database";
+import type { InstagramDatabase, StoredUser } from "@/db/database";
 import { loadFile } from "@/utils/media";
-import { ProgFn } from "./import";
+import type { ProgFn } from "./import";
 
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	const fileData = [
@@ -73,12 +73,12 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				);
 			}
 
-			let user_data = user.string_list_data?.[0];
+			const user_data = user.string_list_data?.[0];
 			if (!user_data) continue;
 			if (!user_data.value) user_data.value = user_data.href?.split("/").pop() || "";
 			if (!user_data.value) continue;
 
-			let userData = data[user_data.value] || { username: user_data.value };
+			const userData = data[user_data.value] || { username: user_data.value };
 			if (fileInfo.column) {
 				(userData as any)[fileInfo.column] = { value: true, timestamp: new Date(user_data.timestamp * 1000) };
 			}

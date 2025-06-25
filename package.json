@@ -10,8 +10,9 @@
     "format": "biome format --write ./src"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.0.5",
     "@types/sql.js": "^1.4.9",
+    "biome": "^0.3.3",
     "vite": "^6.3.5",
     "vite-plugin-solid": "^2.11.6"
   },
