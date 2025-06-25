@@ -1,11 +1,11 @@
 import { Component, createResource, createSignal, Show, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { db, StoredData } from "@/db/database";
-import { requireDataLoaded, clearData } from "@/utils";
 import Layout from "@/components/Layout";
 
 import MessageAnalysis from "@/components/Messages";
 import UsersAnalysis from "@/components/Users";
+import { isDataLoaded, clearData } from "@/utils/storage";
 
 const loadData = async (): Promise<StoredData> => {
 	const [mainUsers, users, conversations, messages] = await Promise.all([
@@ -56,7 +56,7 @@ const Analysis: Component = () => {
 	const [data] = createResource(loadData);
 
 	onMount(() => {
-		if (!requireDataLoaded()) {
+		if (!isDataLoaded()) {
 			navigate("/", { replace: true });
 		}
 	});

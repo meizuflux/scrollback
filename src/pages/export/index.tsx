@@ -1,13 +1,13 @@
 import { useNavigate } from "@solidjs/router";
 import { Component, onMount } from "solid-js";
-import { requireDataLoaded } from "@/utils";
+import { isDataLoaded } from "@/utils/storage";
 import Layout from "@/components/Layout";
 
 const Export: Component = () => {
 	const navigate = useNavigate();
 
 	onMount(() => {
-		if (!requireDataLoaded()) {
+		if (!isDataLoaded()) {
 			navigate("/", { replace: true });
 		}
 	});

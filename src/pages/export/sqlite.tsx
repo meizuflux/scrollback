@@ -12,7 +12,7 @@ import {
 	fetchAllData,
 	insertTableData
 } from "@/utils/sqlite";
-import { opfsSupported, requireDataLoaded } from "@/utils";
+import { isDataLoaded } from "@/utils/storage";
 
 const SqliteExport: Component = () => {
 	const navigate = useNavigate();
@@ -52,7 +52,7 @@ const SqliteExport: Component = () => {
 	};
 
 	onMount(() => {
-		if (!requireDataLoaded()) {
+		if (!isDataLoaded()) {
 			navigate("/", { replace: true });
 		}
 		// Initialize schema

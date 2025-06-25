@@ -1,10 +1,11 @@
 import { createSignal, Show, type Component, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { opfsSupported, requireDataLoaded, clearData } from "@/utils";
+import { isDataLoaded } from "@/utils/storage";
 import { Unzip, AsyncUnzipInflate } from "fflate";
 import { importData, ImportStep } from "@/import/import";
 import ImportProgress from "@/components/ImportProgress";
-import { getFileType } from "@/utils";
+import { getFileType } from "@/utils/media";
+import { opfsSupported, clearData } from "@/utils/storage";
 import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
 
@@ -126,7 +127,7 @@ const Home: Component = () => {
 	};
 
 	onMount(() => {
-		const loaded = requireDataLoaded();
+		const loaded = isDataLoaded();
 		setDataLoaded(loaded);
 	});
 

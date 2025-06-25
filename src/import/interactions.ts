@@ -1,5 +1,5 @@
 import { InstagramDatabase } from "@/db/database";
-import { decodeU8String, loadFile } from "@/utils";
+import { decodeU8String, loadFile } from "@/utils/media";
 import { ProgFn } from "./import";
 
 const processInteractionFile = async (
