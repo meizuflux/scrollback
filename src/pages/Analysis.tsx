@@ -137,12 +137,6 @@ const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction
         }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const messageCount = await db.messages.count();
-    setter("messageCount", messageCount);
-
-
-
     setter("partial", false)
     localStorage.setItem("analysis_cache", JSON.stringify(analysis))
 };
