@@ -1,8 +1,9 @@
 import type { InstagramDatabase, StoredUser } from "@/db/database";
 import { loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
+import { CachedAnalysis } from "@/types/analysis";
 
-export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn, analysis: CachedAnalysis) => {
 	const fileData = [
 		{ name: "blocked_profiles.json", column: "blocked", stored_at: "relationships_blocked_users" },
 		{ name: "close_friends.json", column: "close_friends", stored_at: "relationships_close_friends" },
@@ -117,6 +118,9 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	onProgress(85, "Saving all user data to database...");
 	await database.users.bulkPut(Object.values(data));
+
+	analysis.followers = Object.values(data).filter(user => user.follower?.value).length;
+	analysis.following = Object.values(data).filter(user => user.following?.value).length;
 
 	onProgress(100, "Connections import finished.");
 };

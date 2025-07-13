@@ -2,6 +2,7 @@ import { type InstagramDatabase, StoredMediaMetadata, type StoredPost, type Stor
 import type { User } from "@/types/user";
 import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "@/utils/media";
 import type { ProgFn } from "./import";
+import { CachedAnalysis } from "@/types/analysis";
 
 const importUser = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
 	// TODO: use exact files names for a slight speed up
@@ -82,7 +83,7 @@ interface Post {
 	media: Image[];
 }
 
-const importContent = async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+const importContent = async (files: File[], database: InstagramDatabase, onProgress: ProgFn, analysis: CachedAnalysis) => {
 	onProgress(0, "Loading content files...");
 
 	const postsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/posts_1.json");
@@ -191,6 +192,9 @@ const importContent = async (files: File[], database: InstagramDatabase, onProgr
 		onProgress(95, `Saving ${allStories.length} stories...`);
 		await database.stories.bulkAdd(allStories);
 	});
+
+	analysis.postCount = postsToStore.length;
+	analysis.storyCount = allStories.length;
 
 	onProgress(100, "Content import finished.");
 };

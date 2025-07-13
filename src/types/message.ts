@@ -8,7 +8,7 @@ export interface Reaction {
 }
 
 export interface Share {
-	link?: string;
+	link: string;
 }
 
 export interface Media {

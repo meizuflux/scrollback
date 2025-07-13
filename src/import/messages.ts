@@ -1,11 +1,31 @@
 import type { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
 import type { MessageFile } from "@/types/message";
-import { decodeU8String, findFile, processMediaFilesBatched } from "@/utils/media";
+import { decodeU8String, findFile, processMediaFilesBatched, loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
+import { CachedAnalysis } from "@/types/analysis";
 
-export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn) => {
+export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn, analysis: CachedAnalysis) => {
 	// TODO: perf timing to figure out the correct progress percentages (for everything, tbh)
-	onProgress(0, "Finding message files...");
+	onProgress(0, "Loading user data...");
+
+	// we have to do this here because we need the username
+	const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
+	const username = userFileData?.profile_user[0].string_map_data.Name?.value;
+
+	onProgress(5, "Finding message files...");
+
+	// what we're going to compute here:
+    analysis.systemMessages = 0;
+    analysis.messagesSent = 0;
+    analysis.messagesReceived = 0;
+
+    analysis.reelsSent = 0;
+    analysis.reelsReceived = 0;
+
+    analysis.reactionsSent = 0;
+    analysis.reactionsReceived = 0;
+
+    analysis.groupCount = 0;
 
 	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
 	const messageFiles = files.filter(
@@ -80,6 +100,11 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				is_group: participants.length > 2,
 			};
 
+			if (conversation.is_group) {
+				// @ts-ignore
+				analysis.groupCount += 1;
+			}
+
 			const senderNameCache = new Map<string, string>();
 
 			const conversationMessages: StoredMessage[] = new Array(json_file.messages.length);
@@ -94,11 +119,26 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					senderNameCache.set(message.sender_name!, sender_name);
 				}
 
+
 				let content: string | undefined;
 				let isSystemMessage = false;
 				if (message.content) {
 					content = decodeU8String(message.content);
 					isSystemMessage = checkSystemMessage(content);
+					if (isSystemMessage) {
+					    // @ts-ignore we initialize it already earlier in the fn
+						analysis.systemMessages += 1
+					}
+				}
+
+				if (sender_name === username && !isSystemMessage) {
+				    // TODO: find a way to declare them as not potentially undefined
+				    // @ts-ignore
+                    analysis.messagesSent += 1;
+				} else if (sender_name != username && !isSystemMessage) {
+				    // TODO: find a way to declare them as not potentially undefined
+				    // @ts-ignore
+                    analysis.messagesReceived += 1;
 				}
 
 				let reactions;
@@ -107,6 +147,16 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 						...reaction,
 						reaction: decodeU8String(reaction.reaction),
 					}));
+
+					for (const reaction of reactions) {
+						if (reaction.actor === username) {
+						    // @ts-ignore
+							analysis.reactionsSent += 1;
+						} else {
+						    // @ts-ignore
+							analysis.reactionsReceived += 1;
+						}
+					}
 				}
 
 				// defer storing and processing until the very end
@@ -126,6 +176,16 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 								data: mediaFile,
 							});
 						}
+					}
+				}
+
+			    if (message.share?.link && message.share.link.includes("/reel/")) {
+					if (sender_name === username) {
+					    // @ts-ignore
+                        analysis.reelsSent += 1;
+					} else {
+					    // @ts-ignore
+					    analysis.reelsReceived += 1;
 					}
 				}
 
@@ -177,6 +237,24 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		onProgress(80, `Saving ${allMessages.length} messages...`);
 		await database.messages.bulkAdd(allMessages);
 	});
+
+	analysis.messageCount = allMessages.length;
+	analysis.conversationCount = conversations.length;
+
+	// Calculate top three conversations by message count
+	const conversationMessageCounts = new Map<string, number>();
+
+	for (const message of allMessages) {
+		if (!message.isSystemMessage) {
+			const count = conversationMessageCounts.get(message.conversation) || 0;
+			conversationMessageCounts.set(message.conversation, count + 1);
+		}
+	}
+
+	analysis.topThreeConversations = Array.from(conversationMessageCounts.entries())
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, 3)
+		.map(([title, count]) => ({ title, count }));
 
 	onProgress(100, `Imported ${allMessages.length} messages and ${conversations.length} conversations.`);
 };

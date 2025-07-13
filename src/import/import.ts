@@ -3,6 +3,7 @@ import { importUser, importContent, importProfileChanges } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
 import { importPostLikes, importSavedPosts, importComments } from "./interactions";
+import { CachedAnalysis } from "@/types/analysis";
 
 export interface ImportStep {
 	name: string;
@@ -48,10 +49,12 @@ export const importData = async (
 		stepDurations["Unzipping"] = unzipDuration;
 	}
 
+	let analysis: CachedAnalysis = {}
+
 	await Promise.all(
 		importSteps.map(async ({ name, fn }) => {
 			const stepStartTime = performance.now();
-			await fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText));
+			await fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText), analysis);
 			stepDurations[name] = performance.now() - stepStartTime;
 		}),
 	);
@@ -65,5 +68,7 @@ export const importData = async (
 		stepDurations,
 	};
 
+
+	localStorage.setItem("analysis_cache", JSON.stringify(analysis))
 	localStorage.setItem("import_metadata", JSON.stringify(metadata));
 };
