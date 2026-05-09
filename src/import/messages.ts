@@ -10,7 +10,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 	// we have to do this here because we need the username
 	const userFileData = await loadFile<any>(files, "/personal_information/personal_information.json");
-	const username = userFileData?.profile_user[0].string_map_data.Name?.value;
+	const username = userFileData?.profile_user?.[0]?.string_map_data?.Name?.value;
 
 	onProgress(5, "Finding message files...");
 
@@ -57,7 +57,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 			"changed the theme to",
 			"changed the group photo",
 			"set their own nickname to",
-			"You sent an attachment\\.",
+			".*sent an attachment\\.",
 			"added .* to the group",
 			"removed .* from the group",
 		].join("|"),
