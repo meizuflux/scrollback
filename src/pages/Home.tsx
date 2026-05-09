@@ -125,7 +125,9 @@ const Home: Component = () => {
 		setDataLoaded(loaded);
 	});
 
-	const handleFiles = async (files: FileList) => {
+    const handleFiles = async (files: FileList) => {
+        clearData();
+
 		let fileArray = Array.from(files);
 
 		setIsImporting(true);

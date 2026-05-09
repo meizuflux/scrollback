@@ -48,6 +48,7 @@ export function getFileType(filename: string): string {
 
 // insta messages are encoded, like urls and stuff like that so we have to parse it like this
 export const decodeU8String = (encodedText: string): string => {
+	if (!encodedText) return encodedText;
 	try {
 		const decoder = new TextDecoder("utf-8");
 		const bytes = new Uint8Array(encodedText.length);
