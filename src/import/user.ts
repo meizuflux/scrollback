@@ -29,17 +29,17 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	]);
 
 	const user: User = {
-		username: userFileData.profile_user[0].string_map_data.Username?.value,
-		name: userFileData.profile_user[0].string_map_data.Name?.value,
-		email: userFileData.profile_user[0].string_map_data.Email?.value,
-		bio: userFileData.profile_user[0].string_map_data.Bio?.value,
-		gender: userFileData.profile_user[0].string_map_data.Gender?.value,
-		privateAccount: new Boolean(userFileData.profile_user[0].string_map_data["Private Account"]?.value),
-		dateOfBirth: new Date(userFileData.profile_user[0].string_map_data["Date of birth"]?.value),
-		basedIn: basedInFile?.inferred_data_primary_location[0].string_map_data["City Name"]?.value || null,
+		username: userFileData?.profile_user?.[0]?.string_map_data?.Username?.value,
+		name: userFileData?.profile_user?.[0]?.string_map_data?.Name?.value,
+		email: userFileData?.profile_user?.[0]?.string_map_data?.Email?.value,
+		bio: userFileData?.profile_user?.[0]?.string_map_data?.Bio?.value,
+		gender: userFileData?.profile_user?.[0]?.string_map_data?.Gender?.value,
+		privateAccount: new Boolean(userFileData?.profile_user?.[0]?.string_map_data?.["Private Account"]?.value),
+		dateOfBirth: new Date(userFileData?.profile_user?.[0]?.string_map_data?.["Date of birth"]?.value),
+		basedIn: basedInFile?.label_values?.[0].dict?.[2]?.value || null,
 		locationsOfInterest:
 			locOfInterestFile?.label_values
-				?.filter((label: any) => label.label === "Locations of interest")[0]
+				?.filter((label: any) => label.label === "Locations of interest")?.[0]
 				?.vec?.map((v: any) => v.value) || [],
 		videosWatched: videosWatchedFile?.impressions_history_videos_watched?.length || 0,
 		notInterestedProfiles: notInterestedProfilesFile?.impressions_history_recs_hidden_authors?.length || 0,
@@ -52,7 +52,7 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 	await database.mainUser.put(user);
 
 	onProgress(90, "Checking for profile photo");
-	const pfpPath = userFileData.profile_user[0].media_map_data["Profile Photo"]?.uri;
+	const pfpPath = userFileData?.profile_user?.[0]?.media_map_data?.["Profile Photo"]?.uri;
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath);
 		if (pfp) {
