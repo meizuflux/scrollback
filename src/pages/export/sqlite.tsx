@@ -151,7 +151,10 @@ const SqliteExport: Component = () => {
 			setExportProgress(95);
 
 			setExportStatus("Preparing download...");
-			const blob = new Blob([binaryArray], { type: "application/x-sqlite3" });
+			const blob = new Blob(
+				[Uint8Array.from(binaryArray)],
+				{ type: "application/x-sqlite3" }
+			);
 			setDownloadUrl(URL.createObjectURL(blob));
 			setFileSize(blob.size);
 
