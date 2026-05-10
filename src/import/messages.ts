@@ -1,6 +1,7 @@
 import type { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
-import type { MessageFile, MessageType } from "@/types/message";
+import type { MessageFile } from "@/types/message";
 import { MESSAGE_TYPE } from "@/types/message";
+import { categorizeMessage } from "@/utils/messageParser";
 import { decodeU8String, findFile, processMediaFilesBatched, loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
 import { CachedAnalysis } from "@/types/analysis";
@@ -39,31 +40,6 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	}
 
 	onProgress(10, "Processing conversations...");
-
-	// TODO: find all of these
-	const exactSystemMessages = new Set([
-		"You missed an audio call",
-		"started an audio call",
-		"ended the call",
-		"joined the video chat",
-		"left the video chat",
-		"Say hi to your new connection",
-		"You created the group",
-		"Liked a message",
-	]);
-
-	const patternRegex = new RegExp(
-		[
-			"^Reacted .* to your message\\s*$",
-			"changed the theme to",
-			"changed the group photo",
-			"set their own nickname to",
-			"added .* to the group\\.?$",
-			"removed .* from the group\\.?$",
-		].join("|"),
-	);
-
-	const checkSystemMessage = (content: string) => exactSystemMessages.has(content) || patternRegex.test(content);
 
 	const conversations: any[] = [];
 	const allMessages: StoredMessage[] = [];
@@ -119,44 +95,18 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					senderNameCache.set(message.sender_name!, sender_name);
 				}
 
+				const categorized = categorizeMessage(message);
 
-				let content: string | undefined;
-				let isSystemMessage = false;
-				let isShare = !!message.share;
-				const isReel = !!(message.share?.link && message.share.link.includes("/reel/"));
-				const isPost = !!(message.share?.link && message.share.link.includes("/p/"));
-				const isMedia = !!(message.photos?.length || message.videos?.length || message.audio_files?.length);
-
-				if (message.content) {
-					content = decodeU8String(message.content);
-
-					if (content && /sent an attachment\.$/.test(content)) {
-						isShare = true;
-					}
-
-					if (isShare || isReel || isPost) {
-						content = undefined;
-					} else {
-						isSystemMessage = checkSystemMessage(content);
-						if (isSystemMessage) {
-							// @ts-ignore we initialize it already earlier in the fn
-							analysis.systemMessages += 1
-						}
-					}
+				if (categorized.type === MESSAGE_TYPE.System) {
+					// @ts-ignore we initialize it already earlier in the fn
+					analysis.systemMessages += 1;
 				}
 
-				let type: MessageType = MESSAGE_TYPE.Text;
-				if (isSystemMessage) type = MESSAGE_TYPE.System;
-				else if (isReel) type = MESSAGE_TYPE.Reel;
-				else if (isPost) type = MESSAGE_TYPE.Post;
-				else if (isShare) type = MESSAGE_TYPE.Share;
-				else if (isMedia) type = MESSAGE_TYPE.Media;
-
-				if (sender_name === username && !isSystemMessage) {
+				if (sender_name === username && categorized.type !== MESSAGE_TYPE.System) {
 				    // TODO: find a way to declare them as not potentially undefined
 				    // @ts-ignore
                     analysis.messagesSent += 1;
-				} else if (sender_name != username && !isSystemMessage) {
+				} else if (sender_name != username && categorized.type !== MESSAGE_TYPE.System) {
 				    // TODO: find a way to declare them as not potentially undefined
 				    // @ts-ignore
                     analysis.messagesReceived += 1;
@@ -200,7 +150,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					}
 				}
 
-			    if (isReel) {
+			    if (categorized.type === MESSAGE_TYPE.Reel) {
 					if (sender_name === username) {
 					    // @ts-ignore
                         analysis.reelsSent += 1;
@@ -214,13 +164,13 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					conversation: conversationTitle,
 					sender_name,
 					timestamp: new Date(message.timestamp_ms),
-					content,
+					content: categorized.content,
 					reactions,
 					share: message.share,
 					photos: message.photos,
 					videos: message.videos,
 					audio: message.audio_files,
-					type,
+					type: categorized.type,
 				};
 			}
 
