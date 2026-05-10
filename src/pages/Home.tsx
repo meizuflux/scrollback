@@ -14,10 +14,8 @@ const extractZipToFiles = async (
 	updateSteps: (name: string, progress: number, statusText?: string) => void,
 ): Promise<File[]> => {
 	updateSteps("Unzipping files", 0, "Reading ZIP file...");
-	const arrayBuffer = await zipFile.arrayBuffer();
-	const zipData = new Uint8Array(arrayBuffer);
 
-	return new Promise<File[]>((resolve, _) => {
+	return new Promise<File[]>((resolve, reject) => {
 		const extractedFiles: File[] = [];
 
 		let totalFiles = 0;
@@ -45,15 +43,6 @@ const extractZipToFiles = async (
 
 			totalFiles++; // Increment total files count for each stream created
 			stream.ondata = (err, chunk, final) => {
-				/*if (err) {
-                    console.error(`[extractZipToFiles] Error DURING DECOMPRESSION of file "${filePath}":`, err);
-                    // Stop further file discoveries by this Unzip instance, as state might be corrupt.
-                    mainUnzipper.onfile = () => {};
-                    // Reject the entire operation on the first file processing error.
-                    reject(new Error(`Error decompressing file "${filePath}": ${err.message || String(err)}`));
-                    return;
-                } */
-
 				if (chunk) {
 					chunks.push(chunk);
 					totalSize += chunk.length;
@@ -86,12 +75,27 @@ const extractZipToFiles = async (
 
 		mainUnzipper.register(AsyncUnzipInflate);
 
-		mainUnzipper.push(zipData, true);
-		discoveryComplete = true;
-
-		checkCompletion(); // for when no files in zip
+		const reader = zipFile.stream().getReader();
+		const processStream = async () => {
+			try {
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) {
+						mainUnzipper.push(new Uint8Array(0), true);
+						discoveryComplete = true;
+						checkCompletion();
+						break;
+					}
+					mainUnzipper.push(value);
+				}
+			} catch (err) {
+				reject(err);
+			}
+		};
+		processStream();
 	});
 };
+
 
 const Home: Component = () => {
 	const navigate = useNavigate();
