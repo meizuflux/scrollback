@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { Conversation, Media, Reaction, Share } from "@/types/message";
+import type { Conversation, Media, Reaction, Share, MessageType } from "@/types/message";
 import type { ProfileChange, User } from "@/types/user";
 
 export interface StoredData {
@@ -35,7 +35,7 @@ export interface StoredMessage {
 	photos?: Media[];
 	videos?: Media[];
 	audio?: Media[];
-	isSystemMessage?: boolean;
+	type?: MessageType;
 }
 
 export interface StoredStory {
@@ -108,7 +108,7 @@ export class InstagramDatabase extends Dexie {
 		this.version(1).stores({
 			users: "username, stories_liked",
 			mainUser: "username",
-			messages: "++id, [conversation+timestamp], sender_name, timestamp, isSystemMessage",
+			messages: "++id, [conversation+timestamp], sender_name, timestamp, type",
 			conversations: "title, *participants",
 			media_metadata: "uri, type, timestamp, fileName",
 			virtualFS: "fileName, timestamp, size",

@@ -1,5 +1,6 @@
 import type { InstagramDatabase, StoredMessage, StoredMediaMetadata } from "@/db/database";
-import type { MessageFile } from "@/types/message";
+import type { MessageFile, MessageType } from "@/types/message";
+import { MESSAGE_TYPE } from "@/types/message";
 import { decodeU8String, findFile, processMediaFilesBatched, loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
 import { CachedAnalysis } from "@/types/analysis";
@@ -57,9 +58,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 			"changed the theme to",
 			"changed the group photo",
 			"set their own nickname to",
-			".*sent an attachment\\.",
-			"added .* to the group",
-			"removed .* from the group",
+			"added .* to the group\\.?$",
+			"removed .* from the group\\.?$",
 		].join("|"),
 	);
 
@@ -122,14 +122,35 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 				let content: string | undefined;
 				let isSystemMessage = false;
+				let isShare = !!message.share;
+				const isReel = !!(message.share?.link && message.share.link.includes("/reel/"));
+				const isPost = !!(message.share?.link && message.share.link.includes("/p/"));
+				const isMedia = !!(message.photos?.length || message.videos?.length || message.audio_files?.length);
+
 				if (message.content) {
 					content = decodeU8String(message.content);
-					isSystemMessage = checkSystemMessage(content);
-					if (isSystemMessage) {
-					    // @ts-ignore we initialize it already earlier in the fn
-						analysis.systemMessages += 1
+
+					if (content && /sent an attachment\.$/.test(content)) {
+						isShare = true;
+					}
+
+					if (isShare || isReel || isPost) {
+						content = undefined;
+					} else {
+						isSystemMessage = checkSystemMessage(content);
+						if (isSystemMessage) {
+							// @ts-ignore we initialize it already earlier in the fn
+							analysis.systemMessages += 1
+						}
 					}
 				}
+
+				let type: MessageType = MESSAGE_TYPE.Text;
+				if (isSystemMessage) type = MESSAGE_TYPE.System;
+				else if (isReel) type = MESSAGE_TYPE.Reel;
+				else if (isPost) type = MESSAGE_TYPE.Post;
+				else if (isShare) type = MESSAGE_TYPE.Share;
+				else if (isMedia) type = MESSAGE_TYPE.Media;
 
 				if (sender_name === username && !isSystemMessage) {
 				    // TODO: find a way to declare them as not potentially undefined
@@ -179,7 +200,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					}
 				}
 
-			    if (message.share?.link && message.share.link.includes("/reel/")) {
+			    if (isReel) {
 					if (sender_name === username) {
 					    // @ts-ignore
                         analysis.reelsSent += 1;
@@ -199,7 +220,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					photos: message.photos,
 					videos: message.videos,
 					audio: message.audio_files,
-					isSystemMessage,
+					type,
 				};
 			}
 
@@ -245,7 +266,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	const conversationMessageCounts = new Map<string, number>();
 
 	for (const message of allMessages) {
-		if (!message.isSystemMessage) {
+		if (message.type !== MESSAGE_TYPE.System) {
 			const count = conversationMessageCounts.get(message.conversation) || 0;
 			conversationMessageCounts.set(message.conversation, count + 1);
 		}

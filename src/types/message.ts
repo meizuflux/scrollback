@@ -1,3 +1,14 @@
+export const MESSAGE_TYPE = {
+	System: "system",
+	Reel: "reel",
+	Post: "post",
+	Share: "share",
+	Media: "media",
+	Text: "text",
+} as const;
+
+export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
+
 export interface Participant {
 	name: string;
 }
