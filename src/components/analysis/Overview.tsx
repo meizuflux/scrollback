@@ -179,38 +179,6 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 					/>
 				</div>
 			</div>
-
-			{/* Favorites Section */}
-			<div class="mb-8">
-				<h2 class="text-2xl font-bold text-white mb-6 flex items-center">
-					<span class="mr-3">⭐</span>
-					Favorites
-				</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-						<div class="flex items-center justify-between">
-							<div>
-								<p class="text-gray-400 text-sm font-medium">Favorite Word</p>
-								<p class="text-2xl font-bold text-white mt-1">
-									{props.analysis.favoriteWord || "—"}
-								</p>
-							</div>
-							<div class="text-3xl text-green-400">💬</div>
-						</div>
-					</div>
-					<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
-						<div class="flex items-center justify-between">
-							<div>
-								<p class="text-gray-400 text-sm font-medium">Favorite Emoji</p>
-								<p class="text-2xl font-bold text-white mt-1">
-									{props.analysis.favoriteEmoji || "—"}
-								</p>
-							</div>
-							<div class="text-3xl text-yellow-400">😊</div>
-						</div>
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 };
