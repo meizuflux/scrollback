@@ -10,21 +10,21 @@
     "format": "biome format --write ./src"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.5.13",
     "@types/sql.js": "^1.4.11",
     "biome": "^0.3.3",
-    "vite": "^8.0.11",
-    "vite-plugin-solid": "^2.11.12"
+    "vite": "^8.3.0",
+    "vite-plugin-solid": "^2.11.14"
   },
   "dependencies": {
-    "@solidjs/router": "^0.16.1",
-    "@tailwindcss/vite": "^4.3.0",
-    "dexie": "^4.4.2",
-    "echarts": "^6.0.0",
-    "fflate": "^0.8.2",
-    "solid-js": "^1.9.12",
-    "sql.js": "^1.14.1",
-    "tailwindcss": "^4.3.0",
+    "@solidjs/router": "^0.16.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "dexie": "^4.4.6",
+    "echarts": "^6.1.0",
+    "fflate": "^0.8.3",
+    "solid-js": "^1.9.15",
+    "sql.js": "^1.14.2",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3"
   }
 }
