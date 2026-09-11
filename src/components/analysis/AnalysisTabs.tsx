@@ -137,7 +137,7 @@ const ControlLabel: Component<{ label: string; children: any }> = (props) => (
 );
 
 const controlClass =
-	"w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#4A99F8] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]";
+	"w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#7873F5] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]";
 
 const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	const [activeTab, setActiveTab] = createSignal<TabId>("highlights");
@@ -222,7 +222,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								type="button"
 								class={`flex items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
 									activeTab() === tab.id
-										? "border-[#4A99F8] bg-[#303030] text-[#F2F2F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+										? "border-[#7873F5] bg-[#303030] text-[#F2F2F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 										: "border-transparent text-[#A3A3A3] hover:bg-[#202020] hover:text-[#F2F2F2]"
 								}`}
 								aria-current={activeTab() === tab.id ? "page" : undefined}
@@ -250,7 +250,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "people"}>
 					<section class="space-y-5">
 						<div>
-							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+							<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 								Your connections
 							</p>
 							<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
@@ -295,7 +295,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								</ControlLabel>
 								<button
 									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={!peopleFiltersActive()}
 									onClick={clearPeopleFilters}
 								>
@@ -362,7 +362,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "conversations"}>
 					<section class="space-y-5">
 						<div>
-							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+							<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 								Message history
 							</p>
 							<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
@@ -416,7 +416,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								</ControlLabel>
 								<button
 									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={!conversationFiltersActive()}
 									onClick={clearConversationFilters}
 								>
@@ -468,7 +468,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 														<span class="mr-1 text-[#737373] sm:hidden">Type ·</span>
 														{conversation.is_group ? "Group" : "Direct"}
 													</span>
-													<span class="text-sm font-semibold text-[#4A99F8]">
+													<span class="text-sm font-semibold text-[#7873F5]">
 														<span class="mr-1 text-[#737373] sm:hidden">Messages ·</span>
 														{conversation.messageCount.toLocaleString()}
 													</span>
@@ -489,7 +489,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "profile"}>
 					<section class="space-y-5">
 						<div>
-							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+							<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 								Your account
 							</p>
 							<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">Profile</h1>
@@ -520,26 +520,26 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								<div class="mt-8 grid gap-3 sm:grid-cols-2">
 									<button
 										type="button"
-										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#4A99F8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 										onClick={() => openPeopleFilter("followers")}
 									>
 										<span class="block text-2xl font-semibold text-[#F2F2F2]">
 											{mutedValue(props.analysis.followers)}
 										</span>
 										<span class="mt-1 block text-sm text-[#A3A3A3]">
-											Followers <span class="text-[#4A99F8]">→</span>
+											Followers <span class="text-[#7873F5]">→</span>
 										</span>
 									</button>
 									<button
 										type="button"
-										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#4A99F8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 										onClick={() => openPeopleFilter("following")}
 									>
 										<span class="block text-2xl font-semibold text-[#F2F2F2]">
 											{mutedValue(props.analysis.following)}
 										</span>
 										<span class="mt-1 block text-sm text-[#A3A3A3]">
-											Following <span class="text-[#4A99F8]">→</span>
+											Following <span class="text-[#7873F5]">→</span>
 										</span>
 									</button>
 								</div>

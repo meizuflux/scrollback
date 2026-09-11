@@ -21,7 +21,7 @@ const StepProgressBar: Component<{ step: ImportStep }> = (props) => {
 
 				<div class="mb-1 h-2 w-full rounded-full bg-[#303030]">
 					<div
-						class="h-full rounded-full bg-[#4A99F8] transition-all duration-150 ease-linear"
+						class="h-full rounded-full bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] transition-all duration-150 ease-linear"
 						style={{ width: `${currentProgress()}%` }}
 					/>
 				</div>
@@ -58,7 +58,7 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 						<Show when={props.onStop}>
 							<button
 								type="button"
-								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 								onClick={() => {
 									if (
 										confirm(
@@ -78,12 +78,14 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 
 				<div class="mb-2 h-3 w-full rounded-full border border-[#303030] bg-[#303030]">
 					<div
-						class="h-full rounded-full bg-[#4A99F8] transition-all duration-150 ease-linear"
+						class="h-full rounded-full bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] transition-all duration-150 ease-linear"
 						style={{ width: `${overallProgress()}%` }}
 					/>
 				</div>
 				<div class="text-center">
-					<span class="text-lg font-medium text-[#4A99F8]">{overallProgress()}%</span>
+					<span class="bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-lg font-medium text-transparent">
+						{overallProgress()}%
+					</span>
 				</div>
 			</div>
 

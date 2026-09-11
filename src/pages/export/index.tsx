@@ -24,7 +24,7 @@ const Export: Component = () => {
 		<Layout>
 			<div class="container mx-auto max-w-5xl px-4 py-7 sm:px-6">
 				<div class="mb-8">
-					<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+					<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 						Local export
 					</p>
 					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Export your data</h1>
@@ -45,7 +45,7 @@ const Export: Component = () => {
 
 							<button
 								type="button"
-								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 								onClick={() => navigate(option.route)}
 							>
 								Export {option.title}
@@ -57,7 +57,7 @@ const Export: Component = () => {
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<button
 						type="button"
-						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 						onClick={() => navigate("/analysis")}
 					>
 						← Back to Analysis

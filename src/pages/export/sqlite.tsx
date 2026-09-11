@@ -225,7 +225,7 @@ const SqliteExport: Component = () => {
 					>
 						← Back to Export Options
 					</button>
-					<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+					<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 						Portable backup
 					</p>
 					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">SQLite database export</h1>
@@ -254,7 +254,7 @@ const SqliteExport: Component = () => {
 						<div class="flex gap-2 mb-6">
 							<button
 								type="button"
-								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 								onClick={selectAllTables}
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +269,7 @@ const SqliteExport: Component = () => {
 							</button>
 							<button
 								type="button"
-								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 								onClick={selectNoTables}
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,9 +288,9 @@ const SqliteExport: Component = () => {
 							<For each={tableOptions()}>
 								{(table) => (
 									<label
-										class="relative cursor-pointer rounded-lg border p-4 transition-colors focus-within:border-[#4A99F8]"
+										class="relative cursor-pointer rounded-lg border p-4 transition-colors focus-within:border-[#7873F5]"
 										classList={{
-											"border-[#4A99F8] bg-[#202020]": table.enabled,
+											"border-[#7873F5] bg-[#202020]": table.enabled,
 											"border-[#303030] bg-[#141414] hover:border-[#4A4A4A]": !table.enabled,
 										}}
 									>
@@ -308,7 +308,7 @@ const SqliteExport: Component = () => {
 													</div>
 													{table.enabled && (
 														<svg
-															class="h-4 w-4 text-[#4A99F8]"
+															class="h-4 w-4 text-[#7873F5]"
 															fill="currentColor"
 															viewBox="0 0 20 20"
 														>
@@ -341,7 +341,7 @@ const SqliteExport: Component = () => {
 					<div class="mb-4">
 						<button
 							type="button"
-							class="mb-3 flex items-center text-sm font-semibold text-[#4A99F8] transition-colors hover:text-[#8BC1FF]"
+							class="mb-3 flex items-center text-sm font-semibold text-[#7873F5] transition-colors hover:text-[#FF6EC4]"
 							onClick={() => setShowAdvanced(!showAdvanced())}
 						>
 							<svg
@@ -366,7 +366,7 @@ const SqliteExport: Component = () => {
 										type="text"
 										value={fileName()}
 										onInput={(e) => setFileName(e.target.value)}
-										class="w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#4A99F8] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+										class="w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#7873F5] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 										placeholder="instagram-data.sqlite"
 									/>
 								</div>
@@ -378,7 +378,7 @@ const SqliteExport: Component = () => {
 					<div class="mb-4">
 						<button
 							type="button"
-							class="mb-3 flex items-center text-sm font-semibold text-[#4A99F8] transition-colors hover:text-[#8BC1FF] disabled:cursor-not-allowed disabled:text-[#737373]"
+							class="mb-3 flex items-center text-sm font-semibold text-[#7873F5] transition-colors hover:text-[#FF6EC4] disabled:cursor-not-allowed disabled:text-[#737373]"
 							onClick={() => setShowSchema(!showSchema())}
 						>
 							<svg
@@ -399,7 +399,7 @@ const SqliteExport: Component = () => {
 							<div class="relative rounded-lg border border-[#303030] bg-[#141414] p-4">
 								<button
 									type="button"
-									class="absolute right-3 top-3 z-10 inline-flex min-h-8 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-3 py-1 text-xs font-semibold text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+									class="absolute right-3 top-3 z-10 inline-flex min-h-8 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-3 py-1 text-xs font-semibold text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 									onClick={copySchemaToClipboard}
 								>
 									{copyButtonText()}
@@ -421,7 +421,7 @@ const SqliteExport: Component = () => {
 
 					<button
 						type="button"
-						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
+						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
 						onClick={exportToSqlite}
 						disabled={
 							tableOptions().filter((t) => t.enabled).length === 0 ||
@@ -440,7 +440,7 @@ const SqliteExport: Component = () => {
 						<div class="mb-4">
 							<div class="mb-2 h-3 rounded-full bg-[#303030]">
 								<div
-									class="h-3 rounded-full bg-[#4A99F8] transition-all duration-500 ease-out"
+									class="h-3 rounded-full bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] transition-all duration-500 ease-out"
 									style={`width: ${exportProgress()}%`}
 								></div>
 							</div>
@@ -456,7 +456,7 @@ const SqliteExport: Component = () => {
 					<div class="mb-4 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
 						<div class="text-center">
 							<div class="mb-4">
-								<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#4A99F8] text-[#4A99F8]">
+								<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#7873F5] text-[#FF6EC4]">
 									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
 											stroke-linecap="round"
@@ -474,7 +474,7 @@ const SqliteExport: Component = () => {
 							</p>
 							<button
 								type="button"
-								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-base font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-base font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 								onClick={downloadDatabase}
 							>
 								Download {fileName()} ({formatFileSize(fileSize())})

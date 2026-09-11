@@ -218,7 +218,7 @@ const Home: Component = () => {
 				<Show when={dataLoaded() && !isImporting()}>
 					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-6 sm:p-8">
 						<div class="text-center">
-							<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#4A99F8] text-[#4A99F8]">
+							<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#7873F5] text-[#FF6EC4]">
 								<svg
 									class="h-5 w-5"
 									viewBox="0 0 24 24"
@@ -241,14 +241,14 @@ const Home: Component = () => {
 							<div class="flex flex-col justify-center gap-3 sm:flex-row">
 								<button
 									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 									onClick={() => navigate("/analysis")}
 								>
 									View Analysis
 								</button>
 								<button
 									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
 									onClick={async () => {
 										setIsClearing(true);
 										await clearData();
@@ -325,14 +325,14 @@ const Home: Component = () => {
 						<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
 							<button
 								type="button"
-								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] sm:w-auto sm:min-w-[156px]"
+								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
 								onClick={() => document.getElementById("zipPicker")?.click()}
 							>
 								Select ZIP file
 							</button>
 							<button
 								type="button"
-								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] sm:w-auto sm:min-w-[156px]"
+								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
 								onClick={() => document.getElementById("folderPicker")?.click()}
 							>
 								Select folder
@@ -377,7 +377,7 @@ const Home: Component = () => {
 										href="https://accountscenter.instagram.com/info_and_permissions/"
 										target="_blank"
 										rel="noopener noreferrer"
-										class="text-[#4A99F8] underline decoration-[#4A99F8] underline-offset-4 transition-colors hover:text-[#8BC1FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+										class="text-[#FF6EC4] underline decoration-[#FF6EC4] underline-offset-4 transition-colors hover:text-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
 									>
 										Instagram Account Center
 									</a>
