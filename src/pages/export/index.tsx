@@ -24,7 +24,9 @@ const Export: Component = () => {
 		<Layout>
 			<div class="container mx-auto max-w-5xl px-4 py-7 sm:px-6">
 				<div class="mb-8">
-					<p class="app-kicker mb-3">Local export</p>
+					<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+						Local export
+					</p>
 					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Export your data</h1>
 					<p class="text-base text-[#A3A3A3]">
 						Choose from various export formats to download and backup your Instagram data.
@@ -33,7 +35,7 @@ const Export: Component = () => {
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 					{exportOptions.map((option) => (
-						<div class="app-panel p-5 sm:p-6">
+						<div class="rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
 							<div class="flex items-center mb-4">
 								<div>
 									<h3 class="text-lg font-semibold text-[#F2F2F2]">{option.title}</h3>
@@ -43,7 +45,7 @@ const Export: Component = () => {
 
 							<button
 								type="button"
-								class="app-button-primary w-full"
+								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 								onClick={() => navigate(option.route)}
 							>
 								Export {option.title}
@@ -53,7 +55,11 @@ const Export: Component = () => {
 				</div>
 
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
-					<button type="button" class="app-button-secondary" onClick={() => navigate("/analysis")}>
+					<button
+						type="button"
+						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+						onClick={() => navigate("/analysis")}
+					>
 						← Back to Analysis
 					</button>
 				</div>

@@ -225,7 +225,9 @@ const SqliteExport: Component = () => {
 					>
 						← Back to Export Options
 					</button>
-					<p class="app-kicker mb-3">Portable backup</p>
+					<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+						Portable backup
+					</p>
 					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">SQLite database export</h1>
 					<p class="text-base text-[#A3A3A3]">
 						Export your data to a portable SQL file that you can import into any SQLite database.
@@ -234,12 +236,12 @@ const SqliteExport: Component = () => {
 
 				{/* WASM Loading Status */}
 				<Show when={wasmLoaded() === false}>
-					<div class="app-error mb-6 p-4">
+					<div class="mb-6 rounded-lg border border-[#713D3D] bg-[#211515] p-4">
 						<span class="text-[#E7B7B7]">Failed to load SQL.js. Please refresh the page.</span>
 					</div>
 				</Show>
 
-				<div class="app-panel mb-6 p-5 sm:p-6">
+				<div class="mb-6 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
 					{/* Table Selection */}
 					<div class="mb-6">
 						<div class="flex items-center justify-between mb-4">
@@ -250,7 +252,11 @@ const SqliteExport: Component = () => {
 						</div>
 
 						<div class="flex gap-2 mb-6">
-							<button type="button" class="app-button-primary" onClick={selectAllTables}>
+							<button
+								type="button"
+								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								onClick={selectAllTables}
+							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path
 										stroke-linecap="round"
@@ -261,7 +267,11 @@ const SqliteExport: Component = () => {
 								</svg>
 								Select All
 							</button>
-							<button type="button" class="app-button-secondary" onClick={selectNoTables}>
+							<button
+								type="button"
+								class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								onClick={selectNoTables}
+							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path
 										stroke-linecap="round"
@@ -349,14 +359,14 @@ const SqliteExport: Component = () => {
 							Advanced Options
 						</button>
 						<Show when={showAdvanced()}>
-							<div class="app-panel-muted space-y-4 p-4">
+							<div class="space-y-4 rounded-lg border border-[#303030] bg-[#141414] p-4">
 								<div>
 									<label class="mb-2 block text-sm font-medium text-[#A3A3A3]">Output filename</label>
 									<input
 										type="text"
 										value={fileName()}
 										onInput={(e) => setFileName(e.target.value)}
-										class="app-control"
+										class="w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#4A99F8] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 										placeholder="instagram-data.sqlite"
 									/>
 								</div>
@@ -386,10 +396,10 @@ const SqliteExport: Component = () => {
 							View Generated SQL Schema
 						</button>
 						<Show when={showSchema()}>
-							<div class="app-panel-muted relative p-4">
+							<div class="relative rounded-lg border border-[#303030] bg-[#141414] p-4">
 								<button
 									type="button"
-									class="app-button-secondary absolute right-3 top-3 z-10 min-h-8 px-3 py-1 text-xs"
+									class="absolute right-3 top-3 z-10 inline-flex min-h-8 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-3 py-1 text-xs font-semibold text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 									onClick={copySchemaToClipboard}
 								>
 									{copyButtonText()}
@@ -411,7 +421,7 @@ const SqliteExport: Component = () => {
 
 					<button
 						type="button"
-						class="app-button-primary disabled:cursor-not-allowed"
+						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
 						onClick={exportToSqlite}
 						disabled={
 							tableOptions().filter((t) => t.enabled).length === 0 ||
@@ -425,12 +435,12 @@ const SqliteExport: Component = () => {
 
 				{/* Export Status */}
 				<Show when={isExporting()}>
-					<div class="app-panel mb-4 p-5 sm:p-6">
+					<div class="mb-4 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
 						<h3 class="mb-4 text-lg font-semibold text-[#F2F2F2]">Generating database</h3>
 						<div class="mb-4">
-							<div class="app-progress-track mb-2 h-3">
+							<div class="mb-2 h-3 rounded-full bg-[#303030]">
 								<div
-									class="app-progress-fill h-3 transition-all duration-500 ease-out"
+									class="h-3 rounded-full bg-[#4A99F8] transition-all duration-500 ease-out"
 									style={`width: ${exportProgress()}%`}
 								></div>
 							</div>
@@ -443,7 +453,7 @@ const SqliteExport: Component = () => {
 
 				{/* Download Ready */}
 				<Show when={isComplete() && downloadUrl()}>
-					<div class="app-panel mb-4 p-5 sm:p-6">
+					<div class="mb-4 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
 						<div class="text-center">
 							<div class="mb-4">
 								<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#4A99F8] text-[#4A99F8]">
@@ -462,7 +472,11 @@ const SqliteExport: Component = () => {
 								Your SQLite database has been generated successfully. Click the button below to download
 								it.
 							</p>
-							<button type="button" class="app-button-primary text-base" onClick={downloadDatabase}>
+							<button
+								type="button"
+								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-base font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+								onClick={downloadDatabase}
+							>
 								Download {fileName()} ({formatFileSize(fileSize())})
 							</button>
 						</div>

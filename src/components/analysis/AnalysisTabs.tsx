@@ -42,15 +42,17 @@ const formatDate = (date: Date | undefined) => {
 
 const relationshipBadges = (person: StoredUser) => {
 	const badges: Array<{ label: string; className: string }> = [];
-	if (person.blocked?.value) badges.push({ label: "Blocked", className: "app-badge" });
+	const badgeClass =
+		"inline-flex items-center rounded-full border border-[#404040] bg-[#202020] px-2.5 py-1 text-xs font-semibold leading-4 text-[#C7C7C7]";
+	if (person.blocked?.value) badges.push({ label: "Blocked", className: badgeClass });
 	if (person.follower?.value) {
-		badges.push({ label: "Follows you", className: "app-badge" });
+		badges.push({ label: "Follows you", className: badgeClass });
 	}
 	if (person.following?.value) {
-		badges.push({ label: "Following", className: "app-badge" });
+		badges.push({ label: "Following", className: badgeClass });
 	}
 	if (person.close_friends?.value) {
-		badges.push({ label: "Close friend", className: "app-badge" });
+		badges.push({ label: "Close friend", className: badgeClass });
 	}
 	return badges;
 };
@@ -121,7 +123,7 @@ const ProfileAvatar: Component<{ user: User | null; size?: "large" | "small" }> 
 };
 
 const EmptyState: Component<{ title: string; description: string }> = (props) => (
-	<div class="app-panel px-6 py-12 text-center">
+	<div class="rounded-lg border border-[#303030] bg-[#181818] px-6 py-12 text-center">
 		<p class="text-lg font-semibold text-[#F2F2F2]">{props.title}</p>
 		<p class="mx-auto mt-2 max-w-md text-sm text-[#A3A3A3]">{props.description}</p>
 	</div>
@@ -134,7 +136,8 @@ const ControlLabel: Component<{ label: string; children: any }> = (props) => (
 	</label>
 );
 
-const controlClass = "app-control";
+const controlClass =
+	"w-full min-h-10 rounded-lg border border-[#303030] bg-[#141414] px-3 py-2.5 text-sm leading-5 text-[#F2F2F2] outline-none placeholder:text-[#737373] transition-colors hover:border-[#4A4A4A] focus:border-[#4A99F8] focus:bg-[#181818] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]";
 
 const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	const [activeTab, setActiveTab] = createSignal<TabId>("highlights");
@@ -211,7 +214,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 
 	return (
 		<div class="space-y-7">
-			<div class="app-panel p-1">
+			<div class="rounded-lg border border-[#303030] bg-[#181818] p-1">
 				<nav class="grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="Analysis sections">
 					<For each={tabItems}>
 						{(tab) => (
@@ -219,7 +222,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								type="button"
 								class={`flex items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
 									activeTab() === tab.id
-										? "border-[#4A99F8] bg-[#303030] text-[#F2F2F2]"
+										? "border-[#4A99F8] bg-[#303030] text-[#F2F2F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 										: "border-transparent text-[#A3A3A3] hover:bg-[#202020] hover:text-[#F2F2F2]"
 								}`}
 								aria-current={activeTab() === tab.id ? "page" : undefined}
@@ -234,7 +237,11 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 
 			<Show
 				when={!props.loading}
-				fallback={<div class="app-panel p-12 text-center text-[#A3A3A3]">Loading your imported snapshot…</div>}
+				fallback={
+					<div class="rounded-lg border border-[#303030] bg-[#181818] p-12 text-center text-[#A3A3A3]">
+						Loading your imported snapshot…
+					</div>
+				}
 			>
 				<Show when={activeTab() === "highlights"}>
 					<Overview analysis={props.analysis} />
@@ -243,7 +250,9 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "people"}>
 					<section class="space-y-5">
 						<div>
-							<p class="app-kicker mb-3">Your connections</p>
+							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+								Your connections
+							</p>
 							<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
 								<div>
 									<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">People</h1>
@@ -258,7 +267,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 							</div>
 						</div>
 
-						<div class="app-panel p-4">
+						<div class="rounded-lg border border-[#303030] bg-[#181818] p-4">
 							<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
 								<ControlLabel label="Search usernames">
 									<input
@@ -286,7 +295,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								</ControlLabel>
 								<button
 									type="button"
-									class="app-button-secondary disabled:cursor-not-allowed"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={!peopleFiltersActive()}
 									onClick={clearPeopleFilters}
 								>
@@ -313,7 +322,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 									/>
 								}
 							>
-								<div class="app-panel overflow-hidden">
+								<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
 									<div class="divide-y divide-[#303030]">
 										<For each={filteredPeople()}>
 											{(person) => (
@@ -353,7 +362,9 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "conversations"}>
 					<section class="space-y-5">
 						<div>
-							<p class="app-kicker mb-3">Message history</p>
+							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+								Message history
+							</p>
 							<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
 								<div>
 									<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">Conversations</h1>
@@ -368,7 +379,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 							</div>
 						</div>
 
-						<div class="app-panel p-4">
+						<div class="rounded-lg border border-[#303030] bg-[#181818] p-4">
 							<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px_auto] md:items-end">
 								<ControlLabel label="Search conversations">
 									<input
@@ -405,7 +416,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								</ControlLabel>
 								<button
 									type="button"
-									class="app-button-secondary disabled:cursor-not-allowed"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={!conversationFiltersActive()}
 									onClick={clearConversationFilters}
 								>
@@ -432,7 +443,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 									/>
 								}
 							>
-								<div class="app-panel overflow-hidden">
+								<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
 									<div class="hidden grid-cols-[minmax(0,1fr)_120px_140px_130px] gap-4 border-b border-[#303030] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#737373] sm:grid">
 										<span>Conversation</span>
 										<span>Type</span>
@@ -478,14 +489,16 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 				<Show when={activeTab() === "profile"}>
 					<section class="space-y-5">
 						<div>
-							<p class="app-kicker mb-3">Your account</p>
+							<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+								Your account
+							</p>
 							<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">Profile</h1>
 							<p class="mt-2 text-[#A3A3A3]">
 								Identity and connection counts from this imported snapshot.
 							</p>
 						</div>
 
-						<div class="app-panel overflow-hidden">
+						<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
 							<div class="h-24 bg-[#202020]" />
 							<div class="px-6 pb-7 sm:px-9">
 								<div class="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -507,7 +520,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								<div class="mt-8 grid gap-3 sm:grid-cols-2">
 									<button
 										type="button"
-										class="app-panel w-full p-4 text-left transition-colors hover:border-[#4A99F8]"
+										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#4A99F8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 										onClick={() => openPeopleFilter("followers")}
 									>
 										<span class="block text-2xl font-semibold text-[#F2F2F2]">
@@ -519,7 +532,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 									</button>
 									<button
 										type="button"
-										class="app-panel w-full p-4 text-left transition-colors hover:border-[#4A99F8]"
+										class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#4A99F8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 										onClick={() => openPeopleFilter("following")}
 									>
 										<span class="block text-2xl font-semibold text-[#F2F2F2]">

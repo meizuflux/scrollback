@@ -19,7 +19,12 @@ const ClearButton: Component = () => {
 	};
 
 	return (
-		<button type="button" class="app-button-secondary" onClick={handleClear} disabled={isClearing()}>
+		<button
+			type="button"
+			class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8] disabled:cursor-not-allowed disabled:opacity-50"
+			onClick={handleClear}
+			disabled={isClearing()}
+		>
 			{isClearing() ? "Clearing…" : "Clear data"}
 		</button>
 	);
@@ -104,11 +109,17 @@ const Analysis: Component = () => {
 			<div class="container mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
 				<div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 					<div>
-						<p class="app-kicker">Imported snapshot</p>
+						<p class="text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">
+							Imported snapshot
+						</p>
 						<h1 class="mt-2 text-2xl font-semibold text-[#F2F2F2]">Scrollback</h1>
 					</div>
 					<div class="flex flex-wrap gap-2">
-						<button type="button" class="app-button-secondary" onClick={() => navigate("/export")}>
+						<button
+							type="button"
+							class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
+							onClick={() => navigate("/export")}
+						>
 							Export
 						</button>
 						<ClearButton />

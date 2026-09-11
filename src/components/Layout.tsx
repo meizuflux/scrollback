@@ -12,7 +12,7 @@ const Layout: ParentComponent = (props) => {
 	});
 
 	return (
-		<div class="app-shell flex min-h-screen flex-col">
+		<div class="flex min-h-screen flex-col bg-[#101010]">
 			<header class="border-b border-[#303030] bg-[#101010]">
 				<div class="container mx-auto px-4 py-4">
 					<nav class="flex items-center justify-between">

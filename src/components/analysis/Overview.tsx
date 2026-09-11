@@ -8,7 +8,7 @@ interface StatCardProps {
 
 const StatCard: Component<StatCardProps> = (props) => {
 	return (
-		<div class="app-panel p-5">
+		<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
 			<p class="text-sm font-medium text-[#A3A3A3]">{props.title}</p>
 			<p class="mt-2 text-2xl font-semibold tracking-tight text-[#F2F2F2]">{props.value}</p>
 		</div>
@@ -31,7 +31,7 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 	return (
 		<div class="space-y-8">
 			<div class="mb-8">
-				<p class="app-kicker mb-3">Your snapshot</p>
+				<p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] leading-4 text-[#4A99F8]">Your snapshot</p>
 				<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Highlights</h1>
 				<p class="text-base text-[#A3A3A3]">
 					The parts of your Instagram export we can calculate with confidence.
@@ -55,7 +55,7 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 						<StatCard title="Total conversations" value={formatNumber(props.analysis.conversationCount)} />
 						<StatCard title="Group chats" value={formatNumber(props.analysis.groupCount)} />
 					</div>
-					<div class="app-panel p-5">
+					<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
 						<h3 class="mb-4 text-base font-semibold text-[#F2F2F2]">Top conversations</h3>
 						<Show
 							when={

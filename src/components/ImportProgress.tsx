@@ -10,7 +10,7 @@ const StepProgressBar: Component<{ step: ImportStep }> = (props) => {
 	const currentProgress = () => props.step.progress || 0;
 
 	return (
-		<div class="app-panel-muted flex items-center gap-3 p-4">
+		<div class="flex items-center gap-3 rounded-lg border border-[#303030] bg-[#141414] p-4">
 			<div class="flex-1 min-w-0">
 				<div class="flex justify-between items-center mb-1">
 					<div class="truncate font-medium text-[#F2F2F2]" title={props.step.name}>
@@ -19,9 +19,9 @@ const StepProgressBar: Component<{ step: ImportStep }> = (props) => {
 					<span class="ml-2 shrink-0 text-sm text-[#A3A3A3]">{currentProgress()}%</span>
 				</div>
 
-				<div class="app-progress-track mb-1 h-2 w-full">
+				<div class="mb-1 h-2 w-full rounded-full bg-[#303030]">
 					<div
-						class="app-progress-fill h-full transition-all duration-150 ease-linear"
+						class="h-full rounded-full bg-[#4A99F8] transition-all duration-150 ease-linear"
 						style={{ width: `${currentProgress()}%` }}
 					/>
 				</div>
@@ -58,7 +58,7 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 						<Show when={props.onStop}>
 							<button
 								type="button"
-								class="app-button-secondary"
+								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A99F8]"
 								onClick={() => {
 									if (
 										confirm(
@@ -76,9 +76,9 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 					</div>
 				</div>
 
-				<div class="app-progress-track mb-2 h-3 w-full border border-[#303030]">
+				<div class="mb-2 h-3 w-full rounded-full border border-[#303030] bg-[#303030]">
 					<div
-						class="app-progress-fill h-full transition-all duration-150 ease-linear"
+						class="h-full rounded-full bg-[#4A99F8] transition-all duration-150 ease-linear"
 						style={{ width: `${overallProgress()}%` }}
 					/>
 				</div>
