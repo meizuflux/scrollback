@@ -1,6 +1,8 @@
 export interface User {
 	username: string;
 	name: string;
+	/** URI from the Instagram export that identifies the stored profile photo. */
+	profilePhotoUri?: string;
 	email: string;
 	bio: string;
 	gender: string;

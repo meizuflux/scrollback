@@ -47,12 +47,14 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 		postsViewed: postsViewedFile?.impressions_history_posts_seen?.length || 0,
 		adsViewed: adsViewedFile?.impressions_history_ads_seen?.length || 0,
 	};
+	const pfpPath = userFileData?.profile_user?.[0]?.media_map_data?.["Profile Photo"]?.uri;
+	if (pfpPath) user.profilePhotoUri = pfpPath;
+
 	onProgress(80, "Saving user data");
 
 	await database.mainUser.put(user);
 
 	onProgress(90, "Checking for profile photo");
-	const pfpPath = userFileData?.profile_user?.[0]?.media_map_data?.["Profile Photo"]?.uri;
 	if (pfpPath) {
 		const pfp = findFile(files, pfpPath);
 		if (pfp) {
@@ -83,7 +85,12 @@ interface Post {
 	media: Image[];
 }
 
-const importContent = async (files: File[], database: InstagramDatabase, onProgress: ProgFn, analysis: CachedAnalysis) => {
+const importContent = async (
+	files: File[],
+	database: InstagramDatabase,
+	onProgress: ProgFn,
+	analysis: CachedAnalysis,
+) => {
 	onProgress(0, "Loading content files...");
 
 	const postsFile: Post[] = await loadFile<any>(files, "/your_instagram_activity/media/posts_1.json");

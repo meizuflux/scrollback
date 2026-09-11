@@ -96,7 +96,6 @@ const extractZipToFiles = async (
 	});
 };
 
-
 const Home: Component = () => {
 	const navigate = useNavigate();
 
@@ -129,8 +128,8 @@ const Home: Component = () => {
 		setDataLoaded(loaded);
 	});
 
-    const handleFiles = async (files: FileList) => {
-        clearData();
+	const handleFiles = async (files: FileList) => {
+		clearData();
 
 		let fileArray = Array.from(files);
 
@@ -139,7 +138,7 @@ const Home: Component = () => {
 		setImportSteps([]);
 
 		try {
-			let zipDuration ;
+			let zipDuration;
 			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
 				const zipStartTime = performance.now();
 				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
@@ -172,31 +171,42 @@ const Home: Component = () => {
 
 	return (
 		<Layout>
-			<div class="container mx-auto p-6 max-w-4xl">
+			<div class="container mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
 				{/* Header */}
-				<div class="text-center mb-12">
-					<img src={logo} alt="Scrollback Logo" class="w-20 h-20 mx-auto mb-6" />
-					<h1 class="text-4xl font-bold text-white mb-4">Scrollback</h1>
-					<p class="text-xl text-gray-300 max-w-2xl mx-auto">
-						Upload your Instagram data package to analyze your account activity
-					</p>
+				<div class="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
+					<img src={logo} alt="Scrollback Logo" class="mx-auto mb-5 h-12 w-12" />
+					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Scrollback</h1>
+					<p class="text-base text-[#A3A3A3] sm:text-lg">Explore your Instagram archive.</p>
 				</div>
 
 				{/* Import Progress */}
 				<Show when={isImporting()}>
-					<div class="mb-8 p-6 bg-gray-800 rounded-lg border border-gray-700">
+					<div class="app-panel mb-8 p-5 sm:p-6">
 						<ImportProgress steps={importSteps()} onStop={handleStopImport} />
 					</div>
 				</Show>
 
 				{/* Abort Message */}
 				<Show when={showAbortMessage()}>
-					<div class="mb-8 p-4 bg-yellow-900/30 rounded-lg border border-yellow-700/50">
-						<div class="flex items-center space-x-3">
-							<div class="text-yellow-400 text-xl">⚠️</div>
+					<div class="app-warning mb-8 p-4">
+						<div class="flex items-start gap-3">
+							<svg
+								class="mt-0.5 h-5 w-5 shrink-0 text-[#E4B957]"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.75"
+									d="M12 9v4m0 4h.01M10.3 4.8 2.9 18a2 2 0 0 0 1.75 3h14.7a2 2 0 0 0 1.75-3L13.7 4.8a2 2 0 0 0-3.4 0Z"
+								/>
+							</svg>
 							<div>
-								<h3 class="text-lg font-semibold text-yellow-400 mb-1">Import Stopped</h3>
-								<p class="text-yellow-200 text-sm">
+								<h3 class="mb-1 text-base font-semibold text-[#E4B957]">Import Stopped</h3>
+								<p class="text-sm text-[#CFC3A5]">
 									The import process was cancelled. You can try again with your data files.
 								</p>
 							</div>
@@ -206,24 +216,35 @@ const Home: Component = () => {
 
 				{/* Data Ready State */}
 				<Show when={dataLoaded() && !isImporting()}>
-					<div class="mb-8 p-8 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/30">
+					<div class="app-panel mb-8 p-6 sm:p-8">
 						<div class="text-center">
-							<div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-								<div class="text-2xl">✨</div>
+							<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#4A99F8] text-[#4A99F8]">
+								<svg
+									class="h-5 w-5"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									aria-hidden="true"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="m5 12 4 4L19 6"
+									/>
+								</svg>
 							</div>
-							<h2 class="text-2xl font-bold text-white mb-3">Data Ready!</h2>
-							<p class="text-gray-300 mb-6 max-w-md mx-auto">
+							<h2 class="mb-3 text-2xl font-semibold text-[#F2F2F2]">Data Ready</h2>
+							<p class="mx-auto mb-6 max-w-md text-[#A3A3A3]">
 								Your Instagram data has been successfully imported and is ready for analysis.
 							</p>
-							<div class="flex flex-col sm:flex-row gap-3 justify-center">
-								<button
-									class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-									onClick={() => navigate("/analysis")}
-								>
-									📊 View Analysis
+							<div class="flex flex-col justify-center gap-3 sm:flex-row">
+								<button type="button" class="app-button-primary" onClick={() => navigate("/analysis")}>
+									View Analysis
 								</button>
 								<button
-									class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-gray-600"
+									type="button"
+									class="app-button-secondary"
 									onClick={async () => {
 										setIsClearing(true);
 										await clearData();
@@ -233,12 +254,12 @@ const Home: Component = () => {
 									disabled={isClearing()}
 								>
 									{isClearing() ? (
-										<div class="flex items-center justify-center">
-											<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+										<div class="flex items-center justify-center gap-2">
+											<div class="h-4 w-4 animate-spin rounded-full border-2 border-[#737373] border-t-[#F2F2F2]"></div>
 											Clearing...
 										</div>
 									) : (
-										"🗑️ Clear Data"
+										"Clear Data"
 									)}
 								</button>
 							</div>
@@ -249,7 +270,7 @@ const Home: Component = () => {
 				{/* Upload Section */}
 				<Show when={!dataLoaded() && !isImporting()}>
 					{/* Upload Area */}
-					<div class="mb-8 border-2 border-dashed border-gray-600 bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-12 text-center rounded-lg hover:border-gray-500 transition-all duration-300">
+					<div class="app-panel mb-8 p-7 text-center sm:p-10">
 						<input
 							type="file"
 							accept=".zip"
@@ -270,75 +291,118 @@ const Home: Component = () => {
 							onChange={(e) => handleFiles(e.currentTarget.files!)}
 						/>
 
-						<div class="text-6xl mb-6 text-gray-500">📁</div>
-						<h3 class="text-2xl font-bold text-white mb-4">Upload Your Instagram Data</h3>
-						<p class="text-gray-400 mb-8 max-w-md mx-auto">
+						<div class="mx-auto mb-5 flex h-8 w-8 items-center justify-center text-[#A3A3A3]">
+							<svg
+								class="h-8 w-8"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M3.75 6.75A1.75 1.75 0 0 1 5.5 5h4l1.5 2h7.5a1.75 1.75 0 0 1 1.75 1.75v8.5A1.75 1.75 0 0 1 18.5 19h-13a1.75 1.75 0 0 1-1.75-1.75v-10.5Z"
+								/>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M12 10v5m0 0 2-2m-2 2-2-2"
+								/>
+							</svg>
+						</div>
+						<h3 class="mb-3 text-xl font-semibold text-[#F2F2F2]">Import your Instagram archive</h3>
+						<p class="mx-auto mb-7 max-w-md text-sm text-[#A3A3A3] sm:text-base">
 							Upload the zip file or extracted folder from your Instagram data download
 						</p>
 
-						<div class="flex flex-col sm:flex-row gap-4 justify-center">
-							<label
-								for="zipPicker"
-								class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+						<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
+							<button
+								type="button"
+								class="app-button-primary app-file-button"
+								onClick={() => document.getElementById("zipPicker")?.click()}
 							>
-								<span class="mr-2">📦</span>
-								Select Zip File
-							</label>
-							<label
-								for="folderPicker"
-								class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+								Select ZIP file
+							</button>
+							<button
+								type="button"
+								class="app-button-secondary app-file-button"
+								onClick={() => document.getElementById("folderPicker")?.click()}
 							>
-								<span class="mr-2">📂</span>
-								Select Folder
-							</label>
+								Select folder
+							</button>
 						</div>
+						<p class="mt-5 text-sm text-[#A3A3A3]">
+							Your data stays on this device. Processing happens locally in your browser.
+						</p>
 					</div>
 
 					{/* How to Get Instagram Data */}
-					<div class="mb-8 p-6 bg-blue-900/20 rounded-lg border border-blue-700/30">
-						<h2 class="text-xl font-semibold text-blue-400 mb-4 flex items-center">
-							<span class="mr-2">📋</span>
+					<div class="app-panel mb-8 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-[#F2F2F2]">
+							<svg
+								class="h-5 w-5 text-[#A3A3A3]"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M7 3.75h8.5L19 7.25v13H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z"
+								/>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M15 3.75v4h4M9 12h6m-6 3h6"
+								/>
+							</svg>
 							How to Download Your Instagram Data
 						</h2>
-						<div class="space-y-3 text-gray-300 text-sm">
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">1.</span>
+						<div class="space-y-3 text-sm text-[#A3A3A3]">
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">1.</span>
 								<div>
 									Go to{" "}
 									<a
 										href="https://accountscenter.instagram.com/info_and_permissions/"
 										target="_blank"
 										rel="noopener noreferrer"
-										class="text-blue-400 hover:text-blue-300 underline"
+										class="app-link"
 									>
 										Instagram Account Center
 									</a>
 								</div>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">2.</span>
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">2.</span>
 								<span>Click "Download your information"</span>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">3.</span>
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">3.</span>
 								<span>Select "All available information" or choose specific data types</span>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">4.</span>
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">4.</span>
 								<span>Choose your preferred date range</span>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">5.</span>
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">5.</span>
 								<span>Select "Low" media quality for better performance</span>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">6.</span>
-								<span class="font-semibold text-blue-300">
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">6.</span>
+								<span class="font-semibold text-[#F2F2F2]">
 									IMPORTANT: Make sure the format is set to JSON (not HTML)
 								</span>
 							</div>
-							<div class="flex items-start space-x-3">
-								<span class="text-blue-400 font-semibold">6.</span>
+							<div class="flex items-start gap-3">
+								<span class="font-semibold text-[#F2F2F2]">7.</span>
 								<span>
 									Check your email for a notification that your data package is ready for download
 								</span>
@@ -347,45 +411,45 @@ const Home: Component = () => {
 					</div>
 
 					{/* Limitations */}
-					<div class="mb-8 p-6 bg-orange-900/20 rounded-lg border border-orange-700/30">
-						<h2 class="text-xl font-semibold text-orange-400 mb-4 flex items-center">
-							<span class="mr-2">⚠️</span>
+					<div class="app-panel mb-8 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-[#F2F2F2]">
+							<svg
+								class="h-5 w-5 text-[#A3A3A3]"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.5"
+									d="M12 9v4m0 4h.01M10.3 4.8 2.9 18a2 2 0 0 0 1.75 3h14.7a2 2 0 0 0 1.75-3L13.7 4.8a2 2 0 0 0-3.4 0Z"
+								/>
+							</svg>
 							Known Limitations
 						</h2>
-						<ul class="space-y-2 text-gray-300 text-sm">
-							<li class="flex items-start space-x-2">
-								<span class="text-orange-400">•</span>
+						<ul class="space-y-2 text-sm text-[#A3A3A3]">
+							<li class="flex items-start gap-2">
+								<span class="text-[#737373]">•</span>
 								<span>
 									Instagram frequently changes their data format - we try to stay updated but some
 									files may not parse correctly
 								</span>
 							</li>
-							<li class="flex items-start space-x-2">
-								<span class="text-orange-400">•</span>
+							<li class="flex items-start gap-2">
+								<span class="text-[#737373]">•</span>
 								<span>Processing large datasets can be slow and memory-intensive</span>
 							</li>
-							<li class="flex items-start space-x-2">
-								<span class="text-orange-400">•</span>
+							<li class="flex items-start gap-2">
+								<span class="text-[#737373]">•</span>
 								<span>Instagram's data export can be incomplete or contain inconsistencies</span>
 							</li>
-							<li class="flex items-start space-x-2">
-								<span class="text-orange-400">•</span>
+							<li class="flex items-start gap-2">
+								<span class="text-[#737373]">•</span>
 								<span>Some features may not work on older browsers or mobile devices</span>
 							</li>
 						</ul>
-					</div>
-
-					{/* Privacy & Open Source Notice */}
-					<div class="mb-8 p-6 bg-green-900/20 rounded-lg border border-green-700/30">
-						<div class="flex items-start space-x-3">
-							<div class="text-green-400 text-xl">🔒</div>
-							<div>
-								<h3 class="text-lg font-semibold text-green-400 mb-2">Privacy First</h3>
-								<p class="text-gray-300 text-sm leading-relaxed">
-									Your data never leaves your device. All processing happens locally in your browser.
-								</p>
-							</div>
-						</div>
 					</div>
 				</Show>
 			</div>
