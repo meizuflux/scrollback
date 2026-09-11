@@ -9,7 +9,7 @@ const [demoMode, setDemoModeSignal] = createSignal(readDemoMode());
 
 export const isDemoMode = demoMode;
 
-export const setDemoMode = (enabled: boolean): void => {
+const updateDemoMode = (enabled: boolean): void => {
 	if (typeof sessionStorage !== "undefined") {
 		if (enabled) sessionStorage.setItem(DEMO_MODE_KEY, "true");
 		else sessionStorage.removeItem(DEMO_MODE_KEY);
@@ -17,4 +17,6 @@ export const setDemoMode = (enabled: boolean): void => {
 	setDemoModeSignal(enabled);
 };
 
-export const clearDemoMode = (): void => setDemoMode(false);
+export const enterDemoMode = (): void => updateDemoMode(true);
+
+export const clearDemoMode = (): void => updateDemoMode(false);

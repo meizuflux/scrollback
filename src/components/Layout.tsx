@@ -1,4 +1,4 @@
-import { type ParentComponent, createSignal, onMount } from "solid-js";
+import { type ParentComponent, createSignal } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
 import { clearData, isDataLoaded } from "@/utils/storage";
 import logo from "@/assets/logo.svg";
@@ -6,7 +6,7 @@ import { isDemoMode } from "@/utils/demo";
 
 const Layout: ParentComponent = (props) => {
 	const navigate = useNavigate();
-	const [dataLoaded, setDataLoaded] = createSignal(false);
+	const [dataLoaded] = createSignal(isDataLoaded());
 	const [isExitingDemo, setIsExitingDemo] = createSignal(false);
 
 	const exitDemo = async () => {
@@ -19,11 +19,6 @@ const Layout: ParentComponent = (props) => {
 			setIsExitingDemo(false);
 		}
 	};
-
-	onMount(() => {
-		const loaded = isDataLoaded();
-		setDataLoaded(loaded);
-	});
 
 	return (
 		<div class="flex min-h-screen flex-col bg-[#101010]">

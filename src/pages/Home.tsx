@@ -1,115 +1,27 @@
 import { createSignal, Show, type Component, onCleanup, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { isDataLoaded, clearData, setStoredValue } from "@/utils/storage";
-import { Unzip, AsyncUnzipInflate } from "fflate";
+import { clearData, isDataLoaded, markDataLoaded, opfsSupported } from "@/utils/storage";
 import { importData, ImportCancelledError, type ImportStep } from "@/import/import";
-import ImportProgress from "@/components/ImportProgress";
-import { getFileType } from "@/utils/media";
-import { opfsSupported } from "@/utils/storage";
+import { extractZipToFiles } from "@/import/extractZip";
+import DataReadyState from "@/components/home/DataReadyState";
+import ImportPicker from "@/components/home/ImportPicker";
+import ImportStatus from "@/components/home/ImportStatus";
 import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
-import { clearDemoMode, isDemoMode, setDemoMode } from "@/utils/demo";
+import { enterDemoMode, isDemoMode } from "@/utils/demo";
 import { loadDemoFiles } from "@/demo/loadDemoFiles";
 
-const extractZipToFiles = async (
-	zipFile: File,
-	updateSteps: (name: string, progress: number, statusText?: string) => void,
-	signal?: AbortSignal,
-): Promise<File[]> => {
-	updateSteps("Unzipping files", 0, "Reading ZIP file...");
+type PreparedImport = {
+	files: File[];
+	unzipDuration?: number;
+};
 
-	return new Promise<File[]>((resolve, reject) => {
-		const extractedFiles: File[] = [];
-
-		let totalFiles = 0;
-		let filesProcessed = 0;
-		let discoveryComplete = false;
-
-		const checkCompletion = () => {
-			if (signal?.aborted) {
-				reject(new DOMException("The import was cancelled.", "AbortError"));
-				return;
-			}
-			if (discoveryComplete && filesProcessed === totalFiles) {
-				updateSteps("Unzipping files", 100, "All files extracted successfully.");
-				resolve(extractedFiles);
-			}
-		};
-
-		const mainUnzipper = new Unzip((stream) => {
-			// stream is FFlateUnzipFile
-			const filePath = stream.name;
-
-			if (filePath.endsWith("/")) {
-				// Skip directories
-				return;
-			}
-
-			const chunks: Uint8Array[] = [];
-			let totalSize = 0;
-
-			totalFiles++; // Increment total files count for each stream created
-			stream.ondata = (err, chunk, final) => {
-				if (signal?.aborted) return;
-				if (err) {
-					reject(err);
-					return;
-				}
-				if (chunk) {
-					chunks.push(chunk);
-					totalSize += chunk.length;
-				}
-
-				if (final) {
-					const completeFileBuffer = new Uint8Array(totalSize);
-					let offset = 0;
-					for (const bufferChunk of chunks) {
-						completeFileBuffer.set(bufferChunk, offset);
-						offset += bufferChunk.length;
-					}
-
-					const newFile = new File([completeFileBuffer], filePath, {
-						type: getFileType(filePath),
-					});
-					Object.defineProperty(newFile, "webkitRelativePath", {
-						value: filePath.startsWith("/") ? filePath : `/${filePath}`,
-						writable: false,
-					}); // this was miserable to rememebr to find
-					extractedFiles.push(newFile);
-					filesProcessed++;
-
-					checkCompletion();
-				}
-			};
-
-			stream.start();
-		});
-
-		mainUnzipper.register(AsyncUnzipInflate);
-
-		const reader = zipFile.stream().getReader();
-		const processStream = async () => {
-			try {
-				while (true) {
-					if (signal?.aborted) {
-						await reader.cancel();
-						throw new DOMException("The import was cancelled.", "AbortError");
-					}
-					const { done, value } = await reader.read();
-					if (done) {
-						mainUnzipper.push(new Uint8Array(0), true);
-						discoveryComplete = true;
-						checkCompletion();
-						break;
-					}
-					mainUnzipper.push(value);
-				}
-			} catch (err) {
-				reject(err);
-			}
-		};
-		processStream();
-	});
+type ImportRequest = {
+	initialSteps?: ImportStep[];
+	prepare: (signal: AbortSignal) => Promise<PreparedImport>;
+	clearBeforePrepare?: boolean;
+	onSuccess?: () => void;
+	errorMessage: string;
 };
 
 const Home: Component = () => {
@@ -159,88 +71,96 @@ const Home: Component = () => {
 		setTimeout(() => setShowAbortMessage(false), 5000);
 	};
 
-	const handleFiles = async (files: FileList) => {
+	const runImport = async ({
+		initialSteps = [],
+		prepare,
+		clearBeforePrepare = false,
+		onSuccess,
+		errorMessage,
+	}: ImportRequest) => {
 		if (isImporting()) return;
-		let fileArray = Array.from(files);
-		beginOperation();
+		beginOperation(initialSteps);
 		const controller = activeController!;
 		let dataCleared = false;
 		try {
-			await clearData();
-			dataCleared = true;
-			setDataLoaded(false);
-			let zipDuration: number | undefined;
-			if (fileArray.length === 1 && fileArray[0].name.toLowerCase().endsWith(".zip")) {
-				const zipStartTime = performance.now();
-				fileArray = await extractZipToFiles(fileArray[0], updateSteps, controller.signal);
-				zipDuration = performance.now() - zipStartTime;
+			if (clearBeforePrepare) {
+				await clearData();
+				dataCleared = true;
+				setDataLoaded(false);
 			}
-			await importData(fileArray, updateSteps, zipDuration, controller.signal);
+			const { files, unzipDuration } = await prepare(controller.signal);
 			if (controller.signal.aborted) throw new ImportCancelledError();
-			setStoredValue("loaded", "true");
+			if (!dataCleared) {
+				await clearData();
+				dataCleared = true;
+				setDataLoaded(false);
+			}
+			await importData(files, updateSteps, unzipDuration, controller.signal);
+			if (controller.signal.aborted) throw new ImportCancelledError();
+			markDataLoaded();
+			onSuccess?.();
 			setDataLoaded(true);
 			navigate("/analysis", { replace: true });
 		} catch (error) {
 			console.error("Import failed:", error);
-			if (controller.signal.aborted || error instanceof ImportCancelledError) {
-				if (dataCleared) await clearData();
+			if (dataCleared) {
+				await clearData();
 				setDataLoaded(isDataLoaded());
+			}
+			if (controller.signal.aborted || error instanceof ImportCancelledError) {
 				showCancelled();
 			} else {
-				if (dataCleared) await clearData();
-				setDataLoaded(isDataLoaded());
-				setErrorMessage(error instanceof Error ? error.message : "The import failed. Please try again.");
+				setErrorMessage(error instanceof Error ? error.message : errorMessage);
 			}
 		} finally {
 			completeOperation();
 		}
 	};
 
-	const startDemoImport = async () => {
-		if (isImporting()) return;
-		const previousDemoMode = isDemoMode();
-		clearDemoMode();
-		beginOperation([{ name: "Loading demo data", progress: 0, statusText: "Preparing demo files..." }]);
-		const controller = activeController!;
-		let dataCleared = false;
-		try {
-			const demoFiles = await loadDemoFiles(
-				({ completed, total }) =>
-					updateSteps(
-						"Loading demo data",
-						Math.round((completed / total) * 100),
-						`Downloaded ${completed} of ${total} files`,
-					),
-				controller.signal,
-			);
-			updateSteps("Loading demo data", 100, "Demo files validated successfully.");
-			if (controller.signal.aborted) throw new ImportCancelledError();
-			await clearData();
-			dataCleared = true;
-			setDataLoaded(false);
-			await importData(demoFiles, updateSteps, undefined, controller.signal);
-			if (controller.signal.aborted) throw new ImportCancelledError();
-			setStoredValue("loaded", "true");
-			setDemoMode(true);
-			setDataLoaded(true);
-			navigate("/analysis", { replace: true });
-		} catch (error) {
-			console.error("Demo import failed:", error);
-			if (controller.signal.aborted || error instanceof ImportCancelledError) {
-				if (dataCleared) await clearData();
-				else setDemoMode(previousDemoMode);
-				setDataLoaded(isDataLoaded());
-				showCancelled();
-			} else {
-				if (dataCleared) await clearData();
-				else setDemoMode(previousDemoMode);
-				setDataLoaded(isDataLoaded());
-				setErrorMessage(
-					error instanceof Error ? error.message : "The demo could not be loaded. Please try again.",
+	const handleFiles = (files: FileList) => {
+		const fileArray = Array.from(files);
+		runImport({
+			clearBeforePrepare: true,
+			prepare: async (signal) => {
+				if (fileArray.length !== 1 || !fileArray[0].name.toLowerCase().endsWith(".zip")) {
+					return { files: fileArray };
+				}
+				const zipStartTime = performance.now();
+				const files = await extractZipToFiles(fileArray[0], updateSteps, signal);
+				return { files, unzipDuration: performance.now() - zipStartTime };
+			},
+			errorMessage: "The import failed. Please try again.",
+		});
+	};
+
+	const startDemoImport = () => {
+		runImport({
+			initialSteps: [{ name: "Loading demo data", progress: 0, statusText: "Preparing demo files..." }],
+			prepare: async (signal) => {
+				const files = await loadDemoFiles(
+					({ completed, total }) =>
+						updateSteps(
+							"Loading demo data",
+							Math.round((completed / total) * 100),
+							`Downloaded ${completed} of ${total} files`,
+						),
+					signal,
 				);
-			}
+				updateSteps("Loading demo data", 100, "Demo files validated successfully.");
+				return { files };
+			},
+			onSuccess: enterDemoMode,
+			errorMessage: "The demo could not be loaded. Please try again.",
+		});
+	};
+
+	const handleClearData = async () => {
+		setIsClearing(true);
+		try {
+			await clearData();
+			setDataLoaded(false);
 		} finally {
-			completeOperation();
+			setIsClearing(false);
 		}
 	};
 
@@ -268,220 +188,35 @@ const Home: Component = () => {
 					<p class="text-base text-[#A3A3A3] sm:text-lg">Explore your Instagram archive.</p>
 				</div>
 
-				{/* Import Progress */}
-				<Show when={isImporting()}>
-					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
-						<Show when={importAborted()}>
-							<p class="mb-4 text-sm text-[#E4B957]">Finishing cancellation and cleaning up…</p>
-						</Show>
-						<ImportProgress steps={importSteps()} onStop={importAborted() ? undefined : handleStopImport} />
-					</div>
-				</Show>
+				<ImportStatus
+					isImporting={isImporting()}
+					importAborted={importAborted()}
+					steps={importSteps()}
+					showAbortMessage={showAbortMessage()}
+					errorMessage={errorMessage()}
+					demoMode={isDemoMode()}
+					onStop={importAborted() ? undefined : handleStopImport}
+					onRetryDemo={startDemoImport}
+					onDismissError={() => setErrorMessage("")}
+				/>
 
-				{/* Abort Message */}
-				<Show when={showAbortMessage()}>
-					<div class="mb-8 rounded-lg border border-[#705A2E] bg-[#211D14] p-4">
-						<div class="flex items-start gap-3">
-							<svg
-								class="mt-0.5 h-5 w-5 shrink-0 text-[#E4B957]"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.75"
-									d="M12 9v4m0 4h.01M10.3 4.8 2.9 18a2 2 0 0 0 1.75 3h14.7a2 2 0 0 0 1.75-3L13.7 4.8a2 2 0 0 0-3.4 0Z"
-								/>
-							</svg>
-							<div>
-								<h3 class="mb-1 text-base font-semibold text-[#E4B957]">Import Stopped</h3>
-								<p class="text-sm text-[#CFC3A5]">
-									The import process was cancelled. You can try again with your data files.
-								</p>
-							</div>
-						</div>
-					</div>
-				</Show>
-
-				<Show when={errorMessage()}>
-					<div class="mb-8 rounded-lg border border-[#713D3D] bg-[#211515] p-4" role="alert">
-						<h3 class="mb-1 text-base font-semibold text-[#E7B7B7]">Couldn’t load the data</h3>
-						<p class="text-sm text-[#D6BDBD]">{errorMessage()}</p>
-						<div class="mt-3 flex flex-wrap gap-2">
-							{isDemoMode() && (
-								<button
-									type="button"
-									class="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#E7B7B7] px-3 py-2 text-sm font-semibold text-[#F2F2F2] hover:bg-[#322020]"
-									onClick={startDemoImport}
-								>
-									Retry demo
-								</button>
-							)}
-							<button
-								type="button"
-								class="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#404040] px-3 py-2 text-sm font-semibold text-[#F2F2F2] hover:bg-[#202020]"
-								onClick={() => setErrorMessage("")}
-							>
-								Dismiss
-							</button>
-						</div>
-					</div>
-				</Show>
-
-				{/* Data Ready State */}
 				<Show when={dataLoaded() && !isImporting()}>
-					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-6 sm:p-8">
-						<div class="text-center">
-							<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#7873F5] text-[#FF6EC4]">
-								<svg
-									class="h-5 w-5"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									aria-hidden="true"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="m5 12 4 4L19 6"
-									/>
-								</svg>
-							</div>
-							<h2 class="mb-3 text-2xl font-semibold text-[#F2F2F2]">
-								{isDemoMode() ? "Demo data ready" : "Data Ready"}
-							</h2>
-							<p class="mx-auto mb-6 max-w-md text-[#A3A3A3]">
-								{isDemoMode()
-									? "The sample Instagram archive is ready to explore."
-									: "Your Instagram data has been successfully imported and is ready for analysis."}
-							</p>
-							<div class="flex flex-col justify-center gap-3 sm:flex-row">
-								<button
-									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
-									onClick={() => navigate("/analysis")}
-								>
-									View Analysis
-								</button>
-								<button
-									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
-									onClick={startDemoImport}
-									disabled={isImporting()}
-								>
-									Try demo
-								</button>
-								<button
-									type="button"
-									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
-									onClick={async () => {
-										setIsClearing(true);
-										try {
-											await clearData();
-											setDataLoaded(false);
-										} finally {
-											setIsClearing(false);
-										}
-									}}
-									disabled={isClearing()}
-								>
-									{isClearing() ? (
-										<div class="flex items-center justify-center gap-2">
-											<div class="h-4 w-4 animate-spin rounded-full border-2 border-[#737373] border-t-[#F2F2F2]"></div>
-											Clearing...
-										</div>
-									) : (
-										"Clear Data"
-									)}
-								</button>
-							</div>
-						</div>
-					</div>
+					<DataReadyState
+						demoMode={isDemoMode()}
+						isClearing={isClearing()}
+						onViewAnalysis={() => navigate("/analysis")}
+						onTryDemo={startDemoImport}
+						onClearData={handleClearData}
+					/>
 				</Show>
 
 				{/* Upload Section */}
 				<Show when={!dataLoaded() && !isImporting()}>
-					{/* Upload Area */}
-					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-7 text-center sm:p-10">
-						<input
-							type="file"
-							accept=".zip"
-							id="zipPicker"
-							class="hidden"
-							disabled={isImporting() || opfsSupported() == undefined}
-							onChange={(e) => handleFiles(e.currentTarget.files!)}
-						/>
-						<input
-							type="file"
-							/* @ts-expect-error */
-							webkitdirectory
-							directory
-							multiple
-							id="folderPicker"
-							class="hidden"
-							disabled={isImporting() || opfsSupported() == undefined}
-							onChange={(e) => handleFiles(e.currentTarget.files!)}
-						/>
-
-						<div class="mx-auto mb-5 flex h-8 w-8 items-center justify-center text-[#A3A3A3]">
-							<svg
-								class="h-8 w-8"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.5"
-									d="M3.75 6.75A1.75 1.75 0 0 1 5.5 5h4l1.5 2h7.5a1.75 1.75 0 0 1 1.75 1.75v8.5A1.75 1.75 0 0 1 18.5 19h-13a1.75 1.75 0 0 1-1.75-1.75v-10.5Z"
-								/>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.5"
-									d="M12 10v5m0 0 2-2m-2 2-2-2"
-								/>
-							</svg>
-						</div>
-						<h3 class="mb-3 text-xl font-semibold text-[#F2F2F2]">Import your Instagram archive</h3>
-						<p class="mx-auto mb-7 max-w-md text-sm text-[#A3A3A3] sm:text-base">
-							Upload the zip file or extracted folder from your Instagram data download
-						</p>
-
-						<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
-							<button
-								type="button"
-								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
-								onClick={() => document.getElementById("zipPicker")?.click()}
-							>
-								Select ZIP file
-							</button>
-							<button
-								type="button"
-								class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
-								onClick={() => document.getElementById("folderPicker")?.click()}
-							>
-								Select folder
-							</button>
-						</div>
-						<button
-							type="button"
-							class="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
-							onClick={startDemoImport}
-							disabled={isImporting()}
-						>
-							Try demo
-						</button>
-						<p class="mt-5 text-sm text-[#A3A3A3]">
-							Your data stays on this device. Processing happens locally in your browser.
-						</p>
-					</div>
+					<ImportPicker
+						filePickerDisabled={opfsSupported() == undefined}
+						onFiles={handleFiles}
+						onTryDemo={startDemoImport}
+					/>
 
 					{/* How to Get Instagram Data */}
 					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">

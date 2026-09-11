@@ -4,7 +4,6 @@ import importMessages from "./messages";
 import { importPostLikes, importSavedPosts, importComments } from "./interactions";
 import { CachedAnalysis } from "@/types/analysis";
 import { db } from "@/db/database";
-import { setStoredValue } from "@/utils/storage";
 
 export interface ImportStep {
 	name: string;
@@ -82,6 +81,6 @@ export const importData = async (
 		stepDurations,
 	};
 
-	setStoredValue("analysis_cache", JSON.stringify(analysis));
-	setStoredValue("import_metadata", JSON.stringify(metadata));
+	localStorage.setItem("analysis_cache", JSON.stringify(analysis));
+	localStorage.setItem("import_metadata", JSON.stringify(metadata));
 };

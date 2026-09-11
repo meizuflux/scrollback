@@ -4,7 +4,7 @@ import { createStore, type SetStoreFunction } from "solid-js/store";
 import Layout from "@/components/Layout";
 import AnalysisTabs, { type ConversationRow } from "@/components/analysis/AnalysisTabs";
 import { db, type StoredUser } from "@/db/database";
-import { isDataLoaded, clearData, getStoredValue, setStoredValue } from "@/utils/storage";
+import { isDataLoaded, clearData } from "@/utils/storage";
 import { isDemoMode } from "@/utils/demo";
 import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
@@ -36,7 +36,7 @@ const ClearButton: Component = () => {
 };
 
 const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction<CachedAnalysis>) => {
-	const cached = getStoredValue("analysis_cache");
+	const cached = localStorage.getItem("analysis_cache");
 	if (cached) {
 		const values = JSON.parse(cached) as CachedAnalysis;
 		for (const [key, value] of Object.entries(values)) {
@@ -46,7 +46,7 @@ const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction
 	}
 
 	setter("partial", false);
-	setStoredValue("analysis_cache", JSON.stringify(analysis));
+	localStorage.setItem("analysis_cache", JSON.stringify(analysis));
 };
 
 const loadDataPackage = async () => {
