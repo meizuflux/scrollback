@@ -1,0 +1,29 @@
+{
+  "profile_user": [
+    {
+      "string_map_data": {
+        "Username": {
+          "value": "demo_kaydenschaefer01"
+        },
+        "Name": {
+          "value": "Kayden Schaefer"
+        },
+        "Email": {
+          "value": "demo_kaydenschaefer01@example.test"
+        },
+        "Bio": {
+          "value": "Collecting small moments and good conversations."
+        },
+        "Gender": {
+          "value": "Prefer not to say"
+        },
+        "Private Account": {
+          "value": "false"
+        },
+        "Date of birth": {
+          "value": "1995-04-18"
+        }
+      }
+    }
+  ]
+}

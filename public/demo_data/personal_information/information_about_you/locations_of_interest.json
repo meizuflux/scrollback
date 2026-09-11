@@ -1,0 +1,18 @@
+{
+  "label_values": [
+    {
+      "label": "Locations of interest",
+      "vec": [
+        {
+          "value": "Coral Springs"
+        },
+        {
+          "value": "Muncie"
+        },
+        {
+          "value": "Shreveport"
+        }
+      ]
+    }
+  ]
+}

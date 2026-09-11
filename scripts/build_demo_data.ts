@@ -67,8 +67,9 @@ type RawConversation = {
 	thread_path: string;
 };
 
-const outputDirectory = resolve(process.argv[2] ?? "demo_data");
+const outputDirectory = resolve(process.argv[2] ?? "public/demo_data");
 const usesDefaultOutputDirectory = process.argv[2] === undefined;
+const generatedFilePaths = new Set<string>();
 
 const encodeInstagramString = (value: string): string => {
 	const bytes = new TextEncoder().encode(value);
@@ -102,6 +103,7 @@ const getGitMetadata = (): { sourceCommit: string; sourceTreeDirty: boolean } =>
 };
 
 const writeJson = async (relativePath: string, value: unknown): Promise<void> => {
+	generatedFilePaths.add(relativePath);
 	const absolutePath = resolve(outputDirectory, relativePath);
 	await mkdir(dirname(absolutePath), { recursive: true });
 	await writeFile(absolutePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -516,6 +518,8 @@ const buildDemoData = async (): Promise<void> => {
 			generator: "scripts/build_demo_data.ts",
 			sourceCommit: gitMetadata.sourceCommit,
 			sourceTreeDirty: gitMetadata.sourceTreeDirty,
+			// The manifest is fetched directly; this list is the rest of the fixture.
+			files: [...generatedFilePaths].sort(),
 			counts: {
 				people: people.length,
 				followers: followers.length,

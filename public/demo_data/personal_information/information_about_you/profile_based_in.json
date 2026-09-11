@@ -1,0 +1,21 @@
+{
+  "label_values": [
+    {
+      "label": "Profile based in",
+      "dict": [
+        {
+          "label": "City",
+          "value": "Millcreek"
+        },
+        {
+          "label": "Region",
+          "value": "Montana"
+        },
+        {
+          "label": "Country",
+          "value": "Madagascar"
+        }
+      ]
+    }
+  ]
+}
