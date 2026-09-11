@@ -21,7 +21,7 @@ The import is split into sections, like loading user data, messages, and media, 
 
 Each importer finds it's associated files, normalizes the messy Instagram data into something usable, and records some first-pass analytics.
 
-Structured records are written in batches to IndexedDB through Dexie. Media is stored in OPFS when the browser supports it, with a mock filesystem in IndexedDB as a fallback. Once every importer finishes, the analysis pages can then load the prepared snapshot directly after a refresh.
+Structured records are written in batches to IndexedDB through Dexie. Media is stored in OPFS when the browser supports it, with a mock filesystem in IndexedDB as a fallback. Once every importer finishes, the analysis pages can then load the prepared data package directly after a refresh.
 
 Essentially, it turns the archive into a more usable data structure stored in the browser, which can then be easily analyzed.
 

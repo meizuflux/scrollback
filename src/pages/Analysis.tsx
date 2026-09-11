@@ -44,7 +44,7 @@ const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction
 	localStorage.setItem("analysis_cache", JSON.stringify(analysis));
 };
 
-const loadSnapshot = async () => {
+const loadDataPackage = async () => {
 	const [user, people, conversations, messages] = await Promise.all([
 		db.mainUser.toCollection().first(),
 		db.users.toArray(),
@@ -93,12 +93,12 @@ const Analysis: Component = () => {
 		}
 
 		try {
-			const [snapshot] = await Promise.all([loadSnapshot(), createAnalysis(analysis, setAnalysis)]);
-			setUser(snapshot.user);
-			setPeople(snapshot.people);
-			setConversations(snapshot.conversationRows);
+			const [dataPackage] = await Promise.all([loadDataPackage(), createAnalysis(analysis, setAnalysis)]);
+			setUser(dataPackage.user);
+			setPeople(dataPackage.people);
+			setConversations(dataPackage.conversationRows);
 		} catch (error) {
-			console.error("Failed to load analysis snapshot:", error);
+			console.error("Failed to load analysis data package:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -110,7 +110,7 @@ const Analysis: Component = () => {
 				<div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 					<div>
 						<p class="bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-							Imported snapshot
+							Imported data package
 						</p>
 						<h1 class="mt-2 text-2xl font-semibold text-[#F2F2F2]">Scrollback</h1>
 					</div>

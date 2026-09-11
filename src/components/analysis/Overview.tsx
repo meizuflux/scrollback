@@ -32,12 +32,10 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 		<div class="space-y-8">
 			<div class="mb-8">
 				<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-					Your snapshot
+					Data package summary
 				</p>
 				<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Highlights</h1>
-				<p class="text-base text-[#A3A3A3]">
-					The parts of your Instagram export we can calculate with confidence.
-				</p>
+				<p class="text-base text-[#A3A3A3]">Quick stats about your Instagram activity.</p>
 			</div>
 
 			<section class="space-y-4">
