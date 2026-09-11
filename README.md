@@ -1,13 +1,35 @@
-# data package explorer
+# Scrollback
+
+Scrollback is a web app that lets you analyze and view your Instagram data export.
+
+All processing happens in the browser. Parsed data is stored locally in IndexedDB and OPFS.
+
+## Run locally
+
+```sh
+bun install
+bun run dev
+```
+
+Create a production build with `bun run build`.
+
+## How it works
+
+Scrollback accepts either the original ZIP or an extracted archive. ZIP files are unpacked in the browser.
+
+The import is split into sections, like loading user data, messages, and media, all running in parallel.
+
+Each importer finds it's associated files, normalizes the messy Instagram data into something usable, and records some first-pass analytics.
+
+Structured records are written in batches to IndexedDB through Dexie. Media is stored in OPFS when the browser supports it, with a mock filesystem in IndexedDB as a fallback. Once every importer finishes, the analysis pages can then load the prepared snapshot directly after a refresh.
+
+Essentially, it turns the archive into a more usable data structure stored in the browser, which can then be easily analyzed.
+
+## Instagram archive structure
+
+TODO: add some automated scripting to inspect my own data package, provide annotations, and create docs for the normal format since right now there isn't any
 
 
-essentially, here's how this should work
-- user uploads files
-- files are analyzed and data is stored in memory
-- after that, data can optionally be persisted in the indexeddb
-- from there, data is loaded from the indexeddb when page is refreshed
-
-folder structure:
 ```py
 instagram-package
 ├───media
