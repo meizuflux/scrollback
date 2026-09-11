@@ -1,100 +1,12 @@
-import { type Component, createResource, createSignal, Show, onMount } from "solid-js";
+import { type Component, onMount, createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
+import { createStore, type SetStoreFunction } from "solid-js/store";
 import Layout from "@/components/Layout";
-import { SetStoreFunction } from "solid-js/store";
-import { db } from "@/db/database";
-
+import AnalysisTabs, { type ConversationRow } from "@/components/analysis/AnalysisTabs";
+import { db, type StoredUser } from "@/db/database";
 import { isDataLoaded, clearData } from "@/utils/storage";
-import { createStore } from "solid-js/store";
-import { CachedAnalysis } from "@/types/analysis";
-import Overview from "@/components/analysis/Overview";
-
-/* hopeful stats to display:
-- overview:
-	- numMessages
-	- numSystemMessages
-	- numMessagesSent
-	- NumMessagesReceived
-	- numConversations
-	- followers
-	- following
-	- reels sent
-	- reels received
-	- favorite word
-	- favorite emoji
-	- num posts
-	- num stories
-	- posts saved,
-	- stories liked
-- conversations:
-	- numConversations
-	- conversations[]: (own page that's opened up, but some of these should be filterable)
-		- isGroupChat
-		- favoriteWord
-		- favoriteEmoji
-		- totalMessages
-		- totalReelssent
-		- media{
-			- numphotos
-			- numvideos
-			- numaudio
-			- }
-		- reactions{
-			- emoji, count}
-		- sort by totalmessages, most recently active, most reels sent/received, is groupchat
-		- expanded view:
-			- view all messages (metadata on like 3 dots or wtv)
-			- view all media
-			- words sent
-			- words per message
-			- reactions and emojis per user
-			- longest message
-			- most used emoji
-			- most used word
-			- words per message
-			- timeline from first message to last message
-			- most active time of day
-			- most active day of week
-			- num system messages
-			- Consecutive Msg Max Streak: 5
-			- Avg Consecutive Msgs: 1.6
-			- ranking of reactions usage
-
-- media:
-	- numPosts
-	- numReels
-	- numStories
-	- numSavedPosts
-	- numSavedReels
-	- numSavedStories
-	- viewing of posts and stories
-- import stats:
-	- time taken per thing
-	- files processed
-	- zip file size
-	- isZip
-	- isDemo
-	- isOpfs
-	- indexedDb size etc
-	- time of import
-	- probably more stats on errors / features (more robust)
-- users / connections:
-	- numUsers
-	- all users browsing, simple filtering based on the user stored thing, like blocked, etc
-	- search on everything
-	- key stats of each, numerically
-- interactions:
-	- numLikes
-	- numComments
-	- savedPosts
-	- stored likes
-- graphs
-	- file size?
-	- activity based on timestamps (filter what data is included)
-- user:
-	- insta settings, about, etc
-	- profile changes,etc
-*/
+import type { CachedAnalysis } from "@/types/analysis";
+import type { User } from "@/types/user";
 
 const ClearButton: Component = () => {
 	const navigate = useNavigate();
@@ -107,78 +19,109 @@ const ClearButton: Component = () => {
 	};
 
 	return (
-		<button
-			class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
-			onClick={handleClear}
-			disabled={isClearing()}
-		>
-			{isClearing() ? (
-				<div class="flex items-center">
-					<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white-500 mr-2"></div>
-					Clearing...
-				</div>
-			) : (
-				"Clear Data"
-			)}
+		<button type="button" class="app-button-secondary" onClick={handleClear} disabled={isClearing()}>
+			{isClearing() ? "Clearing…" : "Clear data"}
 		</button>
 	);
 };
 
 const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction<CachedAnalysis>) => {
-    const cached = localStorage.getItem("analysis_cache")
-    if (cached) {
-        const vals = JSON.parse(cached)
-        Object.entries(vals).forEach(([key, value]) => {
-            // @ts-ignore
-            setter(key as keyof CachedAnalysis, value);
-        });
-        if (!vals.partial) {
-            return
-        }
-    }
+	const cached = localStorage.getItem("analysis_cache");
+	if (cached) {
+		const values = JSON.parse(cached) as CachedAnalysis;
+		for (const [key, value] of Object.entries(values)) {
+			setter(key as keyof CachedAnalysis, value as never);
+		}
+		if (!values.partial) return;
+	}
 
-    setter("partial", false)
-    localStorage.setItem("analysis_cache", JSON.stringify(analysis))
+	setter("partial", false);
+	localStorage.setItem("analysis_cache", JSON.stringify(analysis));
+};
+
+const loadSnapshot = async () => {
+	const [user, people, conversations, messages] = await Promise.all([
+		db.mainUser.toCollection().first(),
+		db.users.toArray(),
+		db.conversations.toArray(),
+		db.messages.toArray(),
+	]);
+
+	const messageCounts = new Map<string, number>();
+	const lastActivities = new Map<string, Date>();
+	for (const message of messages) {
+		messageCounts.set(message.conversation, (messageCounts.get(message.conversation) || 0) + 1);
+		const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp);
+		const previous = lastActivities.get(message.conversation);
+		if (!Number.isNaN(timestamp.getTime()) && (!previous || timestamp > previous)) {
+			lastActivities.set(message.conversation, timestamp);
+		}
+	}
+
+	const conversationRows: ConversationRow[] = conversations.map((conversation) => ({
+		title: conversation.title,
+		participants: conversation.participants,
+		is_group: conversation.is_group,
+		messageCount: messageCounts.get(conversation.title) || 0,
+		lastActivity: lastActivities.get(conversation.title),
+	}));
+
+	return {
+		user: user || null,
+		people,
+		conversationRows,
+	};
 };
 
 const Analysis: Component = () => {
 	const navigate = useNavigate();
-    const [analysis, setAnalysis] = createStore<Partial<CachedAnalysis>>({});
+	const [analysis, setAnalysis] = createStore<CachedAnalysis>({});
+	const [user, setUser] = createSignal<User | null>(null);
+	const [people, setPeople] = createSignal<StoredUser[]>([]);
+	const [conversations, setConversations] = createSignal<ConversationRow[]>([]);
+	const [loading, setLoading] = createSignal(true);
 
 	onMount(async () => {
 		if (!isDataLoaded()) {
 			navigate("/", { replace: true });
+			return;
 		}
 
-		await createAnalysis(analysis, setAnalysis);
+		try {
+			const [snapshot] = await Promise.all([loadSnapshot(), createAnalysis(analysis, setAnalysis)]);
+			setUser(snapshot.user);
+			setPeople(snapshot.people);
+			setConversations(snapshot.conversationRows);
+		} catch (error) {
+			console.error("Failed to load analysis snapshot:", error);
+		} finally {
+			setLoading(false);
+		}
 	});
 
 	return (
 		<Layout>
-			<div class="container mx-auto p-4">
-				<div class="flex justify-between items-center mb-6">
-					<div class="flex gap-2">
-						<button
-							class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
-							onClick={() => navigate("/export")}
-						>
+			<div class="container mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+				<div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+					<div>
+						<p class="app-kicker">Imported snapshot</p>
+						<h1 class="mt-2 text-2xl font-semibold text-[#F2F2F2]">Scrollback</h1>
+					</div>
+					<div class="flex flex-wrap gap-2">
+						<button type="button" class="app-button-secondary" onClick={() => navigate("/export")}>
 							Export
 						</button>
 						<ClearButton />
-						<button
-							class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
-							onClick={async () => {
-    							localStorage.removeItem("analysis_cache")
-                                setAnalysis(Object.keys(analysis) as Array<keyof typeof analysis>, undefined);
-    							await createAnalysis(analysis, setAnalysis);
-							}}
-						>
-						Clear Analysis
-						</button>
 					</div>
 				</div>
 
-				<Overview analysis={analysis} />
+				<AnalysisTabs
+					analysis={analysis}
+					user={user()}
+					people={people()}
+					conversations={conversations()}
+					loading={loading()}
+				/>
 			</div>
 		</Layout>
 	);
