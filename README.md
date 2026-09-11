@@ -13,6 +13,19 @@ bun run dev
 
 Create a production build with `bun run build`.
 
+## Try the demo
+
+Select **Try demo** on the home page to load the committed fixture from `public/demo_data`. The manifest and JSON files are fetched only after the button is selected, then imported through the same analysis and SQLite export flow as a local Instagram archive. Demo data replaces the currently loaded data in the app, so exiting the demo clears it and returns to the empty import screen. Import your archive again afterward if needed.
+
+The fixture is generated deliberately and is not rebuilt during a normal app build or deployment. To regenerate it after changing the fixture generator, run:
+
+```sh
+bun run build:demo-data
+bun run build
+```
+
+Review the generated manifest and its files before committing or deploying the updated fixture. `@faker-js/faker` is kept as a development dependency because the generator uses it to create deterministic sample records.
+
 ## How it works
 
 Scrollback accepts either the original ZIP or an extracted archive. ZIP files are unpacked in the browser.

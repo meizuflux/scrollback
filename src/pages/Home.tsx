@@ -1,17 +1,20 @@
-import { createSignal, Show, type Component, onMount } from "solid-js";
+import { createSignal, Show, type Component, onCleanup, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { isDataLoaded } from "@/utils/storage";
+import { isDataLoaded, clearData, setStoredValue } from "@/utils/storage";
 import { Unzip, AsyncUnzipInflate } from "fflate";
-import { importData, type ImportStep } from "@/import/import";
+import { importData, ImportCancelledError, type ImportStep } from "@/import/import";
 import ImportProgress from "@/components/ImportProgress";
 import { getFileType } from "@/utils/media";
-import { opfsSupported, clearData } from "@/utils/storage";
+import { opfsSupported } from "@/utils/storage";
 import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
+import { clearDemoMode, isDemoMode, setDemoMode } from "@/utils/demo";
+import { loadDemoFiles } from "@/demo/loadDemoFiles";
 
 const extractZipToFiles = async (
 	zipFile: File,
 	updateSteps: (name: string, progress: number, statusText?: string) => void,
+	signal?: AbortSignal,
 ): Promise<File[]> => {
 	updateSteps("Unzipping files", 0, "Reading ZIP file...");
 
@@ -23,6 +26,10 @@ const extractZipToFiles = async (
 		let discoveryComplete = false;
 
 		const checkCompletion = () => {
+			if (signal?.aborted) {
+				reject(new DOMException("The import was cancelled.", "AbortError"));
+				return;
+			}
 			if (discoveryComplete && filesProcessed === totalFiles) {
 				updateSteps("Unzipping files", 100, "All files extracted successfully.");
 				resolve(extractedFiles);
@@ -43,6 +50,11 @@ const extractZipToFiles = async (
 
 			totalFiles++; // Increment total files count for each stream created
 			stream.ondata = (err, chunk, final) => {
+				if (signal?.aborted) return;
+				if (err) {
+					reject(err);
+					return;
+				}
 				if (chunk) {
 					chunks.push(chunk);
 					totalSize += chunk.length;
@@ -79,6 +91,10 @@ const extractZipToFiles = async (
 		const processStream = async () => {
 			try {
 				while (true) {
+					if (signal?.aborted) {
+						await reader.cancel();
+						throw new DOMException("The import was cancelled.", "AbortError");
+					}
 					const { done, value } = await reader.read();
 					if (done) {
 						mainUnzipper.push(new Uint8Array(0), true);
@@ -105,6 +121,8 @@ const Home: Component = () => {
 	const [dataLoaded, setDataLoaded] = createSignal(false);
 	const [importAborted, setImportAborted] = createSignal(false);
 	const [showAbortMessage, setShowAbortMessage] = createSignal(false);
+	const [errorMessage, setErrorMessage] = createSignal("");
+	let activeController: AbortController | undefined;
 
 	const updateSteps = (name: string, progress: number, statusText?: string) => {
 		setImportSteps((steps) => {
@@ -123,51 +141,122 @@ const Home: Component = () => {
 		});
 	};
 
-	onMount(() => {
-		const loaded = isDataLoaded();
-		setDataLoaded(loaded);
-	});
-
-	const handleFiles = async (files: FileList) => {
-		clearData();
-
-		let fileArray = Array.from(files);
-
+	const beginOperation = (steps: ImportStep[] = []) => {
+		activeController = new AbortController();
 		setIsImporting(true);
 		setImportAborted(false);
-		setImportSteps([]);
+		setErrorMessage("");
+		setImportSteps(steps);
+	};
 
+	const completeOperation = () => {
+		activeController = undefined;
+		setIsImporting(false);
+	};
+
+	const showCancelled = () => {
+		setShowAbortMessage(true);
+		setTimeout(() => setShowAbortMessage(false), 5000);
+	};
+
+	const handleFiles = async (files: FileList) => {
+		if (isImporting()) return;
+		let fileArray = Array.from(files);
+		beginOperation();
+		const controller = activeController!;
+		let dataCleared = false;
 		try {
-			let zipDuration;
-			if (fileArray.length === 1 && fileArray[0].name.endsWith(".zip")) {
+			await clearData();
+			dataCleared = true;
+			setDataLoaded(false);
+			let zipDuration: number | undefined;
+			if (fileArray.length === 1 && fileArray[0].name.toLowerCase().endsWith(".zip")) {
 				const zipStartTime = performance.now();
-				fileArray = await extractZipToFiles(fileArray[0], updateSteps);
+				fileArray = await extractZipToFiles(fileArray[0], updateSteps, controller.signal);
 				zipDuration = performance.now() - zipStartTime;
 			}
-
-			if (importAborted()) {
-				throw new Error("Import was stopped by user");
-			}
-
-			await importData(fileArray, updateSteps, zipDuration);
-
-			if (!importAborted()) {
-				localStorage.setItem("loaded", "true");
-				navigate("/analysis", { replace: true });
-			}
+			await importData(fileArray, updateSteps, zipDuration, controller.signal);
+			if (controller.signal.aborted) throw new ImportCancelledError();
+			setStoredValue("loaded", "true");
+			setDataLoaded(true);
+			navigate("/analysis", { replace: true });
 		} catch (error) {
 			console.error("Import failed:", error);
-			setIsImporting(false);
+			if (controller.signal.aborted || error instanceof ImportCancelledError) {
+				if (dataCleared) await clearData();
+				setDataLoaded(isDataLoaded());
+				showCancelled();
+			} else {
+				if (dataCleared) await clearData();
+				setDataLoaded(isDataLoaded());
+				setErrorMessage(error instanceof Error ? error.message : "The import failed. Please try again.");
+			}
+		} finally {
+			completeOperation();
+		}
+	};
+
+	const startDemoImport = async () => {
+		if (isImporting()) return;
+		const previousDemoMode = isDemoMode();
+		clearDemoMode();
+		beginOperation([{ name: "Loading demo data", progress: 0, statusText: "Preparing demo files..." }]);
+		const controller = activeController!;
+		let dataCleared = false;
+		try {
+			const demoFiles = await loadDemoFiles(
+				({ completed, total }) =>
+					updateSteps(
+						"Loading demo data",
+						Math.round((completed / total) * 100),
+						`Downloaded ${completed} of ${total} files`,
+					),
+				controller.signal,
+			);
+			updateSteps("Loading demo data", 100, "Demo files validated successfully.");
+			if (controller.signal.aborted) throw new ImportCancelledError();
+			await clearData();
+			dataCleared = true;
+			setDataLoaded(false);
+			await importData(demoFiles, updateSteps, undefined, controller.signal);
+			if (controller.signal.aborted) throw new ImportCancelledError();
+			setStoredValue("loaded", "true");
+			setDemoMode(true);
+			setDataLoaded(true);
+			navigate("/analysis", { replace: true });
+		} catch (error) {
+			console.error("Demo import failed:", error);
+			if (controller.signal.aborted || error instanceof ImportCancelledError) {
+				if (dataCleared) await clearData();
+				else setDemoMode(previousDemoMode);
+				setDataLoaded(isDataLoaded());
+				showCancelled();
+			} else {
+				if (dataCleared) await clearData();
+				else setDemoMode(previousDemoMode);
+				setDataLoaded(isDataLoaded());
+				setErrorMessage(
+					error instanceof Error ? error.message : "The demo could not be loaded. Please try again.",
+				);
+			}
+		} finally {
+			completeOperation();
 		}
 	};
 
 	const handleStopImport = () => {
+		if (!isImporting() || importAborted()) return;
 		setImportAborted(true);
-		setIsImporting(false);
-		setImportSteps([]);
-		setShowAbortMessage(true);
-		setTimeout(() => setShowAbortMessage(false), 5000);
+		activeController?.abort();
 	};
+
+	onMount(() => {
+		setDataLoaded(isDataLoaded());
+	});
+
+	onCleanup(() => {
+		activeController?.abort();
+	});
 
 	return (
 		<Layout>
@@ -182,7 +271,10 @@ const Home: Component = () => {
 				{/* Import Progress */}
 				<Show when={isImporting()}>
 					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
-						<ImportProgress steps={importSteps()} onStop={handleStopImport} />
+						<Show when={importAborted()}>
+							<p class="mb-4 text-sm text-[#E4B957]">Finishing cancellation and cleaning up…</p>
+						</Show>
+						<ImportProgress steps={importSteps()} onStop={importAborted() ? undefined : handleStopImport} />
 					</div>
 				</Show>
 
@@ -214,6 +306,31 @@ const Home: Component = () => {
 					</div>
 				</Show>
 
+				<Show when={errorMessage()}>
+					<div class="mb-8 rounded-lg border border-[#713D3D] bg-[#211515] p-4" role="alert">
+						<h3 class="mb-1 text-base font-semibold text-[#E7B7B7]">Couldn’t load the data</h3>
+						<p class="text-sm text-[#D6BDBD]">{errorMessage()}</p>
+						<div class="mt-3 flex flex-wrap gap-2">
+							{isDemoMode() && (
+								<button
+									type="button"
+									class="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#E7B7B7] px-3 py-2 text-sm font-semibold text-[#F2F2F2] hover:bg-[#322020]"
+									onClick={startDemoImport}
+								>
+									Retry demo
+								</button>
+							)}
+							<button
+								type="button"
+								class="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#404040] px-3 py-2 text-sm font-semibold text-[#F2F2F2] hover:bg-[#202020]"
+								onClick={() => setErrorMessage("")}
+							>
+								Dismiss
+							</button>
+						</div>
+					</div>
+				</Show>
+
 				{/* Data Ready State */}
 				<Show when={dataLoaded() && !isImporting()}>
 					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-6 sm:p-8">
@@ -234,9 +351,13 @@ const Home: Component = () => {
 									/>
 								</svg>
 							</div>
-							<h2 class="mb-3 text-2xl font-semibold text-[#F2F2F2]">Data Ready</h2>
+							<h2 class="mb-3 text-2xl font-semibold text-[#F2F2F2]">
+								{isDemoMode() ? "Demo data ready" : "Data Ready"}
+							</h2>
 							<p class="mx-auto mb-6 max-w-md text-[#A3A3A3]">
-								Your Instagram data has been successfully imported and is ready for analysis.
+								{isDemoMode()
+									? "The sample Instagram archive is ready to explore."
+									: "Your Instagram data has been successfully imported and is ready for analysis."}
 							</p>
 							<div class="flex flex-col justify-center gap-3 sm:flex-row">
 								<button
@@ -248,12 +369,23 @@ const Home: Component = () => {
 								</button>
 								<button
 									type="button"
+									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
+									onClick={startDemoImport}
+									disabled={isImporting()}
+								>
+									Try demo
+								</button>
+								<button
+									type="button"
 									class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
 									onClick={async () => {
 										setIsClearing(true);
-										await clearData();
-										setDataLoaded(false);
-										setIsClearing(false);
+										try {
+											await clearData();
+											setDataLoaded(false);
+										} finally {
+											setIsClearing(false);
+										}
 									}}
 									disabled={isClearing()}
 								>
@@ -338,6 +470,14 @@ const Home: Component = () => {
 								Select folder
 							</button>
 						</div>
+						<button
+							type="button"
+							class="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
+							onClick={startDemoImport}
+							disabled={isImporting()}
+						>
+							Try demo
+						</button>
 						<p class="mt-5 text-sm text-[#A3A3A3]">
 							Your data stays on this device. Processing happens locally in your browser.
 						</p>

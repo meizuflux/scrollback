@@ -1,10 +1,24 @@
 import { type ParentComponent, createSignal, onMount } from "solid-js";
-import { A } from "@solidjs/router";
-import { isDataLoaded } from "@/utils/storage";
+import { A, useNavigate } from "@solidjs/router";
+import { clearData, isDataLoaded } from "@/utils/storage";
 import logo from "@/assets/logo.svg";
+import { isDemoMode } from "@/utils/demo";
 
 const Layout: ParentComponent = (props) => {
+	const navigate = useNavigate();
 	const [dataLoaded, setDataLoaded] = createSignal(false);
+	const [isExitingDemo, setIsExitingDemo] = createSignal(false);
+
+	const exitDemo = async () => {
+		if (isExitingDemo()) return;
+		setIsExitingDemo(true);
+		try {
+			await clearData();
+			navigate("/", { replace: true });
+		} finally {
+			setIsExitingDemo(false);
+		}
+	};
 
 	onMount(() => {
 		const loaded = isDataLoaded();
@@ -56,6 +70,22 @@ const Layout: ParentComponent = (props) => {
 					</nav>
 				</div>
 			</header>
+
+			{isDemoMode() && (
+				<div class="border-b border-[#4B3D68] bg-[#211A2E]">
+					<div class="container mx-auto flex items-center justify-between gap-4 px-4 py-2 text-sm">
+						<span class="font-medium text-[#E4D9FF]">You’re viewing demo data</span>
+						<button
+							type="button"
+							class="rounded-md border border-[#8066B5] px-3 py-1.5 font-medium text-[#E4D9FF] transition-colors hover:bg-[#32264A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6EC4] disabled:cursor-not-allowed disabled:opacity-50"
+							onClick={() => void exitDemo()}
+							disabled={isExitingDemo()}
+						>
+							{isExitingDemo() ? "Exiting…" : "Exit demo"}
+						</button>
+					</div>
+				</div>
+			)}
 
 			<main class="flex-1">{props.children}</main>
 

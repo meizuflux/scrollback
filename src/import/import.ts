@@ -1,9 +1,10 @@
-import { db } from "@/db/database";
 import { importUser, importContent, importProfileChanges } from "./user";
 import importConnections from "./connections";
 import importMessages from "./messages";
 import { importPostLikes, importSavedPosts, importComments } from "./interactions";
 import { CachedAnalysis } from "@/types/analysis";
+import { db } from "@/db/database";
+import { setStoredValue } from "@/utils/storage";
 
 export interface ImportStep {
 	name: string;
@@ -21,6 +22,13 @@ interface ImportMetadata {
 
 export type ProgFn = (progress: number, statusText?: string) => void;
 
+export class ImportCancelledError extends Error {
+	constructor() {
+		super("Import was stopped by user");
+		this.name = "ImportCancelledError";
+	}
+}
+
 const importSteps = [
 	{ name: "Importing Messages", fn: importMessages },
 	{ name: "Importing Content", fn: importContent },
@@ -36,11 +44,14 @@ export const importData = async (
 	files: File[],
 	updateSteps: (name: string, progress: number, statusText?: string) => void,
 	unzipDuration?: number,
+	signal?: AbortSignal,
 ) => {
 	const importStartTime = performance.now();
+	if (signal?.aborted) throw new ImportCancelledError();
 
 	await db.delete();
 	await db.open();
+	if (signal?.aborted) throw new ImportCancelledError();
 
 	const totalFileSize = files.reduce((sum, file) => sum + file.size, 0);
 	const fileCount = files.length;
@@ -49,15 +60,18 @@ export const importData = async (
 		stepDurations["Unzipping"] = unzipDuration;
 	}
 
-	let analysis: CachedAnalysis = {}
+	const analysis: CachedAnalysis = {};
 
-	await Promise.all(
+	const results = await Promise.allSettled(
 		importSteps.map(async ({ name, fn }) => {
 			const stepStartTime = performance.now();
 			await fn(files, db, (progress, statusText?) => updateSteps(name, progress, statusText), analysis);
 			stepDurations[name] = performance.now() - stepStartTime;
 		}),
 	);
+	const failure = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
+	if (failure) throw failure.reason;
+	if (signal?.aborted) throw new ImportCancelledError();
 
 	const totalDuration = performance.now() - importStartTime;
 	const metadata: ImportMetadata = {
@@ -68,7 +82,6 @@ export const importData = async (
 		stepDurations,
 	};
 
-
-	localStorage.setItem("analysis_cache", JSON.stringify(analysis))
-	localStorage.setItem("import_metadata", JSON.stringify(metadata));
+	setStoredValue("analysis_cache", JSON.stringify(analysis));
+	setStoredValue("import_metadata", JSON.stringify(metadata));
 };

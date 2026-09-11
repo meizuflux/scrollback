@@ -24,7 +24,6 @@ const MESSAGED_PEOPLE = 10;
 const GROUP_PARTICIPANT_COUNT = 4;
 const GROUP_COUNT_MIN = 2;
 const GROUP_COUNT_MAX = 4;
-const DEMO_DATA_VERSION = "1.3.0";
 const GROUP_TITLES = ["Weekend Plans", "Book Club", "Photo Walk", "Game Night", "Trip Planning", "Creative Crew"];
 const DIRECT_MESSAGE_BASE = 90;
 const DIRECT_MESSAGE_JITTER = 20;
@@ -513,8 +512,6 @@ const buildDemoData = async (): Promise<void> => {
 		),
 		writeJson("_demo_data_manifest.json", {
 			_generated: true,
-			dataset: "scrollback-demo",
-			datasetVersion: DEMO_DATA_VERSION,
 			generator: "scripts/build_demo_data.ts",
 			sourceCommit: gitMetadata.sourceCommit,
 			sourceTreeDirty: gitMetadata.sourceTreeDirty,

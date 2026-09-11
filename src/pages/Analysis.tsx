@@ -4,7 +4,8 @@ import { createStore, type SetStoreFunction } from "solid-js/store";
 import Layout from "@/components/Layout";
 import AnalysisTabs, { type ConversationRow } from "@/components/analysis/AnalysisTabs";
 import { db, type StoredUser } from "@/db/database";
-import { isDataLoaded, clearData } from "@/utils/storage";
+import { isDataLoaded, clearData, getStoredValue, setStoredValue } from "@/utils/storage";
+import { isDemoMode } from "@/utils/demo";
 import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
 
@@ -14,8 +15,12 @@ const ClearButton: Component = () => {
 
 	const handleClear = async () => {
 		setIsClearing(true);
-		await clearData();
-		navigate("/", { replace: true });
+		try {
+			await clearData();
+			navigate("/", { replace: true });
+		} finally {
+			setIsClearing(false);
+		}
 	};
 
 	return (
@@ -31,7 +36,7 @@ const ClearButton: Component = () => {
 };
 
 const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction<CachedAnalysis>) => {
-	const cached = localStorage.getItem("analysis_cache");
+	const cached = getStoredValue("analysis_cache");
 	if (cached) {
 		const values = JSON.parse(cached) as CachedAnalysis;
 		for (const [key, value] of Object.entries(values)) {
@@ -41,7 +46,7 @@ const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction
 	}
 
 	setter("partial", false);
-	localStorage.setItem("analysis_cache", JSON.stringify(analysis));
+	setStoredValue("analysis_cache", JSON.stringify(analysis));
 };
 
 const loadDataPackage = async () => {
@@ -110,7 +115,7 @@ const Analysis: Component = () => {
 				<div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 					<div>
 						<p class="bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-							Imported data package
+							{isDemoMode() ? "Demo data package" : "Imported data package"}
 						</p>
 						<h1 class="mt-2 text-2xl font-semibold text-[#F2F2F2]">Scrollback</h1>
 					</div>

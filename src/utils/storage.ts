@@ -1,5 +1,6 @@
 import { createResource } from "solid-js";
 import { db } from "@/db/database";
+import { clearDemoMode } from "@/utils/demo";
 
 export const [opfsSupported] = createResource(async () => {
 	try {
@@ -18,16 +19,34 @@ export const [opfsSupported] = createResource(async () => {
 	}
 });
 
-export const isDataLoaded = () => {
+export const isDataLoaded = (): boolean => {
 	return localStorage.getItem("loaded") === "true";
 };
 
+export const getStoredValue = (key: string): string | null => {
+	return localStorage.getItem(key);
+};
+
+export const setStoredValue = (key: string, value: string): void => {
+	localStorage.setItem(key, value);
+};
+
+export const removeStoredValue = (key: string): void => {
+	localStorage.removeItem(key);
+};
+
 export const clearData = async (): Promise<void> => {
-	localStorage.clear();
+	for (const key of ["loaded", "analysis_cache", "import_metadata"]) localStorage.removeItem(key);
+	clearDemoMode();
 
 	if (opfsSupported()) {
-		// @ts-ignore: https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
-		await (await navigator.storage.getDirectory())?.remove({ recursive: true });
+		try {
+			const root = await navigator.storage.getDirectory();
+			await root.removeEntry("media", { recursive: true });
+		} catch (error) {
+			// A missing media directory is already a cleared state.
+			if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
+		}
 	}
 
 	await db.delete();
