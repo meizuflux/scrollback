@@ -3,26 +3,117 @@ import { loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
 import { CachedAnalysis } from "@/types/analysis";
 
+enum ConnectionFormat {
+	LabelValues,
+	StringListData,
+	WrappedStringListData,
+}
+
+// sometimes we have stuff like blocked_profiles.json
+/*
+[
+	{
+		{
+            "timestamp": 1770786643,
+            "media": [
+
+            ],
+            "label_values": [
+            {
+                "label": "URL",
+                "value": "<occassional profile url>?"
+            },
+            {
+                "label": "Name",
+                "value": "<blocked person's display name>"
+            },
+            {
+                "label": "Username",
+                "value": "<blocked person's username>" <-- we need this
+            }
+            ],
+            "fbid": "<user idk idk>"
+        },
+	}
+]
+*/
+
+// then we have: hide story from json
+/*
+{
+  "timestamp": 1786634923,
+  "media": [
+
+  ],
+  "label_values": [
+    {
+      "label": "URL",
+      "value": ""
+    },
+    {
+      "label": "Name",
+      "value": "<displ name>"
+    },
+    {
+      "label": "Username",
+      "value": "<username>"
+    }
+  ],
+  "fbid": "<userid idk>"
+}
+*/
+
+// and then also: following.json
+/*
+{
+  "relationships_following": [
+    {
+      "title": "<their username>",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/<username>",
+          "timestamp": 1788976563
+        }
+      ]
+    },
+    {
+      "title": "<their username>",
+      "string_list_data": [
+        {
+          "href": "https://www.instagram.com/_u/<their username>",
+          "timestamp": 1788917325
+        }
+      ]
+    },
+*/
+
 export default async (files: File[], database: InstagramDatabase, onProgress: ProgFn, analysis: CachedAnalysis) => {
 	const fileData = [
-		{ name: "blocked_profiles.json", column: "blocked", stored_at: "relationships_blocked_users" },
-		{ name: "close_friends.json", column: "close_friends", stored_at: "relationships_close_friends" },
+		{ name: "blocked_profiles.json", column: "blocked", format: ConnectionFormat.LabelValues },
+		{ name: "close_friends.json", column: "close_friends", format: ConnectionFormat.LabelValues },
 		{
 			name: "follow_requests_you've_received.json",
 			column: "requested_to_follow_you",
-			stored_at: "relationships_follow_requests_received",
+			format: ConnectionFormat.LabelValues,
 		},
-		{ name: "followers_1.json", column: "follower" },
-		{ name: "following.json", column: "following", stored_at: "relationships_following" },
-		{ name: "hide_story_from.json", column: "hidden_story_from", stored_at: "relationships_hide_stories_from" },
+		{ name: "followers_1.json", column: "follower", format: ConnectionFormat.StringListData },
+		{
+			name: "following.json",
+			column: "following",
+			format: ConnectionFormat.WrappedStringListData,
+			stored_at: "relationships_following",
+		},
+		{ name: "hide_story_from.json", column: "hidden_story_from", format: ConnectionFormat.LabelValues },
 		{
 			name: "pending_follow_requests.json",
 			column: "pending_follow_request",
+			format: ConnectionFormat.WrappedStringListData,
 			stored_at: "relationships_follow_requests_sent",
 		},
 		{
 			name: "recently_unfollowed_profiles.json",
 			column: "recently_unfollowed",
+			format: ConnectionFormat.WrappedStringListData,
 			stored_at: "relationships_unfollowed_users",
 		},
 	];
@@ -40,10 +131,14 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		let json_file_data = await loadFile<any>(files, filename);
 
 		if (json_file_data) {
-			if (fileInfo.stored_at) {
-				json_file_data = json_file_data[fileInfo.stored_at];
+			if (fileInfo.format === ConnectionFormat.WrappedStringListData && fileInfo.stored_at) {
+				json_file_data = json_file_data[fileInfo.stored_at] ?? json_file_data;
 			}
-			if (Array.isArray(json_file_data)) {
+
+			if (!Array.isArray(json_file_data)) {
+				json_file_data = json_file_data ? [json_file_data] : [];
+			}
+			if (json_file_data.length > 0) {
 				totalUsersToProcess += json_file_data.length;
 				loadedFilesData.push({ data: json_file_data, info: fileInfo });
 			}
@@ -74,16 +169,22 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				);
 			}
 
-			const user_data = user.string_list_data?.[0];
-			if (!user_data) continue;
-			if (!user_data.value) user_data.value = user_data.href?.split("/").pop() || "";
-			if (!user_data.value) continue;
+			const userData =
+				fileInfo.format === ConnectionFormat.LabelValues
+					? (user.label_values?.find((item: any) => item.label === "Username") ?? user.string_list_data?.[0])
+					: user.string_list_data?.[0];
+			const username = userData?.value || userData?.href?.split("/").filter(Boolean).pop() || "";
+			if (!username) continue;
 
-			const userData = data[user_data.value] || { username: user_data.value };
+			const storedUser = data[username] || { username };
 			if (fileInfo.column) {
-				(userData as any)[fileInfo.column] = { value: true, timestamp: new Date(user_data.timestamp * 1000) };
+				const timestamp = user.timestamp ?? userData.timestamp;
+				(storedUser as any)[fileInfo.column] = {
+					value: true,
+					...(timestamp !== undefined && { timestamp: new Date(timestamp * 1000) }),
+				};
 			}
-			data[user_data.value] = userData;
+			data[username] = storedUser;
 		}
 	}
 
@@ -119,8 +220,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	onProgress(85, "Saving all user data to database...");
 	await database.users.bulkPut(Object.values(data));
 
-	analysis.followers = Object.values(data).filter(user => user.follower?.value).length;
-	analysis.following = Object.values(data).filter(user => user.following?.value).length;
+	analysis.followers = Object.values(data).filter((user) => user.follower?.value).length;
+	analysis.following = Object.values(data).filter((user) => user.following?.value).length;
 
 	onProgress(100, "Connections import finished.");
 };
