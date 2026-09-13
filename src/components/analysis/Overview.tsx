@@ -1,15 +1,20 @@
 import { Component, For, Show } from "solid-js";
 import { CachedAnalysis } from "@/types/analysis";
+import { InfoTooltip } from "@/components/analysis/AnalysisShared";
 
 interface StatCardProps {
 	title: string;
 	value: number | string;
+	description?: string;
 }
 
 const StatCard: Component<StatCardProps> = (props) => {
 	return (
 		<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
-			<p class="text-sm font-medium text-[#A3A3A3]">{props.title}</p>
+			<p class="text-sm font-medium text-[#A3A3A3]">
+				{props.title}
+				{props.description && <InfoTooltip label={props.title} description={props.description} />}
+			</p>
 			<p class="mt-2 text-2xl font-semibold tracking-tight text-[#F2F2F2]">{props.value}</p>
 		</div>
 	);
@@ -44,7 +49,11 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 					<StatCard title="Total messages" value={formatNumber(props.analysis.messageCount)} />
 					<StatCard title="Messages sent" value={formatNumber(props.analysis.messagesSent)} />
 					<StatCard title="Messages received" value={formatNumber(props.analysis.messagesReceived)} />
-					<StatCard title="System messages" value={formatNumber(props.analysis.systemMessages)} />
+					<StatCard
+						title="System messages"
+						value={formatNumber(props.analysis.systemMessages)}
+						description="Messages Instagram sends automatically, such as “You created a group”."
+					/>
 				</div>
 			</section>
 
@@ -94,8 +103,16 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 			<section class="space-y-4">
 				<SectionHeading>Social activity</SectionHeading>
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-					<StatCard title="Followers" value={formatNumber(props.analysis.followers)} />
-					<StatCard title="Following" value={formatNumber(props.analysis.following)} />
+					<StatCard
+						title="Followers"
+						value={formatNumber(props.analysis.followers)}
+						description="This may be lower than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+					/>
+					<StatCard
+						title="Following"
+						value={formatNumber(props.analysis.following)}
+						description="This may be lower than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+					/>
 					<StatCard title="Reactions sent" value={formatNumber(props.analysis.reactionsSent)} />
 					<StatCard title="Reactions received" value={formatNumber(props.analysis.reactionsReceived)} />
 				</div>

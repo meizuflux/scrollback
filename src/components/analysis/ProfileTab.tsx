@@ -4,6 +4,7 @@ import { createMediaURL } from "@/utils/media";
 import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
 import type { PeopleFilter } from "@/components/analysis/analysisTypes";
+import { InfoTooltip } from "@/components/analysis/AnalysisShared";
 
 interface ProfileTabProps {
 	user: User | null;
@@ -115,7 +116,12 @@ const ProfileTab: Component<ProfileTabProps> = (props) => (
 							{mutedValue(props.analysis.followers)}
 						</span>
 						<span class="mt-1 block text-sm text-[#A3A3A3]">
-							Followers <span class="text-[#7873F5]">→</span>
+							Followers{" "}
+							<InfoTooltip
+								label="Followers"
+								description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+							/>{" "}
+							<span class="text-[#7873F5]">→</span>
 						</span>
 					</button>
 					<button
@@ -127,7 +133,12 @@ const ProfileTab: Component<ProfileTabProps> = (props) => (
 							{mutedValue(props.analysis.following)}
 						</span>
 						<span class="mt-1 block text-sm text-[#A3A3A3]">
-							Following <span class="text-[#7873F5]">→</span>
+							Following{" "}
+							<InfoTooltip
+								label="Following"
+								description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+							/>{" "}
+							<span class="text-[#7873F5]">→</span>
 						</span>
 					</button>
 				</div>

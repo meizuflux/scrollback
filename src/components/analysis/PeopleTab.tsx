@@ -1,5 +1,5 @@
 import { type Component, createMemo, For, Show } from "solid-js";
-import { ControlLabel, controlClass, EmptyState } from "@/components/analysis/AnalysisShared";
+import { ControlLabel, controlClass, EmptyState, InfoTooltip } from "@/components/analysis/AnalysisShared";
 import type { PeopleFilter, PeopleSort } from "@/components/analysis/analysisTypes";
 import type { StoredUser } from "@/db/database";
 
@@ -21,11 +21,15 @@ interface PeopleTabProps {
 interface StatCardProps {
 	title: string;
 	value: number;
+	description?: string;
 }
 
 const StatCard: Component<StatCardProps> = (props) => (
 	<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
-		<p class="text-sm font-medium leading-5 text-[#A3A3A3]">{props.title}</p>
+		<p class="text-sm font-medium leading-5 text-[#A3A3A3]">
+			{props.title}
+			{props.description && <InfoTooltip label={props.title} description={props.description} />}
+		</p>
 		<p class="mt-2 text-2xl font-semibold tracking-tight text-[#F2F2F2]">{props.value.toLocaleString()}</p>
 	</div>
 );
@@ -114,8 +118,16 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 						<div class="h-px flex-1 bg-[#303030]" />
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						<StatCard title="Followers" value={followers()} />
-						<StatCard title="Following" value={following()} />
+						<StatCard
+							title="Followers"
+							value={followers()}
+							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+						/>
+						<StatCard
+							title="Following"
+							value={following()}
+							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
+						/>
 						<StatCard title="Accounts blocked" value={blocked()} />
 						<StatCard title="People not following you back" value={notFollowingBack()} />
 						<StatCard title="People you don't follow back" value={notFollowedBack()} />
