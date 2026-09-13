@@ -88,7 +88,7 @@ const Layout: ParentComponent = (props) => {
 				<div class="container mx-auto px-4">
 					<div class="flex flex-col items-center justify-between text-sm text-[#737373] md:flex-row">
 						<div class="mb-4 md:mb-0">
-							<p>© 2025 meizuflux</p>
+							<p>© 2026 meizuflux</p>
 						</div>
 						<div>
 							<a
