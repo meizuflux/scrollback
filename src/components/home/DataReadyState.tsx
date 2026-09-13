@@ -11,7 +11,7 @@ interface DataReadyStateProps {
 const DataReadyState: Component<DataReadyStateProps> = (props) => (
 	<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-6 sm:p-8">
 		<div class="text-center">
-			<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#7873F5] text-[#FF6EC4]">
+			<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#7873F5]">
 				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" />
 				</svg>
@@ -31,13 +31,6 @@ const DataReadyState: Component<DataReadyStateProps> = (props) => (
 					onClick={props.onViewAnalysis}
 				>
 					View Analysis
-				</button>
-				<button
-					type="button"
-					class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
-					onClick={props.onTryDemo}
-				>
-					Try demo
 				</button>
 				<button
 					type="button"
