@@ -89,15 +89,17 @@ const ProfileTab: Component<ProfileTabProps> = (props) => (
 		</div>
 
 		<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
-			<div class="h-24 bg-[#202020]" />
-			<div class="px-6 pb-7 sm:px-9">
-				<div class="-mt-14 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+			<div class="px-6 py-7 sm:px-9">
+				<div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-end">
 						<ProfileAvatar user={props.user} />
 						<div>
 							<h2 class="text-2xl font-semibold text-[#F2F2F2]">{props.user?.name || "Unavailable"}</h2>
 							<p class="mt-1 text-[#A3A3A3]">
 								{props.user?.username ? `@${props.user.username}` : "Username unavailable"}
+							</p>
+							<p class="mt-3 max-w-xl whitespace-pre-wrap text-sm leading-6 text-[#D4D4D4]">
+								{props.user?.bio || "Bio unavailable"}
 							</p>
 						</div>
 					</div>

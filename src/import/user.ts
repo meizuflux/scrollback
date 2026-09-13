@@ -32,7 +32,7 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 		username: userFileData?.profile_user?.[0]?.string_map_data?.Username?.value,
 		name: userFileData?.profile_user?.[0]?.string_map_data?.Name?.value,
 		email: userFileData?.profile_user?.[0]?.string_map_data?.Email?.value,
-		bio: userFileData?.profile_user?.[0]?.string_map_data?.Bio?.value,
+		bio: decodeU8String(userFileData?.profile_user?.[0]?.string_map_data?.Bio?.value || ""),
 		gender: userFileData?.profile_user?.[0]?.string_map_data?.Gender?.value,
 		privateAccount: new Boolean(userFileData?.profile_user?.[0]?.string_map_data?.["Private Account"]?.value),
 		dateOfBirth: new Date(userFileData?.profile_user?.[0]?.string_map_data?.["Date of birth"]?.value),
