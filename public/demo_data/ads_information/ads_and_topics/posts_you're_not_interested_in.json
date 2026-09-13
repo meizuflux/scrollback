@@ -1,20 +1,20 @@
 {
-  "impressions_history_posts_not_interested": [
-    {
-      "title": "demo-post",
-      "timestamp": 1767214800
-    },
-    {
-      "title": "demo-post",
-      "timestamp": 1767211200
-    },
-    {
-      "title": "demo-post",
-      "timestamp": 1767207600
-    },
-    {
-      "title": "demo-post",
-      "timestamp": 1767204000
-    }
-  ]
+    "impressions_history_posts_not_interested": [
+        {
+            "title": "demo-post",
+            "timestamp": 1789338635
+        },
+        {
+            "title": "demo-post",
+            "timestamp": 1789335035
+        },
+        {
+            "title": "demo-post",
+            "timestamp": 1789331435
+        },
+        {
+            "title": "demo-post",
+            "timestamp": 1789327835
+        }
+    ]
 }

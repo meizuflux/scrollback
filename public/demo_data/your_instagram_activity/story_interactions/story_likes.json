@@ -1,76 +1,44 @@
 {
-  "story_activities_story_likes": [
-    {
-      "title": "vincenzoschimmel04",
-      "string_list_data": [
+    "story_activities_story_likes": [
         {
-          "timestamp": 1767214800
-        }
-      ]
-    },
-    {
-      "title": "judyhowell94",
-      "string_list_data": [
+            "title": "ike6",
+            "string_list_data": [
+                {
+                    "timestamp": 1789338635
+                }
+            ]
+        },
         {
-          "timestamp": 1767128400
-        }
-      ]
-    },
-    {
-      "title": "andrewgoyette73",
-      "string_list_data": [
+            "title": "separate_rabbit38",
+            "string_list_data": [
+                {
+                    "timestamp": 1789252235
+                }
+            ]
+        },
         {
-          "timestamp": 1767042000
-        }
-      ]
-    },
-    {
-      "title": "jammiegottlieb19",
-      "string_list_data": [
+            "title": "lumbering_ostrich51",
+            "string_list_data": [
+                {
+                    "timestamp": 1789165835
+                }
+            ]
+        },
         {
-          "timestamp": 1766955600
-        }
-      ]
-    },
-    {
-      "title": "tanyaroberts20",
-      "string_list_data": [
+            "title": "bustling_butterfly33",
+            "string_list_data": [
+                {
+                    "timestamp": 1789079435
+                }
+            ]
+        },
         {
-          "timestamp": 1766869200
+            "title": "ivory_hippopotamus",
+            "string_list_data": [
+                {
+                    "timestamp": 1788993035
+                }
+            ]
         }
-      ]
-    },
-    {
-      "title": "margieboyer74",
-      "string_list_data": [
-        {
-          "timestamp": 1766782800
-        }
-      ]
-    },
-    {
-      "title": "rosannaolson34",
-      "string_list_data": [
-        {
-          "timestamp": 1766696400
-        }
-      ]
-    },
-    {
-      "title": "olinhagenes25",
-      "string_list_data": [
-        {
-          "timestamp": 1766610000
-        }
-      ]
-    },
-    {
-      "title": "kamrenmetz43",
-      "string_list_data": [
-        {
-          "timestamp": 1766523600
-        }
-      ]
-    }
-  ]
+    ]
 }

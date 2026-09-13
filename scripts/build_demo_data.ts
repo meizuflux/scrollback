@@ -1,37 +1,28 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { faker } from "@faker-js/faker";
+import { exponentialDistributor, faker } from "@faker-js/faker";
 
-/**
- * Build a deterministic, Instagram-export-shaped fixture for local demos.
- *
- * The generated directory can be committed and loaded as a set of File objects
- * by the demo flow. It intentionally contains no binary media; posts use empty
- * media arrays and stories are empty so the fixture remains JSON-only.
- *
- * Usage:
- *   bun run scripts/build_demo_data.ts [output-directory]
- */
+// everything we need to configure should be right here
+const TOTAL_PEOPLE = faker.number.int({ min: 60, max: 100 });
+const FOLLOWERS = faker.number.int({ min: TOTAL_PEOPLE - 10, max: TOTAL_PEOPLE });
+const FOLLOWING = faker.number.int({ min: TOTAL_PEOPLE - 10, max: TOTAL_PEOPLE });
+const MESSAGED_PEOPLE = ~~(TOTAL_PEOPLE * .25);
 
-const SEED = 20260910;
-const TOTAL_PEOPLE = 100;
-const FOLLOWERS_MIN = 50;
-const FOLLOWERS_MAX = 70;
-const FOLLOWING_MIN = 30;
-const FOLLOWING_MAX = 50;
-const MESSAGED_PEOPLE = 10;
-const GROUP_PARTICIPANT_COUNT = 4;
-const GROUP_COUNT_MIN = 2;
-const GROUP_COUNT_MAX = 4;
-const GROUP_TITLES = ["Weekend Plans", "Book Club", "Photo Walk", "Game Night", "Trip Planning", "Creative Crew"];
-const DIRECT_MESSAGE_BASE = 90;
-const DIRECT_MESSAGE_JITTER = 20;
-const GROUP_MESSAGE_MIN = 90;
-const GROUP_MESSAGE_MAX = 120;
+const GROUPS = [
+    { name: "Weekend Plans", count: faker.number.int({ min: 2, max: 10 }) },
+    { name: "Book Club", count: faker.number.int({ min: 2, max: 10 }) },
+    { name: "Best Friends", count: faker.number.int({ min: 2, max: 10 }) },
+    { name: "Game Night", count: faker.number.int({ min: 2, max: 10 }) },
+    { name: "Summer Trip Planning", count: faker.number.int({ min: 2, max: 10 }) },
+]
 
-const DEMO_START_MS = Date.UTC(2025, 0, 1, 9, 0, 0);
-const DEMO_END_MS = Date.UTC(2025, 11, 31, 21, 0, 0);
+// custom distributor here because most messages are going to not have that many chats
+const DIRECT_MESSAGE_VARS = { min: 2, max: 1000, distributor: exponentialDistributor({ bias: -100 }) }
+const GROUP_MESSAGE_VARS = { min: 2, max: 1000, distributor: exponentialDistributor({ bias: -100 }) };
+
+const DEMO_END_MS = Date.now();
+const DEMO_START_MS = DEMO_END_MS - 365 * 24 * 60 * 60 * 1000;
 const DEMO_START_SECONDS = Math.floor(DEMO_START_MS / 1000);
 
 type Person = {
@@ -66,8 +57,7 @@ type RawConversation = {
 	thread_path: string;
 };
 
-const outputDirectory = resolve(process.argv[2] ?? "public/demo_data");
-const usesDefaultOutputDirectory = process.argv[2] === undefined;
+const OUTPUT_DIRECTORY = "public/demo_data";
 const generatedFilePaths = new Set<string>();
 
 const encodeInstagramString = (value: string): string => {
@@ -75,59 +65,70 @@ const encodeInstagramString = (value: string): string => {
 	return String.fromCharCode(...bytes);
 };
 
+/*
 const slugify = (value: string): string =>
 	value
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, "");
+		.replace(/^-|-$/g, ""); */
 
 const asSeconds = (date: Date): number => Math.floor(date.getTime() / 1000);
 
-const getGitMetadata = (): { sourceCommit: string; sourceTreeDirty: boolean } => {
+const getCurrentGitCommit = (): string => {
 	try {
 		const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], {
 			cwd: process.cwd(),
 			encoding: "utf8",
 		}).trim();
-		const sourceTreeDirty =
-			execFileSync("git", ["status", "--porcelain"], {
-				cwd: process.cwd(),
-				encoding: "utf8",
-			}).trim().length > 0;
-
-		return { sourceCommit, sourceTreeDirty };
+		return sourceCommit;
 	} catch {
-		return { sourceCommit: "unknown", sourceTreeDirty: false };
+		return "unknown";
 	}
 };
 
 const writeJson = async (relativePath: string, value: unknown): Promise<void> => {
 	generatedFilePaths.add(relativePath);
-	const absolutePath = resolve(outputDirectory, relativePath);
+	const absolutePath = resolve(OUTPUT_DIRECTORY, relativePath);
 	await mkdir(dirname(absolutePath), { recursive: true });
-	await writeFile(absolutePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+	await writeFile(absolutePath, `${JSON.stringify(value, null, 4)}\n`, "utf8");
 };
 
-const buildUsername = (name: string, index: number): string => {
-	const nameSlug = slugify(name).replace(/-/g, "");
-	return `${nameSlug.slice(0, 18)}${String(index + 1).padStart(2, "0")}`;
+const capitalize = (str: string): string => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-const buildPersonName = (): string => `${faker.person.firstName()} ${faker.person.lastName()}`;
+const buildUsername = (name: string): string => {
+    const templates = [
+        () => `${faker.word.adjective()}_${faker.animal.type()}${faker.number.int({ min: 1, max: 99 })}`,
+        () => `${faker.helpers.slugify(name).replace(/-/g, "").slice(0, 18)}${faker.number.int({ min: 0, max: 9 })}`,
+        () => `${capitalize(faker.word.noun())}_${capitalize(faker.animal.type())}${faker.number.int({ min: 1000, max: 9999 })}`,
+        () => `${capitalize(faker.color.human())}_${capitalize(faker.animal.type())}`
+    ]
+
+    return faker.helpers.slugify(faker.helpers.arrayElement(templates)()).replace("-", "_").toLowerCase();
+}
+
 
 const buildPeople = (): { account: Person; people: Person[] } => {
-	const accountName = buildPersonName();
+    // we can't use faker.person.fullName since for some reason it includes prefixes like "mr" or "ms"
+    const accountName = faker.person.firstName() + " " + faker.person.lastName();
 	const account: Person = {
 		name: accountName,
-		username: `demo_${buildUsername(accountName, 0)}`,
+		username: `demo_${buildUsername(accountName)}`,
 	};
 
 	const people: Person[] = [];
 	const usernames = new Set([account.username]);
 
 	while (people.length < TOTAL_PEOPLE) {
-		const name = buildPersonName();
-		const username = buildUsername(name, people.length + 1);
+        let name = faker.person.firstName();
+
+        // TODO: have this be a global var up top
+        if (faker.number.float() > .7) {
+            name += " " + faker.person.lastName();
+        }
+
+		const username = buildUsername(name);
 		if (usernames.has(username)) continue;
 
 		usernames.add(username);
@@ -143,7 +144,7 @@ const connectionEntry = (person: Person) => {
 	const timestamp =
 		DEMO_START_SECONDS + faker.number.int({ min: 0, max: Math.floor((DEMO_END_MS - DEMO_START_MS) / 1_000) });
 	const stringListData: StringListItem = {
-		href: `https://www.instagram.com/${person.username}/`,
+		href: "",
 		value: person.username,
 		timestamp,
 	};
@@ -173,16 +174,15 @@ const buildRelationshipFiles = (people: Person[], followers: Person[], following
 	};
 };
 
-const messageText = (sender: Person, recipient: Person, index: number): string => {
+const messageText = (recipient: Person): string => {
 	const templates = [
-		`Hey ${recipient.name.split(" ")[0]}, ${faker.lorem.sentence({ min: 4, max: 9 })}`,
-		`That sounds good — ${faker.lorem.words({ min: 3, max: 7 })}.`,
-		`I saved that for later ${faker.helpers.arrayElement(["✨", "👍", "😄", "🙌"])}.`,
-		`${faker.lorem.sentence({ min: 5, max: 11 })} What do you think?`,
+		() => `Hey ${recipient.name.split(" ")[0]}, ${faker.lorem.sentence({ min: 4, max: 9 })}`,
+		() => `That sounds good — ${faker.lorem.words({ min: 3, max: 7 })}.`,
+		() => `I saved that for later ${faker.helpers.arrayElement(["✨", "👍", "😄", "🙌"])}.`,
+		() => `${faker.lorem.sentence({ min: 5, max: 11 })}`,
 	];
 
-	const prefix = index % 3 === 0 ? `${sender.name.split(" ")[0]}: ` : "";
-	return `${prefix}${faker.helpers.arrayElement(templates)}`;
+	return faker.helpers.arrayElement(templates)();
 };
 
 const buildMessages = (
@@ -221,7 +221,7 @@ const buildMessages = (
 		} else if (messageKind <= 10) {
 			message.content = encodeInstagramString("sent an attachment.");
 		} else {
-			message.content = encodeInstagramString(messageText(sender, receiver, index));
+			message.content = encodeInstagramString(messageText(receiver));
 		}
 
 		const reactionCount = index === 0 ? 1 : faker.number.int({ min: 0, max: 2 });
@@ -254,9 +254,10 @@ const buildConversation = (
 ): RawConversation => {
 	const allParticipants = [account, ...participants];
 	const messageCount = isGroup
-		? faker.number.int({ min: GROUP_MESSAGE_MIN, max: GROUP_MESSAGE_MAX })
-		: DIRECT_MESSAGE_BASE + faker.number.int({ min: -DIRECT_MESSAGE_JITTER, max: DIRECT_MESSAGE_JITTER });
-	const messages = buildMessages(account, allParticipants, messageCount, threadIndex);
+		? faker.number.int(GROUP_MESSAGE_VARS)
+		: faker.number.int(DIRECT_MESSAGE_VARS);
+
+    const messages = buildMessages(account, allParticipants, messageCount, threadIndex);
 
 	if (isGroup) {
 		messages.unshift({
@@ -271,7 +272,7 @@ const buildConversation = (
 		messages,
 		title: encodeInstagramString(title),
 		is_still_participant: true,
-		thread_path: `inbox/${slugify(title)}`,
+		thread_path: `inbox/${faker.helpers.slugify(title)}`,
 	};
 };
 
@@ -281,7 +282,7 @@ const buildProfile = (account: Person) => ({
 			string_map_data: {
 				Username: { value: account.username },
 				Name: { value: account.name },
-				Email: { value: `${account.username}@example.test` },
+				Email: { value: `${account.username}@example.com` },
 				Bio: { value: "Collecting small moments and good conversations." },
 				Gender: { value: "Prefer not to say" },
 				"Private Account": { value: "false" },
@@ -413,46 +414,34 @@ const buildProfileChanges = (account: Person) => ({
 });
 
 const buildDemoData = async (): Promise<void> => {
-	// The committed fixture is generated output; reset only the default directory
-	// so renamed people or removed conversations cannot leave stale files behind.
-	if (usesDefaultOutputDirectory) {
-		await rm(outputDirectory, { recursive: true, force: true });
-	}
-	await mkdir(outputDirectory, { recursive: true });
-
-	faker.seed(SEED);
+	await rm(OUTPUT_DIRECTORY, { recursive: true, force: true });
+	await mkdir(OUTPUT_DIRECTORY, { recursive: true });
 
 	const { account, people } = buildPeople();
-	const followerCount = faker.number.int({ min: FOLLOWERS_MIN, max: FOLLOWERS_MAX });
-	const followingCount = faker.number.int({ min: FOLLOWING_MIN, max: FOLLOWING_MAX });
-	const groupCount = faker.number.int({ min: GROUP_COUNT_MIN, max: GROUP_COUNT_MAX });
-	const followers = samplePeople(people, followerCount);
-	const following = samplePeople(people, followingCount);
+	const followers = samplePeople(people, FOLLOWERS);
+	const following = samplePeople(people, FOLLOWING);
 	const relationships = buildRelationshipFiles(people, followers, following);
-	const followingUsernames = new Set(following.map((person) => person.username));
-	const mutualConnections = followers.filter((person) => followingUsernames.has(person.username)).length;
-	// Ten distinct people are messaged directly; three of those people also join the group chat.
+
 	const messagedPeople = samplePeople(following, MESSAGED_PEOPLE);
-	const groupTitles = faker.helpers.shuffle(GROUP_TITLES).slice(0, groupCount);
 
 	const activity = buildActivityFiles(account, people);
 	const interactions = buildInteractions(people);
 	const directConversations = messagedPeople.map((person, index) =>
 		buildConversation(account, [person], person.name, index, false),
 	);
-	const groupConversations = groupTitles.map((title, index) => ({
-		title,
+	const groupConversations = GROUPS.map((title, index) => ({
+		title: title.name,
 		conversation: buildConversation(
 			account,
-			samplePeople(messagedPeople, GROUP_PARTICIPANT_COUNT - 1),
-			title,
+			samplePeople(messagedPeople, title.count),
+			title.name,
 			messagedPeople.length + index,
 			true,
 		),
 	}));
 	const allConversations = [...directConversations, ...groupConversations.map(({ conversation }) => conversation)];
 	const totalMessages = allConversations.reduce((total, conversation) => total + conversation.messages.length, 0);
-	const gitMetadata = getGitMetadata();
+	const gitCommit = getCurrentGitCommit();
 
 	await Promise.all([
 		writeJson("personal_information/personal_information.json", buildProfile(account)),
@@ -508,42 +497,22 @@ const buildDemoData = async (): Promise<void> => {
 			),
 		),
 		...groupConversations.map(({ title, conversation }) =>
-			writeJson(`your_instagram_activity/messages/inbox/${slugify(title)}/message_1.json`, conversation),
+			writeJson(`your_instagram_activity/messages/inbox/${faker.helpers.slugify(title)}/message_1.json`, conversation),
 		),
 		writeJson("_demo_data_manifest.json", {
 			_generated: true,
-			generator: "scripts/build_demo_data.ts",
-			sourceCommit: gitMetadata.sourceCommit,
-			sourceTreeDirty: gitMetadata.sourceTreeDirty,
-			// The manifest is fetched directly; this list is the rest of the fixture.
-			files: [...generatedFilePaths].sort(),
-			counts: {
-				people: people.length,
-				followers: followers.length,
-				following: following.length,
-				mutualConnections,
-				messagedPeople: messagedPeople.length,
-				conversations: allConversations.length,
-				groups: groupConversations.length,
-				groupParticipantCount: GROUP_PARTICIPANT_COUNT,
-				totalMessages,
-				extraRelationships: {
-					blocked: relationships.blocked.length,
-					closeFriends: relationships.closeFriends.length,
-					followRequestsReceived: relationships.followRequestsReceived.length,
-					hiddenStoryFrom: relationships.hiddenStoryFrom.length,
-					pendingFollowRequests: relationships.pendingFollowRequests.length,
-					recentlyUnfollowed: relationships.recentlyUnfollowed.length,
-				},
-			},
+            generator: "scripts/build_demo_data.ts",
+            sourceCommit: gitCommit,
+
+            files: [...generatedFilePaths].sort(),
 		}),
 	]);
 
-	console.log(`Generated demo data in ${outputDirectory}`);
+	console.log(`Generated demo data in ${OUTPUT_DIRECTORY}`);
 	console.log(`Account: ${account.name} (@${account.username})`);
 	console.log(`People: ${people.length} (${followers.length} followers, ${following.length} following)`);
 	console.log(
-		`Conversations: ${messagedPeople.length} direct + ${groupConversations.length} groups (${GROUP_PARTICIPANT_COUNT} participants each), ${totalMessages} messages`,
+		`Conversations: ${messagedPeople.length} direct + ${groupConversations.length} groups, ${totalMessages} messages`,
 	);
 };
 

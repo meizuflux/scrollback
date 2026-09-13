@@ -1,18 +1,18 @@
 {
-  "label_values": [
-    {
-      "label": "Locations of interest",
-      "vec": [
+    "label_values": [
         {
-          "value": "Coral Springs"
-        },
-        {
-          "value": "Muncie"
-        },
-        {
-          "value": "Shreveport"
+            "label": "Locations of interest",
+            "vec": [
+                {
+                    "value": "New Melvin"
+                },
+                {
+                    "value": "Kennyburgh"
+                },
+                {
+                    "value": "Leopoldofurt"
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

@@ -1,21 +1,21 @@
 {
-  "label_values": [
-    {
-      "label": "Profile based in",
-      "dict": [
+    "label_values": [
         {
-          "label": "City",
-          "value": "Millcreek"
-        },
-        {
-          "label": "Region",
-          "value": "Montana"
-        },
-        {
-          "label": "Country",
-          "value": "Madagascar"
+            "label": "Profile based in",
+            "dict": [
+                {
+                    "label": "City",
+                    "value": "Mayaboro"
+                },
+                {
+                    "label": "Region",
+                    "value": "Minnesota"
+                },
+                {
+                    "label": "Country",
+                    "value": "Samoa"
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
