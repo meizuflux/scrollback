@@ -4,9 +4,10 @@ import { render } from "solid-js/web";
 import "./index.css";
 import { Router, Route } from "@solidjs/router";
 import { lazy } from "solid-js";
+import { loadAnalysisPage } from "@/pages/analysisLoader";
 
 const Home = lazy(() => import("@/pages/Home"));
-const Analysis = lazy(() => import("@/pages/Analysis"));
+const Analysis = lazy(loadAnalysisPage);
 const ExportIndex = lazy(() => import("@/pages/export/index"));
 const SqliteExport = lazy(() => import("@/pages/export/sqlite"));
 

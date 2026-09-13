@@ -11,6 +11,16 @@ export interface DemoLoadProgress {
 	total: number;
 }
 
+type ManifestCacheEntry = {
+	manifest?: DemoManifest;
+	promise?: Promise<DemoManifest>;
+};
+
+// Keep the validated manifest in memory for this page session. The fetcher and
+// base URL are part of the key so callers that provide a test fetcher (or a
+// different deployment base) do not share results accidentally.
+const manifestCache = new Map<typeof fetch, Map<string, ManifestCacheEntry>>();
+
 const isSafeRelativePath = (value: unknown): value is string => {
 	if (typeof value !== "string" || value.length === 0 || value.startsWith("/") || value.includes("\\")) {
 		return false;
@@ -61,12 +71,11 @@ const setRelativePath = (file: File, path: string): File => {
 	return file;
 };
 
-export const loadDemoFiles = async (
-	onProgress?: (progress: DemoLoadProgress) => void,
+const fetchDemoManifest = async (
 	signal?: AbortSignal,
 	fetcher: typeof fetch = fetch,
 	baseUrl = getBaseUrl(),
-): Promise<File[]> => {
+): Promise<DemoManifest> => {
 	const manifestResponse = await fetcher(buildDemoAssetUrl(baseUrl, "_demo_data_manifest.json"), { signal });
 	if (!manifestResponse.ok) {
 		throw new Error(`Could not load the demo manifest (HTTP ${manifestResponse.status}).`);
@@ -77,7 +86,59 @@ export const loadDemoFiles = async (
 	} catch {
 		throw new Error("The demo manifest is not valid JSON.");
 	}
-	const manifest = validateDemoManifest(manifestValue);
+	return validateDemoManifest(manifestValue);
+};
+
+const getManifestCacheEntry = (fetcher: typeof fetch, baseUrl: string): ManifestCacheEntry => {
+	let entries = manifestCache.get(fetcher);
+	if (!entries) {
+		entries = new Map();
+		manifestCache.set(fetcher, entries);
+	}
+	let entry = entries.get(baseUrl);
+	if (!entry) {
+		entry = {};
+		entries.set(baseUrl, entry);
+	}
+	return entry;
+};
+
+export const loadDemoManifest = async (
+	signal?: AbortSignal,
+	fetcher: typeof fetch = fetch,
+	baseUrl = getBaseUrl(),
+): Promise<DemoManifest> => {
+	const entry = getManifestCacheEntry(fetcher, baseUrl);
+	if (entry.manifest) return entry.manifest;
+	if (entry.promise) return entry.promise;
+
+	let trackedPromise!: Promise<DemoManifest>;
+	trackedPromise = fetchDemoManifest(signal, fetcher, baseUrl).then(
+		(manifest) => {
+			entry.manifest = manifest;
+			if (entry.promise === trackedPromise) entry.promise = undefined;
+			return manifest;
+		},
+		(error) => {
+			if (entry.promise === trackedPromise) entry.promise = undefined;
+			throw error;
+		},
+	);
+	entry.promise = trackedPromise;
+	return trackedPromise;
+};
+
+/** Start loading and validating the manifest without downloading demo data files. */
+export const prefetchDemoManifest = (fetcher: typeof fetch = fetch, baseUrl = getBaseUrl()): Promise<DemoManifest> =>
+	loadDemoManifest(undefined, fetcher, baseUrl);
+
+export const loadDemoFiles = async (
+	onProgress?: (progress: DemoLoadProgress) => void,
+	signal?: AbortSignal,
+	fetcher: typeof fetch = fetch,
+	baseUrl = getBaseUrl(),
+): Promise<File[]> => {
+	const manifest = await loadDemoManifest(signal, fetcher, baseUrl);
 	const files = new Array<File>(manifest.files.length);
 	const requestController = new AbortController();
 	const abortFromCaller = () => requestController.abort();

@@ -9,7 +9,8 @@ import ImportStatus from "@/components/home/ImportStatus";
 import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
 import { enterDemoMode, isDemoMode } from "@/utils/demo";
-import { loadDemoFiles } from "@/demo/loadDemoFiles";
+import { loadDemoFiles, prefetchDemoManifest } from "@/demo/loadDemoFiles";
+import { loadAnalysisPage } from "@/pages/analysisLoader";
 
 type PreparedImport = {
 	files: File[];
@@ -34,6 +35,7 @@ const Home: Component = () => {
 	const [importAborted, setImportAborted] = createSignal(false);
 	const [showAbortMessage, setShowAbortMessage] = createSignal(false);
 	const [errorMessage, setErrorMessage] = createSignal("");
+	const [demoManifestLoading, setDemoManifestLoading] = createSignal(true);
 	let activeController: AbortController | undefined;
 
 	const updateSteps = (name: string, progress: number, statusText?: string) => {
@@ -79,6 +81,7 @@ const Home: Component = () => {
 		errorMessage,
 	}: ImportRequest) => {
 		if (isImporting()) return;
+		void loadAnalysisPage().catch(() => undefined);
 		beginOperation(initialSteps);
 		const controller = activeController!;
 		let dataCleared = false;
@@ -134,6 +137,7 @@ const Home: Component = () => {
 	};
 
 	const startDemoImport = () => {
+		if (demoManifestLoading()) return;
 		runImport({
 			initialSteps: [{ name: "Loading demo data", progress: 0, statusText: "Preparing demo files..." }],
 			prepare: async (signal) => {
@@ -172,6 +176,39 @@ const Home: Component = () => {
 
 	onMount(() => {
 		setDataLoaded(isDataLoaded());
+
+		const warmDemoManifest = () => {
+			void prefetchDemoManifest()
+				.then(() => setDemoManifestLoading(false))
+				.catch(() => {
+					// A background warmup failure should not strand the action in a
+					// loading state. The user-triggered load will retry and report any
+					// error in the normal import status UI.
+					setDemoManifestLoading(false);
+				});
+		};
+		const idleWindow = window as Window & {
+			requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+			cancelIdleCallback?: (handle: number) => void;
+		};
+		let idleHandle: number | undefined;
+		let timeoutHandle: number | undefined;
+		const scheduleWarmup = () => {
+			if (idleWindow.requestIdleCallback) {
+				idleHandle = idleWindow.requestIdleCallback(warmDemoManifest, { timeout: 2000 });
+			} else {
+				timeoutHandle = window.setTimeout(warmDemoManifest, 0);
+			}
+		};
+
+		if (document.readyState === "complete") scheduleWarmup();
+		else window.addEventListener("load", scheduleWarmup, { once: true });
+
+		onCleanup(() => {
+			window.removeEventListener("load", scheduleWarmup);
+			if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
+			if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
+		});
 	});
 
 	onCleanup(() => {
@@ -214,6 +251,7 @@ const Home: Component = () => {
 				<Show when={!dataLoaded() && !isImporting()}>
 					<ImportPicker
 						filePickerDisabled={opfsSupported() == undefined}
+						demoManifestReady={!demoManifestLoading()}
 						onFiles={handleFiles}
 						onTryDemo={startDemoImport}
 					/>
