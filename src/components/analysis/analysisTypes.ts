@@ -3,7 +3,18 @@ import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
 
 export type TabId = "highlights" | "people" | "conversations" | "profile";
-export type PeopleFilter = "all" | "followers" | "following" | "mutuals" | "blocked";
+export type PeopleFilter =
+	| "all"
+	| "followers"
+	| "following"
+	| "mutuals"
+	| "close-friends"
+	| "blocked"
+	| "requested"
+	| "hidden-story"
+	| "pending-request"
+	| "recently-unfollowed";
+export type PeopleSort = "username-asc" | "username-desc" | "followers" | "following" | "close-friends" | "blocked";
 export type ConversationTypeFilter = "all" | "direct" | "group";
 
 export interface ConversationRow {

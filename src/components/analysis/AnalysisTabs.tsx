@@ -1,21 +1,23 @@
-import { For, Show, createMemo, createSignal, type Component } from "solid-js";
+import { useSearchParams } from "@solidjs/router";
+import { type Component, createMemo, createSignal, For, Show } from "solid-js";
+import type {
+	AnalysisTabsProps,
+	ConversationTypeFilter,
+	PeopleFilter,
+	PeopleSort,
+	TabId,
+} from "@/components/analysis/analysisTypes";
 import ConversationsTab from "@/components/analysis/ConversationsTab";
 import HighlightsTab from "@/components/analysis/HighlightsTab";
 import PeopleTab from "@/components/analysis/PeopleTab";
 import ProfileTab from "@/components/analysis/ProfileTab";
-import type {
-	AnalysisTabsProps,
-	ConversationRow,
-	ConversationTypeFilter,
-	PeopleFilter,
-	TabId,
-} from "@/components/analysis/analysisTypes";
 
 export type {
 	AnalysisTabsProps,
 	ConversationRow,
 	ConversationTypeFilter,
 	PeopleFilter,
+	PeopleSort,
 	TabId,
 } from "@/components/analysis/analysisTypes";
 
@@ -26,13 +28,70 @@ const tabItems: Array<{ id: TabId; label: string }> = [
 	{ id: "profile", label: "Profile" },
 ];
 
+interface AnalysisSearchParams {
+	[key: string]: string | string[] | undefined;
+	tab?: string;
+	peopleSearch?: string;
+	relationship?: string;
+	sort?: string;
+	table?: string;
+}
+
+const getParam = (value: string | string[] | undefined) => (typeof value === "string" ? value : "");
+
+const isTabId = (value: string): value is TabId => tabItems.some((tab) => tab.id === value);
+const isPeopleFilter = (value: string): value is PeopleFilter =>
+	[
+		"all",
+		"followers",
+		"following",
+		"mutuals",
+		"close-friends",
+		"blocked",
+		"requested",
+		"hidden-story",
+		"pending-request",
+		"recently-unfollowed",
+	].includes(value);
+const isPeopleSort = (value: string): value is PeopleSort =>
+	["username-asc", "username-desc", "followers", "following", "close-friends", "blocked"].includes(value);
+
 const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
-	const [activeTab, setActiveTab] = createSignal<TabId>("highlights");
-	const [peopleSearch, setPeopleSearch] = createSignal("");
-	const [peopleRelationship, setPeopleRelationship] = createSignal<PeopleFilter>("all");
+	const [searchParams, setSearchParams] = useSearchParams<AnalysisSearchParams>();
 	const [conversationSearch, setConversationSearch] = createSignal("");
 	const [conversationType, setConversationType] = createSignal<ConversationTypeFilter>("all");
 	const [minimumMessages, setMinimumMessages] = createSignal("");
+
+	const activeTab = createMemo<TabId>(() => {
+		const tab = getParam(searchParams.tab);
+		return isTabId(tab) ? tab : "highlights";
+	});
+	const peopleSearch = () => getParam(searchParams.peopleSearch);
+	const peopleRelationship = () => {
+		const relationship = getParam(searchParams.relationship);
+		return isPeopleFilter(relationship) ? relationship : "all";
+	};
+	const peopleSort = () => {
+		const sort = getParam(searchParams.sort);
+		return isPeopleSort(sort) ? sort : "username-asc";
+	};
+	const peopleTableOpen = () => getParam(searchParams.table) === "open";
+
+	const setActiveTab = (tab: TabId) => setSearchParams({ tab: tab === "highlights" ? null : tab }, { replace: true });
+	const setPeopleSearch = (value: string) =>
+		setSearchParams({ peopleSearch: value || null, tab: "people", table: "open" }, { replace: true });
+	const setPeopleRelationship = (value: PeopleFilter) =>
+		setSearchParams(
+			{ relationship: value === "all" ? null : value, tab: "people", table: "open" },
+			{ replace: true },
+		);
+	const setPeopleSort = (value: PeopleSort) =>
+		setSearchParams(
+			{ sort: value === "username-asc" ? null : value, tab: "people", table: "open" },
+			{ replace: true },
+		);
+	const togglePeopleTable = () =>
+		setSearchParams({ table: peopleTableOpen() ? null : "open", tab: "people" }, { replace: true });
 
 	const filteredPeople = createMemo(() => {
 		const query = peopleSearch().trim().toLocaleLowerCase();
@@ -49,8 +108,18 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 						return person.following?.value === true;
 					case "mutuals":
 						return person.follower?.value === true && person.following?.value === true;
+					case "close-friends":
+						return person.close_friends?.value === true;
 					case "blocked":
 						return person.blocked?.value === true;
+					case "requested":
+						return person.requested_to_follow_you?.value === true;
+					case "hidden-story":
+						return person.hidden_story_from?.value === true;
+					case "pending-request":
+						return person.pending_follow_request?.value === true;
+					case "recently-unfollowed":
+						return person.recently_unfollowed?.value === true;
 					default:
 						return true;
 				}
@@ -84,8 +153,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 		conversationSearch().trim().length > 0 || conversationType() !== "all" || minimumMessages().trim().length > 0;
 
 	const clearPeopleFilters = () => {
-		setPeopleSearch("");
-		setPeopleRelationship("all");
+		setSearchParams({ peopleSearch: null, relationship: null, tab: "people", table: "open" }, { replace: true });
 	};
 
 	const clearConversationFilters = () => {
@@ -95,8 +163,13 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	};
 
 	const openPeopleFilter = (filter: PeopleFilter) => {
-		setPeopleRelationship(filter);
-		setActiveTab("people");
+		setSearchParams({
+			tab: "people",
+			peopleSearch: null,
+			relationship: filter,
+			sort: null,
+			table: "open",
+		});
 	};
 
 	return (
@@ -140,9 +213,13 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 						filteredPeople={filteredPeople()}
 						peopleSearch={peopleSearch}
 						peopleRelationship={peopleRelationship}
+						peopleSort={peopleSort}
+						peopleTableOpen={peopleTableOpen}
 						peopleFiltersActive={peopleFiltersActive}
 						onPeopleSearch={setPeopleSearch}
 						onPeopleRelationship={setPeopleRelationship}
+						onPeopleSort={setPeopleSort}
+						onPeopleTableToggle={togglePeopleTable}
 						onClearFilters={clearPeopleFilters}
 					/>
 				</Show>
