@@ -1,6 +1,6 @@
 import { For, Show, type Component } from "solid-js";
 import { ControlLabel, EmptyState, controlClass } from "@/components/analysis/AnalysisShared";
-import type { ConversationRow, ConversationTypeFilter } from "@/components/analysis/analysisTypes";
+import type { ConversationRow, ConversationSenderStat, ConversationTypeFilter } from "@/components/analysis/analysisTypes";
 
 interface ConversationsTabProps {
 	conversations: ConversationRow[];
@@ -13,6 +13,10 @@ interface ConversationsTabProps {
 	onConversationType: (value: ConversationTypeFilter) => void;
 	onMinimumMessages: (value: string) => void;
 	onClearFilters: () => void;
+	selectedConversation: () => string | null;
+	conversationStats: () => ConversationSenderStat[];
+	conversationStatsLoading: () => boolean;
+	onConversationClick: (conversation: ConversationRow) => void;
 }
 
 const formatDate = (date: Date | undefined) => {
@@ -114,7 +118,13 @@ const ConversationsTab: Component<ConversationsTabProps> = (props) => (
 					<div class="divide-y divide-[#303030]">
 						<For each={props.filteredConversations}>
 							{(conversation) => (
-								<div class="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_120px_140px_130px] sm:items-center sm:gap-4">
+								<>
+								<button
+									type="button"
+									class="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] gap-3 px-5 py-4 text-left transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#7873F5] sm:grid-cols-[minmax(0,1fr)_120px_140px_130px_auto] sm:items-center sm:gap-4"
+									aria-expanded={props.selectedConversation() === conversation.title}
+									onClick={() => props.onConversationClick(conversation)}
+								>
 									<div class="min-w-0">
 										<p class="truncate font-semibold text-[#F2F2F2]">
 											{conversation.title || "Untitled conversation"}
@@ -137,7 +147,31 @@ const ConversationsTab: Component<ConversationsTabProps> = (props) => (
 										<span class="mr-1 text-[#737373] sm:hidden">Active ·</span>
 										{formatDate(conversation.lastActivity)}
 									</span>
-								</div>
+									<span class="flex items-center justify-end text-[#A3A3A3]" aria-hidden="true">
+										<svg
+											class={`h-5 w-5 transition-transform ${props.selectedConversation() === conversation.title ? "rotate-180" : ""}`}
+											viewBox="0 0 20 20"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.75"
+										>
+											<path d="m5 7.5 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</span>
+								</button>
+								<Show when={props.selectedConversation() === conversation.title}>
+									<div class="border-t border-[#303030] bg-[#141414] px-5 py-4">
+										<h2 class="mb-3 text-sm font-semibold text-[#F2F2F2]">Messages by person</h2>
+										<Show when={!props.conversationStatsLoading()} fallback={<p class="text-sm text-[#A3A3A3]">Loading stats…</p>}>
+											<Show when={props.conversationStats().length > 0} fallback={<p class="text-sm text-[#737373]">No messages found.</p>}>
+												<div class="max-h-[50vh] overflow-y-auto rounded-md border border-[#303030]">
+													<table class="w-full text-sm"><thead class="sticky top-0 bg-[#202020] text-left text-xs uppercase tracking-wider text-[#737373]"><tr><th class="px-4 py-2">Person</th><th class="px-4 py-2 text-right">Messages</th></tr></thead><tbody class="divide-y divide-[#303030]"><For each={props.conversationStats()}>{(stat) => <tr><td class="px-4 py-2.5 text-[#F2F2F2]">{stat.sender}</td><td class="px-4 py-2.5 text-right font-semibold text-[#7873F5]">{stat.count.toLocaleString()}</td></tr>}</For></tbody></table>
+												</div>
+											</Show>
+										</Show>
+									</div>
+								</Show>
+								</>
 							)}
 						</For>
 					</div>

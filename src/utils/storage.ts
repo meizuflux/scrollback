@@ -28,7 +28,7 @@ export const markDataLoaded = (): void => {
 };
 
 export const clearData = async (): Promise<void> => {
-	for (const key of ["loaded", "analysis_cache", "import_metadata"]) localStorage.removeItem(key);
+	for (const key of ["loaded", "analysis_cache", "conversation_stats_cache", "import_metadata"]) localStorage.removeItem(key);
 	clearDemoMode();
 
 	if (opfsSupported()) {

@@ -25,6 +25,11 @@ export interface ConversationRow {
 	lastActivity?: Date;
 }
 
+export interface ConversationSenderStat {
+	sender: string;
+	count: number;
+}
+
 export interface AnalysisTabsProps {
 	analysis: CachedAnalysis;
 	user: User | null;

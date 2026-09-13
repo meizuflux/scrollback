@@ -11,6 +11,8 @@ import ConversationsTab from "@/components/analysis/ConversationsTab";
 import HighlightsTab from "@/components/analysis/HighlightsTab";
 import PeopleTab from "@/components/analysis/PeopleTab";
 import ProfileTab from "@/components/analysis/ProfileTab";
+import { db } from "@/db/database";
+import type { ConversationSenderStat } from "@/components/analysis/analysisTypes";
 
 export type {
 	AnalysisTabsProps,
@@ -61,6 +63,30 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	const [conversationSearch, setConversationSearch] = createSignal("");
 	const [conversationType, setConversationType] = createSignal<ConversationTypeFilter>("all");
 	const [minimumMessages, setMinimumMessages] = createSignal("");
+	const [selectedConversation, setSelectedConversation] = createSignal<string | null>(null);
+	const [conversationStats, setConversationStats] = createSignal<ConversationSenderStat[]>([]);
+	const [conversationStatsLoading, setConversationStatsLoading] = createSignal(false);
+
+	const loadConversationStats = async (conversation: { title: string }) => {
+		if (selectedConversation() === conversation.title) {
+			setSelectedConversation(null);
+			return;
+		}
+		setSelectedConversation(conversation.title);
+		const cache = JSON.parse(localStorage.getItem("conversation_stats_cache") || "{}") as Record<string, ConversationSenderStat[]>;
+		if (cache[conversation.title]) { setConversationStats(cache[conversation.title]); return; }
+		setConversationStatsLoading(true);
+		try {
+			const counts = new Map<string, number>();
+			for (const message of await db.messages.filter((message) => message.conversation === conversation.title).toArray()) {
+				const sender = message.sender_name || "Unknown sender";
+				counts.set(sender, (counts.get(sender) || 0) + 1);
+			}
+			const stats = Array.from(counts, ([sender, count]) => ({ sender, count })).sort((a, b) => b.count - a.count || a.sender.localeCompare(b.sender));
+			setConversationStats(stats);
+			localStorage.setItem("conversation_stats_cache", JSON.stringify({ ...cache, [conversation.title]: stats }));
+		} finally { setConversationStatsLoading(false); }
+	};
 
 	const activeTab = createMemo<TabId>(() => {
 		const tab = getParam(searchParams.tab);
@@ -236,6 +262,10 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 						onConversationType={setConversationType}
 						onMinimumMessages={setMinimumMessages}
 						onClearFilters={clearConversationFilters}
+						selectedConversation={selectedConversation}
+						conversationStats={conversationStats}
+						conversationStatsLoading={conversationStatsLoading}
+						onConversationClick={loadConversationStats}
 					/>
 				</Show>
 

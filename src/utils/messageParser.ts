@@ -32,7 +32,9 @@ export interface CategorizedMessage {
 
 export function categorizeMessage(message: Message): CategorizedMessage {
 	let isShare = !!message.share;
-	const isReel = !!(message.share?.link && message.share.link.includes("/reel/"));
+    const isReel = !!(message.share?.link && message.share.link.includes("/reel/"));
+    if (isReel && message.share && message.share.link) console.log("found reel: " + message.share.link)
+
 	const isPost = !!(message.share?.link && message.share.link.includes("/p/"));
 
 	const hasPhotos = !!(message.photos && message.photos.length > 0);
