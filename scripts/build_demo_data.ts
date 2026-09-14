@@ -497,7 +497,7 @@ const buildDemoData = async (): Promise<void> => {
 			),
 		),
 		...groupConversations.map(({ title, conversation }) =>
-			writeJson(`your_instagram_activity/messages/inbox/${faker.helpers.slugify(title)}/message_1.json`, conversation),
+			writeJson(`your_instagram_activity/messages/inbox/${faker.helpers.slugify(title).toLowerCase()}/message_1.json`, conversation),
 		),
 		writeJson("_demo_data_manifest.json", {
 			_generated: true,
