@@ -82,9 +82,6 @@ const ProfileAvatar: Component<{ user: User | null; size?: "large" | "small" }> 
 const ProfileTab: Component<ProfileTabProps> = (props) => (
 	<section class="space-y-5">
 		<div>
-			<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-				Your account
-			</p>
 			<h1 class="text-3xl font-semibold tracking-tight text-gray-100">Profile</h1>
 			<p class="mt-2 text-gray-400">Identity and connection counts from this data package.</p>
 		</div>

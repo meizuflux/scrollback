@@ -35,10 +35,7 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 
 	return (
 		<div class="space-y-8">
-			<div class="mb-8">
-				<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-					Data package summary
-				</p>
+            <div class="mb-8">
 				<h1 class="mb-3 text-3xl font-semibold tracking-tight text-gray-100">Highlights</h1>
 				<p class="text-base text-gray-400">Quick stats about your Instagram activity.</p>
 			</div>

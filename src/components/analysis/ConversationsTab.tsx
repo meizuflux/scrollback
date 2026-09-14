@@ -27,9 +27,6 @@ const formatDate = (date: Date | undefined) => {
 const ConversationsTab: Component<ConversationsTabProps> = (props) => (
 	<section class="space-y-5">
 		<div>
-			<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-				Message history
-			</p>
 			<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
 				<div>
 					<h1 class="text-3xl font-semibold tracking-tight text-gray-100">Conversations</h1>

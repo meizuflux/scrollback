@@ -8,6 +8,7 @@ import { isDataLoaded, clearData } from "@/utils/storage";
 import { isDemoMode } from "@/utils/demo";
 import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
+import logo from "@/assets/logo.svg";
 
 const ClearButton: Component = () => {
 	const navigate = useNavigate();
@@ -26,7 +27,7 @@ const ClearButton: Component = () => {
 	return (
 		<button
 			type="button"
-			class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
+			class="inline-flex min-h-10 items-center justify-center rounded-lg border border-red-700 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-red-200 transition-colors hover:border-red-200 hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-50"
 			onClick={handleClear}
 			disabled={isClearing()}
 		>
@@ -112,14 +113,12 @@ const Analysis: Component = () => {
 	return (
 		<Layout>
 			<div class="container mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-				<div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-					<div>
-						<p class="bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
-							{isDemoMode() ? "Demo data package" : "Imported data package"}
-						</p>
-						<h1 class="mt-2 text-2xl font-semibold text-gray-100">Scrollback</h1>
+				<div class="relative mb-8 flex flex-col items-center gap-4 sm:min-h-10 sm:justify-center">
+					<div class="flex items-center gap-3">
+						<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
+						<h1 class="text-2xl font-semibold text-gray-100">Scrollback</h1>
 					</div>
-					<div class="flex flex-wrap gap-2">
+					<div class="flex flex-wrap justify-center gap-2 sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2">
 						<button
 							type="button"
 							class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"

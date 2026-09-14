@@ -8,7 +8,7 @@ import type {
 	TabId,
 } from "@/components/analysis/analysisTypes";
 import ConversationsTab from "@/components/analysis/ConversationsTab";
-import HighlightsTab from "@/components/analysis/HighlightsTab";
+import HighlightsTab from "@/components/analysis/Overview";
 import PeopleTab from "@/components/analysis/PeopleTab";
 import ProfileTab from "@/components/analysis/ProfileTab";
 import { db } from "@/db/database";

@@ -1,12 +1,10 @@
 import { type ParentComponent, createSignal } from "solid-js";
-import { A, useNavigate } from "@solidjs/router";
-import { clearData, isDataLoaded } from "@/utils/storage";
-import logo from "@/assets/logo.svg";
+import { useNavigate } from "@solidjs/router";
+import { clearData } from "@/utils/storage";
 import { isDemoMode } from "@/utils/demo";
 
 const Layout: ParentComponent = (props) => {
 	const navigate = useNavigate();
-	const [dataLoaded] = createSignal(isDataLoaded());
 	const [isExitingDemo, setIsExitingDemo] = createSignal(false);
 
 	const exitDemo = async () => {
@@ -22,50 +20,6 @@ const Layout: ParentComponent = (props) => {
 
 	return (
 		<div class="flex min-h-screen flex-col bg-gray-950">
-			<header class="border-b border-gray-700 bg-gray-950">
-				<div class="container mx-auto px-4 py-4">
-					<nav class="flex items-center justify-between">
-						<A href="/" class="flex items-center gap-3 transition-opacity hover:opacity-80">
-							<img src={logo} alt="Scrollback Logo" class="h-7 w-7" />
-							<span class="text-lg font-semibold text-gray-100">Scrollback</span>
-						</A>
-
-						<div class="flex items-center gap-5 text-sm">
-							{dataLoaded() ? (
-								<A
-									href="/analysis"
-									class="font-medium text-gray-400 transition-colors hover:text-gray-100"
-								>
-									Analysis
-								</A>
-							) : (
-								<span
-									class="cursor-not-allowed font-medium text-gray-500"
-									title="Import data first to access analysis"
-								>
-									Analysis
-								</span>
-							)}
-							{dataLoaded() ? (
-								<A
-									href="/export"
-									class="font-medium text-gray-400 transition-colors hover:text-gray-100"
-								>
-									Export
-								</A>
-							) : (
-								<span
-									class="cursor-not-allowed font-medium text-gray-500"
-									title="Import data first to access export"
-								>
-									Export
-								</span>
-							)}
-						</div>
-					</nav>
-				</div>
-			</header>
-
 			{isDemoMode() && (
 				<div class="border-b border-purple/60 bg-purple/10">
 					<div class="container mx-auto flex items-center justify-between gap-4 px-4 py-2 text-sm">
