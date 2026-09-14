@@ -1,4 +1,4 @@
-import { type Component, Show } from "solid-js";
+import { type Component, Match, Show, Switch } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import Layout from "@/components/Layout";
 import {
@@ -52,7 +52,9 @@ const SqliteExport: Component = () => {
 					<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase leading-4 tracking-[0.16em] text-transparent">
 						Portable backup
 					</p>
-					<h1 class="mb-3 font-sans text-3xl font-semibold tracking-tight text-white">SQLite database export</h1>
+					<h1 class="mb-3 font-sans text-3xl font-semibold tracking-tight text-white">
+						SQLite database export
+					</h1>
 					<p class="text-base text-gray-400">
 						Export your data to a portable SQL file that you can import into any SQLite database.
 					</p>
@@ -94,7 +96,10 @@ const SqliteExport: Component = () => {
 						onClick={exportToSqlite}
 						disabled={selectedTableCount() === 0 || isExporting() || !sqlInstance()}
 					>
-						{!sqlInstance() ? "Loading..." : isExporting() ? "Generating..." : "Generate Database"}
+						<Switch fallback="Generate Database">
+							<Match when={!sqlInstance()}>Loading...</Match>
+							<Match when={isExporting()}>Generating...</Match>
+						</Switch>
 					</button>
 				</div>
 

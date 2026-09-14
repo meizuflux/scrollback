@@ -1,4 +1,4 @@
-import { type Component, onMount, createSignal } from "solid-js";
+import { type Component, Show, onMount, createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { createStore, type SetStoreFunction } from "solid-js/store";
 import Layout from "@/components/Layout";
@@ -31,7 +31,9 @@ const ClearButton: Component = () => {
 			onClick={handleClear}
 			disabled={isClearing()}
 		>
-			{isClearing() ? "Clearing…" : "Clear data"}
+			<Show when={isClearing()} fallback="Clear data">
+				Clearing…
+			</Show>
 		</button>
 	);
 };

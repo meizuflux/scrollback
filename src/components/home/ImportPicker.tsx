@@ -1,4 +1,4 @@
-import type { Component } from "solid-js";
+import { type Component, Show } from "solid-js";
 
 interface ImportPickerProps {
 	filePickerDisabled: boolean;
@@ -82,17 +82,20 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				disabled={!props.demoManifestReady}
 				aria-busy={!props.demoManifestReady}
 			>
-				{props.demoManifestReady ? (
-					"Try demo"
-				) : (
-					<span class="flex items-center justify-center gap-2">
-						<span
-							class="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-gray-100"
-							aria-hidden="true"
-						/>
-						Loading demo manifest...
-					</span>
-				)}
+				<Show
+					when={props.demoManifestReady}
+					fallback={
+						<span class="flex items-center justify-center gap-2">
+							<span
+								class="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-gray-100"
+								aria-hidden="true"
+							/>
+							Loading demo manifest...
+						</span>
+					}
+				>
+					Try demo
+				</Show>
 			</button>
 			<p class="mt-5 text-sm text-gray-400">
 				Your data stays on this device. Processing happens locally in your browser.

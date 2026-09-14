@@ -1,4 +1,4 @@
-import type { Component } from "solid-js";
+import { type Component, Show } from "solid-js";
 
 interface DataReadyStateProps {
 	demoMode: boolean;
@@ -17,12 +17,17 @@ const DataReadyState: Component<DataReadyStateProps> = (props) => (
 				</svg>
 			</div>
 			<h2 class="mb-3 font-sans text-2xl font-semibold text-white">
-				{props.demoMode ? "Demo data ready" : "Data Ready"}
+				<Show when={props.demoMode} fallback="Data Ready">
+					Demo data ready
+				</Show>
 			</h2>
 			<p class="mx-auto mb-6 max-w-md text-gray-400">
-				{props.demoMode
-					? "The sample Instagram archive is ready to explore."
-					: "Your Instagram data has been successfully imported and is ready for analysis."}
+				<Show
+					when={props.demoMode}
+					fallback="Your Instagram data has been successfully imported and is ready for analysis."
+				>
+					The sample Instagram archive is ready to explore.
+				</Show>
 			</p>
 			<div class="flex flex-col justify-center gap-3 sm:flex-row">
 				<button
@@ -38,14 +43,12 @@ const DataReadyState: Component<DataReadyStateProps> = (props) => (
 					onClick={props.onClearData}
 					disabled={props.isClearing}
 				>
-					{props.isClearing ? (
+					<Show when={props.isClearing} fallback="Clear Data">
 						<div class="flex items-center justify-center gap-2">
 							<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-gray-100"></div>
 							Clearing...
 						</div>
-					) : (
-						"Clear Data"
-					)}
+					</Show>
 				</button>
 			</div>
 		</div>

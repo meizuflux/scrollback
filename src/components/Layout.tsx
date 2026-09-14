@@ -1,4 +1,4 @@
-import { type ParentComponent, createSignal } from "solid-js";
+import { type ParentComponent, Show, createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { clearData } from "@/utils/storage";
 import { isDemoMode } from "@/utils/demo";
@@ -20,7 +20,7 @@ const Layout: ParentComponent = (props) => {
 
 	return (
 		<div class="isolate flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_8%_-5%,rgba(255,110,196,0.12),transparent_24rem),radial-gradient(circle_at_92%_12%,rgba(120,115,245,0.1),transparent_22rem),#101010] font-space-grotesk">
-			{isDemoMode() && (
+			<Show when={isDemoMode()}>
 				<div class="border-b border-purple/60 bg-purple/10">
 					<div class="container mx-auto flex items-center justify-between gap-4 px-4 py-2 text-sm">
 						<span class="font-medium text-gray-100">You’re viewing demo data</span>
@@ -30,11 +30,13 @@ const Layout: ParentComponent = (props) => {
 							onClick={() => void exitDemo()}
 							disabled={isExitingDemo()}
 						>
-							{isExitingDemo() ? "Exiting…" : "Exit demo"}
+							<Show when={isExitingDemo()} fallback="Exit demo">
+								Exiting…
+							</Show>
 						</button>
 					</div>
 				</div>
-			)}
+			</Show>
 
 			<main class="flex-1">{props.children}</main>
 
