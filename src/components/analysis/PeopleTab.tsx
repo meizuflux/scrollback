@@ -25,12 +25,12 @@ interface StatCardProps {
 }
 
 const StatCard: Component<StatCardProps> = (props) => (
-	<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
-		<p class="text-sm font-medium leading-5 text-[#A3A3A3]">
+	<div class="rounded-lg border border-gray-700 bg-gray-900 p-5">
+		<p class="text-sm font-medium leading-5 text-gray-400">
 			{props.title}
 			{props.description && <InfoTooltip label={props.title} description={props.description} />}
 		</p>
-		<p class="mt-2 text-2xl font-semibold tracking-tight text-[#F2F2F2]">{props.value.toLocaleString()}</p>
+		<p class="mt-2 text-2xl font-semibold tracking-tight text-gray-100">{props.value.toLocaleString()}</p>
 	</div>
 );
 
@@ -86,16 +86,16 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 	return (
 		<section class="space-y-7">
 			<div>
-				<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
+				<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 					Your connections
 				</p>
 				<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
 					<div>
-						<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">People</h1>
-						<p class="mt-2 text-[#A3A3A3]">Accounts found in this data package.</p>
+						<h1 class="text-3xl font-semibold tracking-tight text-gray-100">People</h1>
+						<p class="mt-2 text-gray-400">Accounts found in this data package.</p>
 					</div>
-					<div class="text-sm text-[#A3A3A3]">
-						<span class="font-semibold text-[#F2F2F2]">{props.filteredPeople.length.toLocaleString()}</span>{" "}
+					<div class="text-sm text-gray-400">
+						<span class="font-semibold text-gray-100">{props.filteredPeople.length.toLocaleString()}</span>{" "}
 						results
 					</div>
 				</div>
@@ -112,10 +112,10 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 			>
 				<section class="space-y-4" aria-labelledby="people-overview-heading">
 					<div class="flex items-center gap-4">
-						<h2 id="people-overview-heading" class="text-xl font-semibold tracking-tight text-[#F2F2F2]">
+						<h2 id="people-overview-heading" class="text-xl font-semibold tracking-tight text-gray-100">
 							At a Glance
 						</h2>
-						<div class="h-px flex-1 bg-[#303030]" />
+						<div class="h-px flex-1 bg-gray-700" />
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						<StatCard
@@ -138,7 +138,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 				<div>
 					<button
 						type="button"
-						class="group flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left text-lg font-semibold text-[#F2F2F2] transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
+						class="group flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left text-lg font-semibold text-gray-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						aria-expanded={props.peopleTableOpen()}
 						aria-controls="people-table-panel"
 						onClick={props.onPeopleTableToggle}
@@ -146,7 +146,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 						<span>View Table</span>
 						<span
 							aria-hidden="true"
-							class={`text-[#A3A3A3] transition-transform ${props.peopleTableOpen() ? "rotate-90" : ""}`}
+							class={`text-gray-400 transition-transform ${props.peopleTableOpen() ? "rotate-90" : ""}`}
 						>
 							▶
 						</span>
@@ -154,7 +154,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 
 					<Show when={props.peopleTableOpen()}>
 						<div id="people-table-panel" class="mt-2 space-y-5">
-							<div class="rounded-lg border border-[#303030] bg-[#181818] p-4">
+							<div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
 								<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
 									<ControlLabel label="Search usernames">
 										<input
@@ -187,7 +187,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									</ControlLabel>
 									<button
 										type="button"
-										class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
+										class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
 										disabled={!props.peopleFiltersActive()}
 										onClick={props.onClearFilters}
 									>
@@ -196,7 +196,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 								</div>
 							</div>
 
-							<div class="rounded-lg border border-[#303030] bg-[#181818] p-4">
+							<div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
 								<ControlLabel label="Sorting options">
 									<select
 										class={controlClass}
@@ -224,11 +224,11 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									/>
 								}
 							>
-								<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
+								<div class="overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
 									<div class="overflow-x-auto">
 										<table class="w-full min-w-[1320px] text-left">
-											<thead class="border-b border-[#303030] bg-[#141414]">
-												<tr class="text-xs font-semibold uppercase tracking-wider text-[#737373]">
+											<thead class="border-b border-gray-700 bg-gray-900">
+												<tr class="text-xs font-semibold uppercase tracking-wider text-gray-500">
 													<th scope="col" class="px-5 py-3">
 														Username
 													</th>
@@ -261,16 +261,16 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 													</th>
 												</tr>
 											</thead>
-											<tbody class="divide-y divide-[#303030]">
+											<tbody class="divide-y divide-gray-700">
 												<For each={peopleForTable()}>
 													{(person) => (
-														<tr class="text-sm text-[#A3A3A3] transition-colors hover:bg-[#202020]">
+														<tr class="text-sm text-gray-400 transition-colors hover:bg-gray-800">
 															<th
 																scope="row"
-																class="px-5 py-4 font-semibold text-[#F2F2F2]"
+																class="px-5 py-4 font-semibold text-gray-100"
 															>
 																<div class="flex items-center gap-3">
-																	<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#404040] bg-[#303030] text-xs font-semibold text-[#F2F2F2]">
+																	<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-600 bg-gray-700 text-xs font-semibold text-gray-100">
 																		{person.username.slice(0, 1).toUpperCase()}
 																	</div>
 																	<span>@{person.username}</span>

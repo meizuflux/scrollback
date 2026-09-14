@@ -221,8 +221,8 @@ const Home: Component = () => {
 				{/* Header */}
 				<div class="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
 					<img src={logo} alt="Scrollback Logo" class="mx-auto mb-5 h-12 w-12" />
-					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Scrollback</h1>
-					<p class="text-base text-[#A3A3A3] sm:text-lg">Explore your Instagram archive.</p>
+					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-gray-100">Scrollback</h1>
+					<p class="text-base text-gray-400 sm:text-lg">Explore your Instagram archive.</p>
 				</div>
 
 				<ImportStatus
@@ -257,10 +257,10 @@ const Home: Component = () => {
 					/>
 
 					{/* How to Get Instagram Data */}
-					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-[#F2F2F2]">
+					<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-100">
 							<svg
-								class="h-5 w-5 text-[#A3A3A3]"
+								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -281,45 +281,45 @@ const Home: Component = () => {
 							</svg>
 							How to Download Your Instagram Data
 						</h2>
-						<div class="space-y-3 text-sm text-[#A3A3A3]">
+						<div class="space-y-3 text-sm text-gray-400">
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">1.</span>
+								<span class="font-semibold text-gray-100">1.</span>
 								<div>
 									Go to{" "}
 									<a
 										href="https://accountscenter.instagram.com/info_and_permissions/"
 										target="_blank"
 										rel="noopener noreferrer"
-										class="text-[#FF6EC4] underline decoration-[#FF6EC4] underline-offset-4 transition-colors hover:text-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
+										class="text-pink underline decoration-pink underline-offset-4 transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 									>
 										Instagram Account Center
 									</a>
 								</div>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">2.</span>
+								<span class="font-semibold text-gray-100">2.</span>
 								<span>Click "Download your information"</span>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">3.</span>
+								<span class="font-semibold text-gray-100">3.</span>
 								<span>Select "All available information" or choose specific data types</span>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">4.</span>
+								<span class="font-semibold text-gray-100">4.</span>
 								<span>Choose your preferred date range</span>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">5.</span>
+								<span class="font-semibold text-gray-100">5.</span>
 								<span>Select "Low" media quality for better performance</span>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">6.</span>
-								<span class="font-semibold text-[#F2F2F2]">
+								<span class="font-semibold text-gray-100">6.</span>
+								<span class="font-semibold text-gray-100">
 									IMPORTANT: Make sure the format is set to JSON (not HTML)
 								</span>
 							</div>
 							<div class="flex items-start gap-3">
-								<span class="font-semibold text-[#F2F2F2]">7.</span>
+								<span class="font-semibold text-gray-100">7.</span>
 								<span>
 									Check your email for a notification that your data package is ready for download
 								</span>
@@ -328,10 +328,10 @@ const Home: Component = () => {
 					</div>
 
 					{/* Limitations */}
-					<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-[#F2F2F2]">
+					<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-100">
 							<svg
-								class="h-5 w-5 text-[#A3A3A3]"
+								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -346,24 +346,24 @@ const Home: Component = () => {
 							</svg>
 							Known Limitations
 						</h2>
-						<ul class="space-y-2 text-sm text-[#A3A3A3]">
+						<ul class="space-y-2 text-sm text-gray-400">
 							<li class="flex items-start gap-2">
-								<span class="text-[#737373]">•</span>
+								<span class="text-gray-500">•</span>
 								<span>
 									Instagram frequently changes their data format - we try to stay updated but some
 									files may not parse correctly
 								</span>
 							</li>
 							<li class="flex items-start gap-2">
-								<span class="text-[#737373]">•</span>
+								<span class="text-gray-500">•</span>
 								<span>Processing large datasets can be slow and memory-intensive</span>
 							</li>
 							<li class="flex items-start gap-2">
-								<span class="text-[#737373]">•</span>
+								<span class="text-gray-500">•</span>
 								<span>Instagram's data export can be incomplete or contain inconsistencies</span>
 							</li>
 							<li class="flex items-start gap-2">
-								<span class="text-[#737373]">•</span>
+								<span class="text-gray-500">•</span>
 								<span>Some features may not work on older browsers or mobile devices</span>
 							</li>
 						</ul>

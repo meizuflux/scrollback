@@ -64,7 +64,7 @@ const ProfileAvatar: Component<{ user: User | null; size?: "large" | "small" }> 
 			when={photoUrl()}
 			fallback={
 				<div
-					class={`flex shrink-0 items-center justify-center rounded-full border border-[#4A4A4A] bg-[#303030] font-semibold text-[#F2F2F2] ${sizeClass()}`}
+					class={`flex shrink-0 items-center justify-center rounded-full border border-gray-600 bg-gray-700 font-semibold text-gray-100 ${sizeClass()}`}
 				>
 					{initialsFor(props.user)}
 				</div>
@@ -73,7 +73,7 @@ const ProfileAvatar: Component<{ user: User | null; size?: "large" | "small" }> 
 			<img
 				src={photoUrl()!}
 				alt="Profile"
-				class={`shrink-0 rounded-full border border-[#303030] object-cover ${sizeClass()}`}
+				class={`shrink-0 rounded-full border border-gray-700 object-cover ${sizeClass()}`}
 			/>
 		</Show>
 	);
@@ -82,24 +82,24 @@ const ProfileAvatar: Component<{ user: User | null; size?: "large" | "small" }> 
 const ProfileTab: Component<ProfileTabProps> = (props) => (
 	<section class="space-y-5">
 		<div>
-			<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
+			<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 				Your account
 			</p>
-			<h1 class="text-3xl font-semibold tracking-tight text-[#F2F2F2]">Profile</h1>
-			<p class="mt-2 text-[#A3A3A3]">Identity and connection counts from this data package.</p>
+			<h1 class="text-3xl font-semibold tracking-tight text-gray-100">Profile</h1>
+			<p class="mt-2 text-gray-400">Identity and connection counts from this data package.</p>
 		</div>
 
-		<div class="overflow-hidden rounded-lg border border-[#303030] bg-[#181818]">
+		<div class="overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
 			<div class="px-6 py-7 sm:px-9">
 				<div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-end">
 						<ProfileAvatar user={props.user} />
 						<div>
-							<h2 class="text-2xl font-semibold text-[#F2F2F2]">{props.user?.name || "Unavailable"}</h2>
-							<p class="mt-1 text-[#A3A3A3]">
+							<h2 class="text-2xl font-semibold text-gray-100">{props.user?.name || "Unavailable"}</h2>
+							<p class="mt-1 text-gray-400">
 								{props.user?.username ? `@${props.user.username}` : "Username unavailable"}
 							</p>
-							<p class="mt-3 max-w-xl whitespace-pre-wrap text-sm leading-6 text-[#D4D4D4]">
+							<p class="mt-3 max-w-xl whitespace-pre-wrap text-sm leading-6 text-gray-300">
 								{props.user?.bio || "Bio unavailable"}
 							</p>
 						</div>
@@ -109,36 +109,36 @@ const ProfileTab: Component<ProfileTabProps> = (props) => (
 				<div class="mt-8 grid gap-3 sm:grid-cols-2">
 					<button
 						type="button"
-						class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
+						class="w-full rounded-lg border border-gray-700 bg-gray-900 p-4 text-left transition-colors hover:border-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						onClick={() => props.onOpenPeopleFilter("followers")}
 					>
-						<span class="block text-2xl font-semibold text-[#F2F2F2]">
+						<span class="block text-2xl font-semibold text-gray-100">
 							{mutedValue(props.analysis.followers)}
 						</span>
-						<span class="mt-1 block text-sm text-[#A3A3A3]">
+						<span class="mt-1 block text-sm text-gray-400">
 							Followers{" "}
 							<InfoTooltip
 								label="Followers"
 								description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
 							/>{" "}
-							<span class="text-[#7873F5]">→</span>
+							<span class="text-purple">→</span>
 						</span>
 					</button>
 					<button
 						type="button"
-						class="w-full rounded-lg border border-[#303030] bg-[#181818] p-4 text-left transition-colors hover:border-[#7873F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
+						class="w-full rounded-lg border border-gray-700 bg-gray-900 p-4 text-left transition-colors hover:border-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						onClick={() => props.onOpenPeopleFilter("following")}
 					>
-						<span class="block text-2xl font-semibold text-[#F2F2F2]">
+						<span class="block text-2xl font-semibold text-gray-100">
 							{mutedValue(props.analysis.following)}
 						</span>
-						<span class="mt-1 block text-sm text-[#A3A3A3]">
+						<span class="mt-1 block text-sm text-gray-400">
 							Following{" "}
 							<InfoTooltip
 								label="Following"
 								description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
 							/>{" "}
-							<span class="text-[#7873F5]">→</span>
+							<span class="text-purple">→</span>
 						</span>
 					</button>
 				</div>

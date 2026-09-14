@@ -200,7 +200,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 
 	return (
 		<div class="space-y-7">
-			<div class="rounded-lg border border-[#303030] bg-[#181818] p-1">
+			<div class="rounded-lg border border-gray-700 bg-gray-900 p-1">
 				<nav class="grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="Analysis sections">
 					<For each={tabItems}>
 						{(tab) => (
@@ -208,8 +208,8 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 								type="button"
 								class={`flex items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
 									activeTab() === tab.id
-										? "border-[#7873F5] bg-[#303030] text-[#F2F2F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5]"
-										: "border-transparent text-[#A3A3A3] hover:bg-[#202020] hover:text-[#F2F2F2]"
+										? "border-purple bg-gray-700 text-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+										: "border-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-100"
 								}`}
 								aria-current={activeTab() === tab.id ? "page" : undefined}
 								onClick={() => setActiveTab(tab.id)}
@@ -224,7 +224,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 			<Show
 				when={!props.loading}
 				fallback={
-					<div class="rounded-lg border border-[#303030] bg-[#181818] p-12 text-center text-[#A3A3A3]">
+					<div class="rounded-lg border border-gray-700 bg-gray-900 p-12 text-center text-gray-400">
 						Loading your data package…
 					</div>
 				}

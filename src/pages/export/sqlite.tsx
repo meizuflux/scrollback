@@ -44,27 +44,27 @@ const SqliteExport: Component = () => {
 				<div class="mb-6">
 					<button
 						type="button"
-						class="mb-4 flex items-center text-sm text-[#A3A3A3] transition-colors hover:text-[#F2F2F2]"
+						class="mb-4 flex items-center text-sm text-gray-400 transition-colors hover:text-gray-100"
 						onClick={() => navigate("/export")}
 					>
 						← Back to Export Options
 					</button>
-					<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase leading-4 tracking-[0.16em] text-transparent">
+					<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase leading-4 tracking-[0.16em] text-transparent">
 						Portable backup
 					</p>
-					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">SQLite database export</h1>
-					<p class="text-base text-[#A3A3A3]">
+					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-gray-100">SQLite database export</h1>
+					<p class="text-base text-gray-400">
 						Export your data to a portable SQL file that you can import into any SQLite database.
 					</p>
 				</div>
 
 				<Show when={sqlInstance.error}>
-					<div class="mb-6 rounded-lg border border-[#713D3D] bg-[#211515] p-4">
-						<span class="text-[#E7B7B7]">Failed to load SQL.js. Please refresh the page.</span>
+					<div class="mb-6 rounded-lg border border-red/60 bg-red/10 p-4">
+						<span class="text-red">Failed to load SQL.js. Please refresh the page.</span>
 					</div>
 				</Show>
 
-				<div class="mb-6 rounded-lg border border-[#303030] bg-[#181818] p-5 sm:p-6">
+				<div class="mb-6 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
 					<TableSelection
 						tableOptions={tableOptions}
 						selectedCount={selectedTableCount}
@@ -90,7 +90,7 @@ const SqliteExport: Component = () => {
 
 					<button
 						type="button"
-						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
+						class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
 						onClick={exportToSqlite}
 						disabled={selectedTableCount() === 0 || isExporting() || !sqlInstance()}
 					>

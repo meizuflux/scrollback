@@ -10,20 +10,20 @@ interface StatCardProps {
 
 const StatCard: Component<StatCardProps> = (props) => {
 	return (
-		<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
-			<p class="text-sm font-medium text-[#A3A3A3]">
+		<div class="rounded-lg border border-gray-700 bg-gray-900 p-5">
+			<p class="text-sm font-medium text-gray-400">
 				{props.title}
 				{props.description && <InfoTooltip label={props.title} description={props.description} />}
 			</p>
-			<p class="mt-2 text-2xl font-semibold tracking-tight text-[#F2F2F2]">{props.value}</p>
+			<p class="mt-2 text-2xl font-semibold tracking-tight text-gray-100">{props.value}</p>
 		</div>
 	);
 };
 
 const SectionHeading: Component<{ children: any }> = (props) => (
 	<div class="flex items-center gap-4">
-		<h2 class="text-lg font-semibold text-[#F2F2F2]">{props.children}</h2>
-		<div class="h-px flex-1 bg-[#303030]" />
+		<h2 class="text-lg font-semibold text-gray-100">{props.children}</h2>
+		<div class="h-px flex-1 bg-gray-700" />
 	</div>
 );
 
@@ -36,11 +36,11 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 	return (
 		<div class="space-y-8">
 			<div class="mb-8">
-				<p class="mb-3 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
+				<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase tracking-[0.16em] leading-4 text-transparent">
 					Data package summary
 				</p>
-				<h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#F2F2F2]">Highlights</h1>
-				<p class="text-base text-[#A3A3A3]">Quick stats about your Instagram activity.</p>
+				<h1 class="mb-3 text-3xl font-semibold tracking-tight text-gray-100">Highlights</h1>
+				<p class="text-base text-gray-400">Quick stats about your Instagram activity.</p>
 			</div>
 
 			<section class="space-y-4">
@@ -64,14 +64,14 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 						<StatCard title="Total conversations" value={formatNumber(props.analysis.conversationCount)} />
 						<StatCard title="Group chats" value={formatNumber(props.analysis.groupCount)} />
 					</div>
-					<div class="rounded-lg border border-[#303030] bg-[#181818] p-5">
-						<h3 class="mb-4 text-base font-semibold text-[#F2F2F2]">Top conversations</h3>
+					<div class="rounded-lg border border-gray-700 bg-gray-900 p-5">
+						<h3 class="mb-4 text-base font-semibold text-gray-100">Top conversations</h3>
 						<Show
 							when={
 								props.analysis.topThreeConversations && props.analysis.topThreeConversations.length > 0
 							}
 							fallback={
-								<p class="text-sm text-[#A3A3A3]">
+								<p class="text-sm text-gray-400">
 									{props.analysis.topThreeConversations === undefined
 										? "Unavailable"
 										: "No conversations found"}
@@ -81,14 +81,14 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 							<div class="space-y-2">
 								<For each={props.analysis.topThreeConversations}>
 									{(conversation, index) => (
-										<div class="flex items-center justify-between gap-4 rounded-lg border border-[#303030] bg-[#141414] p-3">
+										<div class="flex items-center justify-between gap-4 rounded-lg border border-gray-700 bg-gray-900 p-3">
 											<div class="flex min-w-0 items-center gap-3">
-												<span class="text-sm text-[#737373]">#{index() + 1}</span>
-												<span class="truncate text-sm font-medium text-[#F2F2F2]">
+												<span class="text-sm text-gray-500">#{index() + 1}</span>
+												<span class="truncate text-sm font-medium text-gray-100">
 													{conversation.title}
 												</span>
 											</div>
-											<span class="shrink-0 bg-gradient-to-r from-[#FF6EC4] to-[#7873F5] bg-clip-text text-sm font-semibold text-transparent">
+											<span class="shrink-0 bg-gradient-to-r from-pink to-purple bg-clip-text text-sm font-semibold text-transparent">
 												{formatNumber(conversation.count)}
 											</span>
 										</div>

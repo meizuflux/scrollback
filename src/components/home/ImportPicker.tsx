@@ -15,7 +15,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 	};
 
 	return (
-		<div class="mb-8 rounded-lg border border-[#303030] bg-[#181818] p-7 text-center sm:p-10">
+		<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-7 text-center sm:p-10">
 			<input
 				type="file"
 				accept=".zip"
@@ -36,7 +36,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				onChange={handleChange}
 			/>
 
-			<div class="mx-auto mb-5 flex h-8 w-8 items-center justify-center text-[#A3A3A3]">
+			<div class="mx-auto mb-5 flex h-8 w-8 items-center justify-center text-gray-400">
 				<svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 					<path
 						stroke-linecap="round"
@@ -52,22 +52,22 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 					/>
 				</svg>
 			</div>
-			<h3 class="mb-3 text-xl font-semibold text-[#F2F2F2]">Import your Instagram archive</h3>
-			<p class="mx-auto mb-7 max-w-md text-sm text-[#A3A3A3] sm:text-base">
+			<h3 class="mb-3 text-xl font-semibold text-gray-100">Import your Instagram archive</h3>
+			<p class="mx-auto mb-7 max-w-md text-sm text-gray-400 sm:text-base">
 				Upload the zip file or extracted folder from your Instagram data download
 			</p>
 
 			<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
 				<button
 					type="button"
-					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#F2F2F2] bg-[#F2F2F2] px-4 py-2.5 text-sm font-semibold leading-5 text-[#101010] transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
+					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("zipPicker")}
 				>
 					Select ZIP file
 				</button>
 				<button
 					type="button"
-					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#404040] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:border-[#606060] hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] sm:w-auto sm:min-w-[156px]"
+					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("folderPicker")}
 				>
 					Select folder
@@ -75,7 +75,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 			</div>
 			<button
 				type="button"
-				class="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-[#7873F5] bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-[#F2F2F2] transition-colors hover:bg-[#202020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7873F5] disabled:cursor-not-allowed disabled:opacity-50"
+				class="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-purple bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
 				onClick={props.onTryDemo}
 				disabled={!props.demoManifestReady}
 				aria-busy={!props.demoManifestReady}
@@ -85,14 +85,14 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				) : (
 					<span class="flex items-center justify-center gap-2">
 						<span
-							class="h-4 w-4 animate-spin rounded-full border-2 border-[#737373] border-t-[#F2F2F2]"
+							class="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-gray-100"
 							aria-hidden="true"
 						/>
 						Loading demo manifest...
 					</span>
 				)}
 			</button>
-			<p class="mt-5 text-sm text-[#A3A3A3]">
+			<p class="mt-5 text-sm text-gray-400">
 				Your data stays on this device. Processing happens locally in your browser.
 			</p>
 		</div>
