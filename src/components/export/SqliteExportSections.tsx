@@ -20,7 +20,7 @@ interface TableSelectionProps {
 export const TableSelection: Component<TableSelectionProps> = (props) => (
 	<div class="mb-6">
 		<div class="mb-4 flex items-center justify-between">
-			<h4 class="text-lg font-semibold text-gray-100">Select tables to export</h4>
+			<h4 class="font-sans text-lg font-semibold text-gray-100">Select tables to export</h4>
 			<div class="text-sm text-gray-400">
 				{props.selectedCount()} of {props.tableOptions().length} selected
 			</div>
@@ -29,7 +29,7 @@ export const TableSelection: Component<TableSelectionProps> = (props) => (
 		<div class="mb-6 flex gap-2">
 			<button
 				type="button"
-				class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
 				onClick={props.onSelectAll}
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ export const TableSelection: Component<TableSelectionProps> = (props) => (
 			</button>
 			<button
 				type="button"
-				class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 				onClick={props.onSelectNone}
 			>
 				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ export const AdvancedOptions: Component<AdvancedOptionsProps> = (props) => (
 	<div class="mb-4">
 		<button
 			type="button"
-			class="mb-3 flex items-center text-sm font-semibold text-purple transition-colors hover:text-pink"
+			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple transition-colors hover:text-pink"
 			onClick={props.onToggle}
 		>
 			<svg
@@ -128,14 +128,14 @@ export const AdvancedOptions: Component<AdvancedOptionsProps> = (props) => (
 			Advanced Options
 		</button>
 		<Show when={props.open()}>
-			<div class="space-y-4 rounded-lg border border-gray-700 bg-gray-900 p-4">
+			<div class="space-y-4 rounded-lg border border-purple/30 bg-gray-900/85 p-4">
 				<div>
 					<label class="mb-2 block text-sm font-medium text-gray-400">Output filename</label>
 					<input
 						type="text"
 						value={props.fileName()}
 						onInput={(event) => props.onFileName(event.currentTarget.value)}
-						class="min-h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm leading-5 text-gray-100 outline-none placeholder:text-gray-500 transition-colors hover:border-gray-600 focus:border-purple focus:bg-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+						class="min-h-10 w-full cursor-text rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm leading-5 text-gray-100 outline-none placeholder:text-gray-500 transition-colors hover:border-gray-600 focus:border-purple focus:bg-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						placeholder="instagram-data.sqlite"
 					/>
 				</div>
@@ -156,7 +156,7 @@ export const SchemaPreview: Component<SchemaPreviewProps> = (props) => (
 	<div class="mb-4">
 		<button
 			type="button"
-			class="mb-3 flex items-center text-sm font-semibold text-purple transition-colors hover:text-pink disabled:cursor-not-allowed disabled:text-gray-500"
+			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple transition-colors hover:text-pink disabled:cursor-not-allowed disabled:text-gray-500"
 			onClick={props.onToggle}
 		>
 			<svg
@@ -174,10 +174,10 @@ export const SchemaPreview: Component<SchemaPreviewProps> = (props) => (
 			View Generated SQL Schema
 		</button>
 		<Show when={props.open()}>
-			<div class="relative rounded-lg border border-gray-700 bg-gray-900 p-4">
+			<div class="relative rounded-lg border border-purple/40 bg-[radial-gradient(circle_at_100%_0%,rgba(120,115,245,0.1),transparent_12rem),rgba(24,24,24,0.92)] p-4">
 				<button
 					type="button"
-					class="absolute right-3 top-3 z-10 inline-flex min-h-8 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-3 py-1 text-xs font-semibold text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+					class="absolute right-3 top-3 z-10 inline-flex min-h-8 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-3 py-1 text-xs font-semibold text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 					onClick={props.onCopy}
 				>
 					{props.copyButtonText()}
@@ -206,8 +206,8 @@ interface ExportStatusProps {
 
 export const ExportStatus: Component<ExportStatusProps> = (props) => (
 	<Show when={props.visible()}>
-		<div class="mb-4 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
-			<h3 class="mb-4 text-lg font-semibold text-gray-100">Generating database</h3>
+		<div class="mb-4 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
+			<h3 class="mb-4 font-sans text-lg font-semibold text-gray-100">Generating database</h3>
 			<div class="mb-4">
 				<div class="mb-2 h-3 rounded-full bg-gray-700">
 					<div
@@ -232,10 +232,10 @@ interface DownloadReadyProps {
 
 export const DownloadReady: Component<DownloadReadyProps> = (props) => (
 	<Show when={props.visible()}>
-		<div class="mb-4 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
+		<div class="mb-4 rounded-lg border border-pink/35 bg-[radial-gradient(circle_at_88%_18%,rgba(121,115,245,0.2),transparent_16rem),linear-gradient(145deg,rgba(39,27,43,0.96),rgba(24,24,24,0.96))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.16)] sm:p-6">
 			<div class="text-center">
 				<div class="mb-4">
-					<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple text-pink">
+					<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple text-purple shadow-[0_0_20px_rgba(120,115,245,0.15)]">
 						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
 								stroke-linecap="round"
@@ -246,13 +246,13 @@ export const DownloadReady: Component<DownloadReadyProps> = (props) => (
 						</svg>
 					</div>
 				</div>
-				<h3 class="mb-4 text-2xl font-semibold text-gray-100">Database ready</h3>
+				<h3 class="mb-4 font-sans text-2xl font-semibold text-gray-100">Database ready</h3>
 				<p class="mx-auto mb-6 max-w-lg text-gray-400">
 					Your SQLite database has been generated successfully. Click the button below to download it.
 				</p>
 				<button
 					type="button"
-					class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-base font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+					class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-base font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
 					onClick={props.onDownload}
 				>
 					Download {props.fileName()} ({formatFileSize(props.fileSize())})

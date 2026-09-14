@@ -9,14 +9,14 @@ interface DataReadyStateProps {
 }
 
 const DataReadyState: Component<DataReadyStateProps> = (props) => (
-	<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-6 sm:p-8">
+	<div class="mb-8 rounded-lg border border-pink/35 bg-[radial-gradient(circle_at_88%_18%,rgba(121,115,245,0.2),transparent_16rem),linear-gradient(145deg,rgba(39,27,43,0.96),rgba(24,24,24,0.96))] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)] sm:p-8">
 		<div class="text-center">
-			<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple">
+			<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple text-purple shadow-[0_0_20px_rgba(120,115,245,0.15)]">
 				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" />
 				</svg>
 			</div>
-			<h2 class="mb-3 text-2xl font-semibold text-gray-100">
+			<h2 class="mb-3 font-sans text-2xl font-semibold text-white">
 				{props.demoMode ? "Demo data ready" : "Data Ready"}
 			</h2>
 			<p class="mx-auto mb-6 max-w-md text-gray-400">
@@ -27,14 +27,14 @@ const DataReadyState: Component<DataReadyStateProps> = (props) => (
 			<div class="flex flex-col justify-center gap-3 sm:flex-row">
 				<button
 					type="button"
-					class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+					class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
 					onClick={props.onViewAnalysis}
 				>
 					View Analysis
 				</button>
 				<button
 					type="button"
-					class="inline-flex min-h-10 items-center justify-center rounded-lg border border-red-700 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-red-200 transition-colors hover:border-red-200 hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+					class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-red-700 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-red-200 transition-colors hover:border-red-200 hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-50"
 					onClick={props.onClearData}
 					disabled={props.isClearing}
 				>

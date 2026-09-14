@@ -17,19 +17,19 @@ interface ImportStatusProps {
 const ImportStatus: Component<ImportStatusProps> = (props) => (
 	<>
 		<Show when={props.isImporting}>
-			<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
+			<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
 				<Show when={props.importAborted}>
-					<p class="mb-4 text-sm text-yellow">Finishing cancellation and cleaning up…</p>
+					<p class="mb-4 text-sm text-orange">Finishing cancellation and cleaning up…</p>
 				</Show>
 				<ImportProgress steps={props.steps} onStop={props.importAborted ? undefined : props.onStop} />
 			</div>
 		</Show>
 
 		<Show when={props.showAbortMessage}>
-			<div class="mb-8 rounded-lg border border-yellow/60 bg-yellow/10 p-4">
+			<div class="mb-8 rounded-lg border border-orange/60 bg-orange/10 p-4">
 				<div class="flex items-start gap-3">
 					<svg
-						class="mt-0.5 h-5 w-5 shrink-0 text-yellow"
+						class="mt-0.5 h-5 w-5 shrink-0 text-orange"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -43,8 +43,8 @@ const ImportStatus: Component<ImportStatusProps> = (props) => (
 						/>
 					</svg>
 					<div>
-						<h3 class="mb-1 text-base font-semibold text-yellow">Import Stopped</h3>
-						<p class="text-sm text-yellow">
+						<h3 class="mb-1 font-sans text-base font-semibold text-orange">Import Stopped</h3>
+						<p class="text-sm text-orange">
 							The import process was cancelled. You can try again with your data files.
 						</p>
 					</div>
@@ -54,13 +54,13 @@ const ImportStatus: Component<ImportStatusProps> = (props) => (
 
 		<Show when={props.errorMessage}>
 			<div class="mb-8 rounded-lg border border-red/60 bg-red/10 p-4" role="alert">
-				<h3 class="mb-1 text-base font-semibold text-red">Couldn’t load the data</h3>
+				<h3 class="mb-1 font-sans text-base font-semibold text-red">Couldn’t load the data</h3>
 				<p class="text-sm text-red">{props.errorMessage}</p>
 				<div class="mt-3 flex flex-wrap gap-2">
 					<Show when={props.demoMode}>
 						<button
 							type="button"
-							class="inline-flex min-h-9 items-center justify-center rounded-lg border border-red/60 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-red/15"
+							class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-red/60 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-red/15"
 							onClick={props.onRetryDemo}
 						>
 							Retry demo
@@ -68,7 +68,7 @@ const ImportStatus: Component<ImportStatusProps> = (props) => (
 					</Show>
 					<button
 						type="button"
-						class="inline-flex min-h-9 items-center justify-center rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-gray-800"
+						class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-gray-800"
 						onClick={props.onDismissError}
 					>
 						Dismiss

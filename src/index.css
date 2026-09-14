@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 @theme {
+	--font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-space-grotesk: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+
 	--color-pink: #ff6ec4;
 	--color-purple: #7873f5;
+	--color-lavender: #aaa7ff;
+	--color-orange: #f0a06a;
 
 	--color-gray-950: #101010;
 	--color-gray-900: #181818;
@@ -14,6 +19,5 @@
 	--color-gray-300: #d4d4d4;
 	--color-gray-100: #f2f2f2;
 
-	--color-yellow: #e4b957;
 	--color-red: #e7b7b7;
 }

@@ -15,7 +15,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 	};
 
 	return (
-		<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-7 text-center sm:p-10">
+		<div class="mb-8 rounded-lg border border-pink/35 bg-[radial-gradient(circle_at_88%_18%,rgba(121,115,245,0.2),transparent_16rem),linear-gradient(145deg,rgba(39,27,43,0.96),rgba(24,24,24,0.96))] p-7 shadow-[0_18px_50px_rgba(0,0,0,0.16)] text-center sm:p-10">
 			<input
 				type="file"
 				accept=".zip"
@@ -36,7 +36,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				onChange={handleChange}
 			/>
 
-			<div class="mx-auto mb-5 flex h-8 w-8 items-center justify-center text-gray-400">
+			<div class="mx-auto mb-5 flex h-10 w-10 items-center justify-center rounded-xl border border-purple/50 bg-purple/10 text-purple shadow-[0_0_24px_rgba(120,115,245,0.12)]">
 				<svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 					<path
 						stroke-linecap="round"
@@ -52,7 +52,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 					/>
 				</svg>
 			</div>
-			<h3 class="mb-3 text-xl font-semibold text-gray-100">Import your Instagram archive</h3>
+			<h3 class="mb-3 font-sans text-xl font-semibold text-white">Import your Instagram archive</h3>
 			<p class="mx-auto mb-7 max-w-md text-sm text-gray-400 sm:text-base">
 				Upload the zip file or extracted folder from your Instagram data download
 			</p>
@@ -60,22 +60,24 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 			<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
 				<button
 					type="button"
-					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-gray-100 bg-gray-100 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 transition-colors hover:border-white hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple sm:w-auto sm:min-w-[156px]"
+					class="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ff9ad8] hover:bg-[#ff9ad8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("zipPicker")}
+					disabled={props.filePickerDisabled}
 				>
 					Select ZIP file
 				</button>
 				<button
 					type="button"
-					class="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple sm:w-auto sm:min-w-[156px]"
+					class="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("folderPicker")}
+					disabled={props.filePickerDisabled}
 				>
 					Select folder
 				</button>
 			</div>
 			<button
 				type="button"
-				class="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-purple bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
+				class="mt-4 inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-purple/70 bg-purple/10 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:bg-purple/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
 				onClick={props.onTryDemo}
 				disabled={!props.demoManifestReady}
 				aria-busy={!props.demoManifestReady}

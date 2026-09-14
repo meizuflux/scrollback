@@ -27,7 +27,7 @@ const ClearButton: Component = () => {
 	return (
 		<button
 			type="button"
-			class="inline-flex min-h-10 items-center justify-center rounded-lg border border-red-700 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-red-200 transition-colors hover:border-red-200 hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+			class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-red-700 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-red-200 transition-colors hover:border-red-200 hover:bg-red-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-50"
 			onClick={handleClear}
 			disabled={isClearing()}
 		>
@@ -116,12 +116,14 @@ const Analysis: Component = () => {
 				<div class="relative mb-8 flex flex-col items-center gap-4 sm:min-h-10 sm:justify-center">
 					<div class="flex items-center gap-3">
 						<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
-						<h1 class="text-2xl font-semibold text-gray-100">Scrollback</h1>
+						<h1 class="bg-gradient-to-r from-pink to-purple bg-clip-text font-sans text-2xl font-bold tracking-tight text-transparent drop-shadow-[0_0_24px_rgba(255,110,196,0.22)]">
+							Scrollback
+						</h1>
 					</div>
 					<div class="flex flex-wrap justify-center gap-2 sm:absolute sm:right-0 sm:top-1/2 sm:-translate-y-1/2">
 						<button
 							type="button"
-							class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+							class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 							onClick={() => navigate("/export")}
 						>
 							Export

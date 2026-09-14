@@ -17,17 +17,17 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	onProgress(5, "Finding message files...");
 
 	// what we're going to compute here:
-    analysis.systemMessages = 0;
-    analysis.messagesSent = 0;
-    analysis.messagesReceived = 0;
+	analysis.systemMessages = 0;
+	analysis.messagesSent = 0;
+	analysis.messagesReceived = 0;
 
-    analysis.reelsSent = 0;
-    analysis.reelsReceived = 0;
+	analysis.reelsSent = 0;
+	analysis.reelsReceived = 0;
 
-    analysis.reactionsSent = 0;
-    analysis.reactionsReceived = 0;
+	analysis.reactionsSent = 0;
+	analysis.reactionsReceived = 0;
 
-    analysis.groupCount = 0;
+	analysis.groupCount = 0;
 
 	// messages can actually be numbered, starts messages_1.json, but then goes to messages_2.json, etc
 	const messageFiles = files.filter(
@@ -103,13 +103,13 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 				}
 
 				if (sender_name === username && categorized.type !== MESSAGE_TYPE.System) {
-				    // TODO: find a way to declare them as not potentially undefined
-				    // @ts-ignore
-                    analysis.messagesSent += 1;
+					// TODO: find a way to declare them as not potentially undefined
+					// @ts-ignore
+					analysis.messagesSent += 1;
 				} else if (sender_name != username && categorized.type !== MESSAGE_TYPE.System) {
-				    // TODO: find a way to declare them as not potentially undefined
-				    // @ts-ignore
-                    analysis.messagesReceived += 1;
+					// TODO: find a way to declare them as not potentially undefined
+					// @ts-ignore
+					analysis.messagesReceived += 1;
 				}
 
 				let reactions;
@@ -121,10 +121,10 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 
 					for (const reaction of reactions) {
 						if (reaction.actor === username) {
-						    // @ts-ignore
+							// @ts-ignore
 							analysis.reactionsSent += 1;
 						} else {
-						    // @ts-ignore
+							// @ts-ignore
 							analysis.reactionsReceived += 1;
 						}
 					}
@@ -150,13 +150,13 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					}
 				}
 
-			    if (categorized.type === MESSAGE_TYPE.Reel) {
+				if (categorized.type === MESSAGE_TYPE.Reel) {
 					if (sender_name === username) {
-					    // @ts-ignore
-                        analysis.reelsSent += 1;
+						// @ts-ignore
+						analysis.reelsSent += 1;
 					} else {
-					    // @ts-ignore
-					    analysis.reelsReceived += 1;
+						// @ts-ignore
+						analysis.reelsReceived += 1;
 					}
 				}
 

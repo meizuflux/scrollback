@@ -12,7 +12,7 @@ export const InfoTooltip: Component<{ label: string; description: string }> = (p
 		</span>
 		<span
 			role="tooltip"
-			class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-64 -translate-x-1/2 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-left text-xs font-normal leading-5 text-gray-100 shadow-lg group-hover:block"
+			class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-64 -translate-x-1/2 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-left font-space-grotesk text-xs font-normal leading-5 text-gray-100 shadow-lg group-hover:block"
 		>
 			{props.description}
 		</span>
@@ -20,7 +20,7 @@ export const InfoTooltip: Component<{ label: string; description: string }> = (p
 );
 
 export const EmptyState: Component<{ title: string; description: string }> = (props) => (
-	<div class="rounded-lg border border-gray-700 bg-gray-900 px-6 py-12 text-center">
+	<div class="rounded-lg border border-gray-600/60 bg-[linear-gradient(145deg,rgba(32,32,32,0.96),rgba(24,24,24,0.96))] px-6 py-12 text-center shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
 		<p class="text-lg font-semibold text-gray-100">{props.title}</p>
 		<p class="mx-auto mt-2 max-w-md text-sm text-gray-400">{props.description}</p>
 	</div>

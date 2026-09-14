@@ -219,9 +219,13 @@ const Home: Component = () => {
 		<Layout>
 			<div class="container mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
 				{/* Header */}
-				<div class="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
-					<img src={logo} alt="Scrollback Logo" class="mx-auto mb-5 h-12 w-12" />
-					<h1 class="mb-3 text-3xl font-semibold tracking-tight text-gray-100">Scrollback</h1>
+				<div class="relative mx-auto mb-10 max-w-2xl text-center sm:mb-12">
+					<div class="mx-auto mb-6 h-12 w-12">
+						<img src={logo} alt="Scrollback Logo" class="h-12 w-12" />
+					</div>
+					<h1 class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text font-sans text-3xl font-bold tracking-tight text-transparent">
+						Scrollback
+					</h1>
 					<p class="text-base text-gray-400 sm:text-lg">Explore your Instagram archive.</p>
 				</div>
 
@@ -257,8 +261,8 @@ const Home: Component = () => {
 					/>
 
 					{/* How to Get Instagram Data */}
-					<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-100">
+					<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold text-white">
 							<svg
 								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"
@@ -290,7 +294,7 @@ const Home: Component = () => {
 										href="https://accountscenter.instagram.com/info_and_permissions/"
 										target="_blank"
 										rel="noopener noreferrer"
-										class="text-pink underline decoration-pink underline-offset-4 transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+										class="cursor-pointer text-pink underline decoration-pink underline-offset-4 transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 									>
 										Instagram Account Center
 									</a>
@@ -328,8 +332,8 @@ const Home: Component = () => {
 					</div>
 
 					{/* Limitations */}
-					<div class="mb-8 rounded-lg border border-gray-700 bg-gray-900 p-5 sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-100">
+					<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold text-white">
 							<svg
 								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"

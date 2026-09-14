@@ -10,7 +10,7 @@ const StepProgressBar: Component<{ step: ImportStep }> = (props) => {
 	const currentProgress = () => props.step.progress || 0;
 
 	return (
-		<div class="flex items-center gap-3 rounded-lg border border-gray-700 bg-gray-900 p-4">
+		<div class="flex items-center gap-3 rounded-lg border border-purple/30 bg-gray-900/85 p-4">
 			<div class="flex-1 min-w-0">
 				<div class="flex justify-between items-center mb-1">
 					<div class="truncate font-medium text-gray-100" title={props.step.name}>
@@ -48,7 +48,7 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 		<div class="space-y-4" aria-live="polite">
 			<div class="mb-6">
 				<div class="flex justify-between items-center mb-2">
-					<h2 class="text-lg font-semibold text-gray-100">Importing data</h2>
+					<h2 class="font-sans text-lg font-semibold text-white">Importing data</h2>
 					<div class="flex items-center gap-3">
 						<Show when={totalSteps() > 0}>
 							<span class="text-sm text-gray-400">
@@ -58,7 +58,7 @@ const ImportProgress: Component<ImportProgressProps> = (props) => {
 						<Show when={props.onStop}>
 							<button
 								type="button"
-								class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+								class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 								onClick={() => {
 									if (
 										confirm(

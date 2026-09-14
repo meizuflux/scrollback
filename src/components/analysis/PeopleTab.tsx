@@ -22,15 +22,26 @@ interface StatCardProps {
 	title: string;
 	value: number;
 	description?: string;
+	accent?: "pink" | "purple" | "lavender";
 }
 
+const accentClasses = {
+	pink: "border-t-pink hover:border-pink",
+	purple: "border-t-purple hover:border-purple",
+	lavender: "border-t-lavender hover:border-lavender",
+} as const;
+
 const StatCard: Component<StatCardProps> = (props) => (
-	<div class="rounded-lg border border-gray-700 bg-gray-900 p-5">
+	<div
+		class={`rounded-lg border border-gray-600/50 border-t-[3px] bg-[linear-gradient(145deg,rgba(32,32,32,0.96),rgba(24,24,24,0.92))] p-5 transition-colors ${accentClasses[props.accent || "pink"]}`}
+	>
 		<p class="text-sm font-medium leading-5 text-gray-400">
 			{props.title}
 			{props.description && <InfoTooltip label={props.title} description={props.description} />}
 		</p>
-		<p class="mt-2 text-2xl font-semibold tracking-tight text-gray-100">{props.value.toLocaleString()}</p>
+		<p class="mt-2 tabular-nums text-2xl font-semibold tracking-tight text-gray-100">
+			{props.value.toLocaleString()}
+		</p>
 	</div>
 );
 
@@ -88,7 +99,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 			<div>
 				<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
 					<div>
-						<h1 class="text-3xl font-semibold tracking-tight text-gray-100">People</h1>
+						<h1 class="font-sans text-3xl font-semibold tracking-tight text-white">People</h1>
 						<p class="mt-2 text-gray-400">Other Instagram accounts found in this data package.</p>
 					</div>
 					<div class="text-sm text-gray-400">
@@ -109,33 +120,35 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 			>
 				<section class="space-y-4" aria-labelledby="people-overview-heading">
 					<div class="flex items-center gap-4">
-						<h2 id="people-overview-heading" class="text-xl font-semibold tracking-tight text-gray-100">
+						<h2 id="people-overview-heading" class="font-sans text-xl font-semibold tracking-tight text-white">
 							At a Glance
 						</h2>
-						<div class="h-px flex-1 bg-gray-700" />
+						<div class="h-px flex-1 bg-[linear-gradient(90deg,rgba(170,167,255,0.5),rgba(115,115,115,0.35),transparent)]" />
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						<StatCard
-							title="Followers"
-							value={followers()}
+							<StatCard
+								title="Followers"
+								value={followers()}
+								accent="lavender"
 							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
 						/>
-						<StatCard
-							title="Following"
-							value={following()}
+							<StatCard
+								title="Following"
+								value={following()}
+								accent="lavender"
 							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
 						/>
-						<StatCard title="Accounts blocked" value={blocked()} />
-						<StatCard title="People not following you back" value={notFollowingBack()} />
-						<StatCard title="People you don't follow back" value={notFollowedBack()} />
-						<StatCard title="Close friends" value={closeFriends()} />
+						<StatCard title="Accounts blocked" value={blocked()} accent="lavender" />
+						<StatCard title="People not following you back" value={notFollowingBack()} accent="lavender" />
+						<StatCard title="People you don't follow back" value={notFollowedBack()} accent="lavender" />
+						<StatCard title="Close friends" value={closeFriends()} accent="lavender" />
 					</div>
 				</section>
 
 				<div>
 					<button
 						type="button"
-						class="group flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left text-lg font-semibold text-gray-100 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+						class="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-1 py-2 text-left text-lg font-semibold text-gray-100 transition-colors hover:text-lavender focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender"
 						aria-expanded={props.peopleTableOpen()}
 						aria-controls="people-table-panel"
 						onClick={props.onPeopleTableToggle}
@@ -151,11 +164,11 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 
 					<Show when={props.peopleTableOpen()}>
 						<div id="people-table-panel" class="mt-2 space-y-5">
-							<div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
+							<div class="rounded-lg border border-lavender/30 bg-gray-900/85 p-4">
 								<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
 									<ControlLabel label="Search usernames">
 										<input
-											class={controlClass}
+											class={`${controlClass} cursor-text`}
 											type="search"
 											value={props.peopleSearch()}
 											placeholder="Search by username"
@@ -164,7 +177,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									</ControlLabel>
 									<ControlLabel label="Relationship">
 										<select
-											class={controlClass}
+						class={`${controlClass} cursor-pointer`}
 											value={props.peopleRelationship()}
 											onChange={(event) =>
 												props.onPeopleRelationship(event.currentTarget.value as PeopleFilter)
@@ -184,7 +197,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									</ControlLabel>
 									<button
 										type="button"
-										class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-gray-500 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
+									class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-lavender hover:bg-lavender/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender disabled:cursor-not-allowed disabled:opacity-50"
 										disabled={!props.peopleFiltersActive()}
 										onClick={props.onClearFilters}
 									>
@@ -193,10 +206,10 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 								</div>
 							</div>
 
-							<div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
+							<div class="rounded-lg border border-lavender/30 bg-gray-900/85 p-4">
 								<ControlLabel label="Sorting options">
 									<select
-										class={controlClass}
+									class={`${controlClass} cursor-pointer`}
 										value={props.peopleSort()}
 										onChange={(event) =>
 											props.onPeopleSort(event.currentTarget.value as PeopleSort)
@@ -221,10 +234,10 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									/>
 								}
 							>
-								<div class="overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+								<div class="overflow-hidden rounded-lg border border-lavender/35 bg-gray-900/90">
 									<div class="overflow-x-auto">
 										<table class="w-full min-w-[1320px] text-left">
-											<thead class="border-b border-gray-700 bg-gray-900">
+					<thead class="border-b border-gray-700 bg-lavender/10">
 												<tr class="text-xs font-semibold uppercase tracking-wider text-gray-500">
 													<th scope="col" class="px-5 py-3">
 														Username
@@ -261,13 +274,13 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 											<tbody class="divide-y divide-gray-700">
 												<For each={peopleForTable()}>
 													{(person) => (
-														<tr class="text-sm text-gray-400 transition-colors hover:bg-gray-800">
+										<tr class="text-sm text-gray-400 transition-colors hover:bg-lavender/10">
 															<th
 																scope="row"
 																class="px-5 py-4 font-semibold text-gray-100"
 															>
 																<div class="flex items-center gap-3">
-																	<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-600 bg-gray-700 text-xs font-semibold text-gray-100">
+											<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-lavender/60 bg-[linear-gradient(145deg,rgba(255,110,196,0.22),rgba(120,115,245,0.2))] text-xs font-semibold text-gray-100">
 																		{person.username.slice(0, 1).toUpperCase()}
 																	</div>
 																	<span>@{person.username}</span>

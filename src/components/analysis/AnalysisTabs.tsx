@@ -73,19 +73,31 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 			return;
 		}
 		setSelectedConversation(conversation.title);
-		const cache = JSON.parse(localStorage.getItem("conversation_stats_cache") || "{}") as Record<string, ConversationSenderStat[]>;
-		if (cache[conversation.title]) { setConversationStats(cache[conversation.title]); return; }
+		const cache = JSON.parse(localStorage.getItem("conversation_stats_cache") || "{}") as Record<
+			string,
+			ConversationSenderStat[]
+		>;
+		if (cache[conversation.title]) {
+			setConversationStats(cache[conversation.title]);
+			return;
+		}
 		setConversationStatsLoading(true);
 		try {
 			const counts = new Map<string, number>();
-			for (const message of await db.messages.filter((message) => message.conversation === conversation.title).toArray()) {
+			for (const message of await db.messages
+				.filter((message) => message.conversation === conversation.title)
+				.toArray()) {
 				const sender = message.sender_name || "Unknown sender";
 				counts.set(sender, (counts.get(sender) || 0) + 1);
 			}
-			const stats = Array.from(counts, ([sender, count]) => ({ sender, count })).sort((a, b) => b.count - a.count || a.sender.localeCompare(b.sender));
+			const stats = Array.from(counts, ([sender, count]) => ({ sender, count })).sort(
+				(a, b) => b.count - a.count || a.sender.localeCompare(b.sender),
+			);
 			setConversationStats(stats);
 			localStorage.setItem("conversation_stats_cache", JSON.stringify({ ...cache, [conversation.title]: stats }));
-		} finally { setConversationStatsLoading(false); }
+		} finally {
+			setConversationStatsLoading(false);
+		}
 	};
 
 	const activeTab = createMemo<TabId>(() => {
@@ -198,19 +210,23 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 		});
 	};
 
+	const activeTabClass = (tab: TabId) => {
+		if (activeTab() !== tab) return "border-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-100";
+		if (tab === "highlights") return "border-pink bg-pink/10 text-gray-100 focus-visible:outline-pink";
+		if (tab === "people") return "border-lavender bg-lavender/10 text-gray-100 focus-visible:outline-lavender";
+		if (tab === "conversations") return "border-purple bg-purple/10 text-gray-100 focus-visible:outline-purple";
+		return "border-purple bg-purple/10 text-gray-100 focus-visible:outline-purple";
+	};
+
 	return (
 		<div class="space-y-7">
-			<div class="rounded-lg border border-gray-700 bg-gray-900 p-1">
+			<div class="rounded-lg border border-gray-600/50 bg-gray-900/90 p-1 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
 				<nav class="grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="Analysis sections">
 					<For each={tabItems}>
 						{(tab) => (
 							<button
 								type="button"
-								class={`flex items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
-									activeTab() === tab.id
-										? "border-purple bg-gray-700 text-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-										: "border-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-100"
-								}`}
+								class={`flex cursor-pointer items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${activeTabClass(tab.id)}`}
 								aria-current={activeTab() === tab.id ? "page" : undefined}
 								onClick={() => setActiveTab(tab.id)}
 							>
@@ -224,7 +240,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 			<Show
 				when={!props.loading}
 				fallback={
-					<div class="rounded-lg border border-gray-700 bg-gray-900 p-12 text-center text-gray-400">
+					<div class="rounded-lg border border-gray-600/60 bg-[linear-gradient(145deg,rgba(32,32,32,0.96),rgba(24,24,24,0.96))] p-12 text-center text-gray-400 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
 						Loading your data package…
 					</div>
 				}
