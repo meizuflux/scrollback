@@ -25,7 +25,7 @@ const StatCard: Component<StatCardProps> = (props) => {
 				{props.title}
 				{props.description && <InfoTooltip label={props.title} description={props.description} />}
 			</p>
-			<p class="mt-2 tabular-nums text-2xl font-semibold tracking-tight text-gray-100">{props.value}</p>
+			<p class="mt-2 font-mono text-2xl font-medium leading-8 text-gray-100">{props.value}</p>
 		</div>
 	);
 };
@@ -108,7 +108,7 @@ const Overview: Component<{ analysis: CachedAnalysis }> = (props) => {
 													{conversation.title}
 												</span>
 											</div>
-											<span class="shrink-0 bg-gradient-to-r from-pink to-purple bg-clip-text text-sm font-semibold text-transparent">
+											<span class="shrink-0 bg-gradient-to-r from-pink to-purple bg-clip-text font-mono text-sm font-semibold text-transparent">
 												{formatNumber(conversation.count)}
 											</span>
 										</div>

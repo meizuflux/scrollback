@@ -140,11 +140,11 @@ const ConversationsTab: Component<ConversationsTabProps> = (props) => (
 											<span class="mr-1 text-gray-500 sm:hidden">Type ·</span>
 											{conversation.is_group ? "Group" : "Direct"}
 										</span>
-						<span class="text-sm font-semibold text-pink">
+						<span class="text-sm font-mono text-pink">
 											<span class="mr-1 text-gray-500 sm:hidden">Messages ·</span>
 											{conversation.messageCount.toLocaleString()}
 										</span>
-										<span class="text-sm text-gray-400">
+										<span class="font-mono text-sm text-gray-400">
 											<span class="mr-1 text-gray-500 sm:hidden">Active ·</span>
 											{formatDate(conversation.lastActivity)}
 										</span>

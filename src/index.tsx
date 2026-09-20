@@ -1,8 +1,8 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 
-import "@fontsource-variable/inter/wght.css";
 import "@fontsource-variable/space-grotesk/wght.css";
+import "@fontsource-variable/jetbrains-mono/wght.css";
 import "./index.css";
 import { Router, Route } from "@solidjs/router";
 import { lazy } from "solid-js";

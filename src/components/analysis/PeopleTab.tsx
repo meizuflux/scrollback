@@ -39,7 +39,7 @@ const StatCard: Component<StatCardProps> = (props) => (
 			{props.title}
 			{props.description && <InfoTooltip label={props.title} description={props.description} />}
 		</p>
-		<p class="mt-2 tabular-nums text-2xl font-semibold tracking-tight text-gray-100">
+		<p class="mt-2 font-mono text-2xl font-medium leading-8 text-gray-100">
 			{props.value.toLocaleString()}
 		</p>
 	</div>
@@ -103,7 +103,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 						<p class="mt-2 text-gray-400">Other Instagram accounts found in this data package.</p>
 					</div>
 					<div class="text-sm text-gray-400">
-						<span class="font-semibold text-gray-100">{props.filteredPeople.length.toLocaleString()}</span>{" "}
+						<span class="font-mono text-sm font-medium leading-5 text-gray-100">{props.filteredPeople.length.toLocaleString()}</span>{" "}
 						results
 					</div>
 				</div>
@@ -283,7 +283,7 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 											<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-lavender/60 bg-[linear-gradient(145deg,rgba(255,110,196,0.22),rgba(120,115,245,0.2))] text-xs font-semibold text-gray-100">
 																		{person.username.slice(0, 1).toUpperCase()}
 																	</div>
-																	<span>@{person.username}</span>
+																	<span class="font-mono text-sm text-gray-100">@{person.username}</span>
 																</div>
 															</th>
 															<td class="px-5 py-4">
