@@ -211,22 +211,22 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	};
 
 	const activeTabClass = (tab: TabId) => {
-		if (activeTab() !== tab) return "border-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-100";
-		if (tab === "highlights") return "border-pink bg-pink/10 text-gray-100 focus-visible:outline-pink";
-		if (tab === "people") return "border-lavender bg-lavender/10 text-gray-100 focus-visible:outline-lavender";
-		if (tab === "conversations") return "border-purple bg-purple/10 text-gray-100 focus-visible:outline-purple";
-		return "border-purple bg-purple/10 text-gray-100 focus-visible:outline-purple";
+		if (activeTab() !== tab) return "text-gray-400 hover:bg-gray-800 hover:text-gray-100";
+		if (tab === "highlights") return "bg-pink text-gray-950 shadow-[0_2px_14px_rgba(255,110,196,0.35)] focus-visible:outline-pink";
+		if (tab === "people") return "bg-lavender text-gray-950 shadow-[0_2px_14px_rgba(170,167,255,0.35)] focus-visible:outline-lavender";
+		if (tab === "conversations") return "bg-purple text-gray-950 shadow-[0_2px_14px_rgba(120,115,245,0.35)] focus-visible:outline-purple";
+		return "bg-purple text-gray-950 shadow-[0_2px_14px_rgba(120,115,245,0.35)] focus-visible:outline-purple";
 	};
 
 	return (
 		<div class="space-y-7">
-			<div class="rounded-lg border border-gray-600/50 bg-gray-900/90 p-1 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
-				<nav class="grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="Analysis sections">
+			<div class="rounded-full border border-gray-600/50 bg-gray-900/90 p-1 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+				<nav class="grid grid-cols-2 gap-1 md:grid-cols-4" aria-label="Analysis sections">
 					<For each={tabItems}>
 						{(tab) => (
 							<button
 								type="button"
-								class={`flex cursor-pointer items-center justify-center rounded-lg border-b-2 px-3 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${activeTabClass(tab.id)}`}
+								class={`flex cursor-pointer items-center justify-center rounded-full px-3 py-2.5 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 ${activeTabClass(tab.id)}`}
 								aria-current={activeTab() === tab.id ? "page" : undefined}
 								onClick={() => setActiveTab(tab.id)}
 							>
