@@ -170,20 +170,29 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 			<Layout>
 				<div class="container mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8">
 					<header class="mb-5 flex flex-col border-b border-edge pb-4 sm:mb-7">
-						<div class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-3 sm:items-center sm:gap-4">
-							<div class="flex items-center justify-center gap-2.5 sm:col-start-1 sm:justify-self-start">
-								<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
-								<span class="font-sans text-xl font-bold tracking-tight text-gray-100">Scrollback</span>
-								<Show when={user()} fallback={null}>
-									{(current) => (
-										<span class="text-sm text-gray-400">@{current().username}</span>
-									)}
-								</Show>
+<div class="flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:items-center sm:gap-4">
+							<div class="flex items-center justify-between gap-3 sm:contents">
+								<div class="flex items-center gap-2.5 sm:col-start-1 sm:justify-self-start">
+									<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
+									<div class="flex flex-col sm:flex-row sm:items-center sm:gap-2.5">
+										<span class="font-sans text-xl font-bold tracking-tight text-gray-100">Scrollback</span>
+										<Show when={user()} fallback={null}>
+											{(current) => (
+												<span class="text-sm text-gray-400">@{current().username}</span>
+											)}
+										</Show>
+									</div>
+								</div>
+
+								<div class="flex items-center gap-2 sm:col-start-3 sm:justify-self-end">
+									<NavigationLink href="/export">Export</NavigationLink>
+									<ClearButton />
+								</div>
 							</div>
 
 							<nav
 								aria-label="Analysis sections"
-								class="mx-auto flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-xl border border-edge bg-surface p-[3px] sm:col-start-2 sm:justify-self-center"
+								class="mx-auto flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-xl border border-edge bg-surface p-[3px] sm:col-start-2 sm:row-start-1 sm:justify-self-center"
 							>
 								<For each={NAV_ITEMS}>
 									{(item) => (
@@ -199,11 +208,6 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 									)}
 								</For>
 							</nav>
-
-							<div class="flex items-center justify-center gap-2 sm:col-start-3 sm:justify-self-end">
-								<NavigationLink href="/export">Export</NavigationLink>
-								<ClearButton />
-							</div>
 						</div>
 					</header>
 
