@@ -1,4 +1,14 @@
-import { type Component, For, Show, createMemo, createSignal, onCleanup, createEffect } from "solid-js";
+import {
+	type Accessor,
+	type Component,
+	For,
+	Show,
+	createEffect,
+	createMemo,
+	createSignal,
+	onCleanup,
+	onMount,
+} from "solid-js";
 import { db, type StoredPost, type StoredUser } from "@/db/database";
 import { createMediaURL } from "@/utils/media";
 import type { ContentCounts, EngagementCounts } from "@/components/analysis/analysisData";
@@ -128,7 +138,30 @@ const SectionHeading: Component<{ children: string }> = (props) => (
 	<h2 class="text-sm font-semibold tracking-tight text-gray-100">{props.children}</h2>
 );
 
-const POSTS_PREVIEW_COUNT = 9;
+/** Column count for the posts grid, following Tailwind’s breakpoints. */
+const useColumnCount = (): Accessor<number> => {
+	const [columns, setColumns] = createSignal(3);
+
+	onMount(() => {
+		const breakpoints = [
+			[1024, 6],
+			[768, 5],
+			[640, 4],
+		] as const;
+		const queries = breakpoints.map(([width]) => window.matchMedia(`(min-width: ${width}px)`));
+		const update = () => {
+			const index = queries.findIndex((query) => query.matches);
+			setColumns(index === -1 ? 3 : breakpoints[index][1]);
+		};
+		for (const query of queries) query.addEventListener("change", update);
+		update();
+		onCleanup(() => {
+			for (const query of queries) query.removeEventListener("change", update);
+		});
+	});
+
+	return columns;
+};
 
 const Stat: Component<{ label: string; value: number }> = (props) => (
 	<div class="flex items-baseline gap-1.5">
@@ -210,6 +243,7 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 		"This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data.";
 	const [showActivity, setShowActivity] = createSignal(false);
 	const [showAllPosts, setShowAllPosts] = createSignal(false);
+	const columns = useColumnCount();
 
 	const posts = createMemo(() =>
 		props
@@ -217,7 +251,7 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 			.filter((post) => !post.archived)
 			.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
 	);
-	const visiblePosts = () => (showAllPosts() ? posts() : posts().slice(0, POSTS_PREVIEW_COUNT));
+	const visiblePosts = () => (showAllPosts() ? posts() : posts().slice(0, columns() * 3));
 
 	const networkCounts = createMemo(() => {
 		const counts = {
@@ -316,10 +350,10 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 					when={posts().length > 0}
 					fallback={<p class="mt-5 text-sm text-gray-500">No posts were included in this export.</p>}
 				>
-					<div class="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+					<div class="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-6">
 						<For each={visiblePosts()}>{(post) => <PostThumb post={post} />}</For>
 					</div>
-					<Show when={posts().length > POSTS_PREVIEW_COUNT}>
+					<Show when={posts().length > columns() * 3}>
 						<Button
 							variant="secondary"
 							class="mt-4 w-full"
@@ -327,7 +361,7 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 						>
 							{showAllPosts()
 								? "Show fewer posts"
-								: `Show ${posts().length - POSTS_PREVIEW_COUNT} more posts`}
+								: `Show ${posts().length - visiblePosts().length} more posts`}
 						</Button>
 					</Show>
 				</Show>
