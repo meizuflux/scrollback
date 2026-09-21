@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:demo-data": "bun run scripts/build_demo_data.ts",
+    "instagram:scan": "bun run tools/instagram-inspector/src/cli.ts",
+    "instagram:scan:test": "bun test tools/instagram-inspector/tests",
+    "instagram:preview": "bun run tools/instagram-inspector/src/preview.ts",
     "preview": "vite preview",
     "format": "biome format --write ./src"
   },

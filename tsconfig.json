@@ -30,6 +30,6 @@
       "@/utils/*": ["./src/utils/*"]
     }
   },
-  "exclude": ["src/old/"],
+  "exclude": ["src/old/", "tools/**/tests/**"],
 
 }
