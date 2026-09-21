@@ -2,6 +2,51 @@ import type { InstagramDatabase } from "@/db/database";
 import { decodeU8String, loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
 
+// Instagram interaction files (likes, saves, story likes) currently use a
+// label_values structure, e.g.
+// {
+//   "timestamp": 1788990318,
+//   "media": [],
+//   "label_values": [
+//     { "label": "URL", "value": "https://..." },
+//     { "label": "Caption", "value": "..." },
+//     { "dict": [...], "title": "Owner" }
+//   ],
+//   "fbid": "..."
+// }
+// but older exports used string_list_data / string_map_data instead.
+
+export const getLabelValue = (item: any, label: string): string =>
+	item.label_values?.find((entry: any) => entry.label === label)?.value ?? "";
+
+export const getOwnerUsername = (item: any): string => {
+	const ownerEntry = item.label_values?.find((entry: any) => entry.title === "Owner");
+	for (const owner of ownerEntry?.dict ?? []) {
+		const username = owner.dict?.find((entry: any) => entry.label === "Username")?.value;
+		if (username) return username;
+	}
+	return getLabelValue(item, "Username");
+};
+
+interface ParsedInteraction {
+	media_owner: string;
+	href: string;
+	timestamp: Date;
+}
+
+const parseInteractionItem = (item: any): ParsedInteraction | null => {
+	const data = item.string_list_data?.[0] ?? item.string_map_data?.["Saved on"];
+	const href = getLabelValue(item, "URL") || data?.href || "";
+	const mediaOwner = getOwnerUsername(item) || item.title || "";
+	const timestamp = item.timestamp ?? data?.timestamp;
+	if ((!href && !mediaOwner) || timestamp == null) return null;
+	return {
+		media_owner: mediaOwner,
+		href,
+		timestamp: new Date(timestamp * 1000),
+	};
+};
+
 const processInteractionFile = async (
 	filePath: string,
 	dataKey: string,
@@ -14,8 +59,15 @@ const processInteractionFile = async (
 	onProgress(0, `Loading ${itemType}s file: ${filePath}`);
 	const fileContent = await loadFile<any>(files, filePath);
 
-	const items = fileContent?.[dataKey];
-	if (!items || !Array.isArray(items) || items.length === 0) {
+	if (!fileContent) {
+		onProgress(100, `No ${itemType}s file found: ${filePath}.`);
+		return;
+	}
+
+	// Some exports nest entries under dataKey, others are a bare array at the root
+	const rawItems = fileContent?.[dataKey];
+	const items = Array.isArray(rawItems) ? rawItems : Array.isArray(fileContent) ? fileContent : [];
+	if (items.length === 0) {
 		onProgress(100, `No ${itemType}s found in ${filePath}.`);
 		return;
 	}
@@ -44,15 +96,7 @@ export const importPostLikes = async (files: File[], database: InstagramDatabase
 		files,
 		onProgress,
 		"liked post",
-		(item: any) => {
-			const data = item.string_list_data?.[0];
-			if (!data) return null;
-			return {
-				media_owner: item.title,
-				href: data.href,
-				timestamp: new Date(data.timestamp * 1000),
-			};
-		},
+		parseInteractionItem,
 	);
 };
 
@@ -64,15 +108,7 @@ export const importSavedPosts = async (files: File[], database: InstagramDatabas
 		files,
 		onProgress,
 		"saved post",
-		(item: any) => {
-			const data = item.string_map_data?.["Saved on"];
-			if (!data) return null;
-			return {
-				media_owner: item.title,
-				href: data.href,
-				timestamp: new Date(data.timestamp * 1000),
-			};
-		},
+		parseInteractionItem,
 	);
 };
 

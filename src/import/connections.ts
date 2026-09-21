@@ -1,13 +1,19 @@
 import type { InstagramDatabase, StoredUser } from "@/db/database";
+import { CachedAnalysis } from "@/types/analysis";
 import { loadFile } from "@/utils/media";
 import type { ProgFn } from "./import";
-import { CachedAnalysis } from "@/types/analysis";
+import { getLabelValue, getOwnerUsername } from "./interactions";
 
 enum ConnectionFormat {
 	LabelValues,
 	StringListData,
 	WrappedStringListData,
 }
+
+const usernameFromStoryUrl = (href: string): string => {
+	const match = /\/stories\/([^/]+)\//.exec(href);
+	return match?.[1] ?? "";
+};
 
 // sometimes we have stuff like blocked_profiles.json
 /*
@@ -191,8 +197,9 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	onProgress(70, "Processing story likes...");
 
 	const storyLikesFile = await loadFile<any>(files, "/your_instagram_activity/story_interactions/story_likes.json");
-	if (storyLikesFile?.story_activities_story_likes) {
-		const storyLikes = storyLikesFile.story_activities_story_likes;
+	// Current exports store story likes as a bare array, older ones nested it under story_activities_story_likes
+	const storyLikes = Array.isArray(storyLikesFile) ? storyLikesFile : storyLikesFile?.story_activities_story_likes;
+	if (storyLikes?.length) {
 		const storyLikeCounts: Record<string, number> = {};
 
 		for (let i = 0; i < storyLikes.length; i++) {
@@ -204,7 +211,8 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 					`Counting story likes ${i + 1}/${storyLikes.length}`,
 				);
 			}
-			const username = storyLike.title;
+			const username =
+				getOwnerUsername(storyLike) || storyLike.title || usernameFromStoryUrl(getLabelValue(storyLike, "URL"));
 			if (username) storyLikeCounts[username] = (storyLikeCounts[username] || 0) + 1;
 		}
 
