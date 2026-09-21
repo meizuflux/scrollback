@@ -164,9 +164,9 @@ const useColumnCount = (): Accessor<number> => {
 };
 
 const Stat: Component<{ label: string; value: number }> = (props) => (
-	<div class="flex items-baseline gap-1.5">
-		<span class="font-mono text-lg font-semibold leading-7 text-gray-100">{props.value.toLocaleString()}</span>
-		<span class="text-xs font-medium uppercase tracking-wide text-gray-500">{props.label}</span>
+	<div class="flex flex-col gap-0.5">
+		<span class="font-mono text-base font-semibold leading-5 text-gray-100">{props.value.toLocaleString()}</span>
+		<span class="text-[0.625rem] font-medium uppercase tracking-wide text-gray-500">{props.label}</span>
 	</div>
 );
 
@@ -309,37 +309,23 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 			/>
 
 			{/* Account */}
-			<Panel variant="raised" class="p-6 sm:p-8">
-				<div class="flex flex-col gap-5 sm:flex-row sm:items-start">
-					<ProfileAvatar user={props.user} />
-					<div class="flex min-w-0 flex-1 flex-col justify-between gap-x-8 sm:flex-row">
-						<div class="min-w-0">
-							<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-								<h2 class="font-sans text-2xl font-semibold tracking-tight text-gray-100">
-									{props.user?.name || "Unavailable"}
-								</h2>
-								<Show when={props.user}>
-									<span
-										class={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5 ${
-											props.user?.privateAccount
-												? "border-red-line bg-red-fill text-red-soft"
-												: "border-edge-strong text-gray-400"
-										}`}
-									>
-										{props.user?.privateAccount ? "Private account" : "Public account"}
-									</span>
-								</Show>
-							</div>
-							<Show when={props.user?.username}>
-								<p class="mt-1 text-gray-400">@{props.user?.username}</p>
-							</Show>
-							<Show when={props.user?.bio}>
-								<p class="mt-2 max-w-xl whitespace-pre-wrap font-space-grotesk text-sm leading-6 text-gray-300">
-									{props.user?.bio}
-								</p>
-							</Show>
+			<Panel variant="raised" class="p-5 sm:p-6">
+				<div class="flex items-start gap-4 sm:gap-6">
+					<div class="min-w-0 shrink-0">
+						<ProfileAvatar user={props.user} />
+						<Show when={props.user?.bio}>
+							<p class="mt-3 max-w-28 whitespace-pre-wrap font-space-grotesk text-xs leading-5 text-gray-300 sm:mt-4 sm:max-w-36 sm:text-sm sm:leading-6">
+								{props.user?.bio}
+							</p>
+						</Show>
+					</div>
+					<div class="min-w-0 flex-1 pt-0.5">
+						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+							<h2 class="font-sans text-lg font-semibold tracking-tight text-gray-100 sm:text-xl">
+								{props.user?.name || "Unavailable"}
+							</h2>
 						</div>
-						<div class="flex shrink-0 flex-wrap items-baseline justify-end gap-x-6 gap-y-1.5 sm:flex-col sm:items-end">
+						<div class="mt-3 grid grid-cols-3 gap-x-3 text-left sm:mt-4 sm:gap-x-6">
 							<Stat label="Posts" value={props.contentCounts().posts} />
 							<Stat label="Followers" value={networkCounts().followers} />
 							<Stat label="Following" value={networkCounts().following} />
@@ -347,14 +333,31 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 					</div>
 				</div>
 
-				<div class="mt-7 mb-6 h-px w-full border-0 bg-edge" aria-hidden="true" />
-
-				<dl class="divide-y divide-edge">
-					<DetailRow label="Based in" value={basedInText(props.user)} />
-					<DetailRow label="Email" value={props.user?.email || "Not provided"} />
-					<DetailRow label="Date of birth" value={formatDate(props.user?.dateOfBirth)} />
-					<DetailRow label="Gender" value={props.user?.gender || "Not provided"} />
-				</dl>
+				<details class="group mt-5 border-t border-edge pt-4">
+					<summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-gray-300 [&::-webkit-details-marker]:hidden">
+						<span>Account details</span>
+						<svg
+							class="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180"
+							viewBox="0 0 20 20"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.75"
+							aria-hidden="true"
+						>
+							<path d="m5 7.5 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</summary>
+					<dl class="mt-3 divide-y divide-edge">
+						<DetailRow
+							label="Account type"
+							value={props.user?.privateAccount ? "Private account" : "Public account"}
+						/>
+						<DetailRow label="Based in" value={basedInText(props.user)} />
+						<DetailRow label="Email" value={props.user?.email || "Not provided"} />
+						<DetailRow label="Date of birth" value={formatDate(props.user?.dateOfBirth)} />
+						<DetailRow label="Gender" value={props.user?.gender || "Not provided"} />
+					</dl>
+				</details>
 			</Panel>
 
 			{/* Posts */}
