@@ -174,6 +174,11 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 							<div class="flex items-center justify-center gap-2.5 sm:col-start-1 sm:justify-self-start">
 								<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
 								<span class="font-sans text-xl font-bold tracking-tight text-gray-100">Scrollback</span>
+								<Show when={user()} fallback={null}>
+									{(current) => (
+										<span class="text-sm text-gray-400">@{current().username}</span>
+									)}
+								</Show>
 							</div>
 
 							<nav
