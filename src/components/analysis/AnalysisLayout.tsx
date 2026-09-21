@@ -62,7 +62,7 @@ const loadDataPackage = async () => {
 			db.users.toArray(),
 			db.conversations.toArray(),
 			db.messages.toArray(),
-			db.profileChanges.orderBy("timestamp").toArray(),
+			db.profileChanges.orderBy("timestamp").reverse().toArray(),
 			db.posts.toArray(),
 			db.stories.toArray(),
 			db.likedPosts.count(),
@@ -169,36 +169,37 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 		>
 			<Layout>
 				<div class="container mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8">
-					<header class="mb-5 flex flex-col gap-3 border-b border-edge pb-4 sm:mb-7">
+					<header class="mb-5 flex flex-col border-b border-edge pb-4 sm:mb-7">
 						<div class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-3 sm:items-center sm:gap-4">
-							<div class="flex items-center gap-2.5 sm:col-start-2 sm:justify-self-center">
+							<div class="flex items-center justify-center gap-2.5 sm:col-start-1 sm:justify-self-start">
 								<img src={logo} alt="Scrollback Logo" class="h-8 w-8" />
 								<span class="font-sans text-xl font-bold tracking-tight text-gray-100">Scrollback</span>
 							</div>
+
+							<nav
+								aria-label="Analysis sections"
+								class="mx-auto flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-xl border border-edge bg-surface p-[3px] sm:col-start-2 sm:justify-self-center"
+							>
+								<For each={NAV_ITEMS}>
+									{(item) => (
+										<A
+											href={item.href}
+											end={item.end}
+											class="flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[0.625rem] px-3.5 py-1.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+											activeClass="bg-purple font-semibold text-purple-fill hover:bg-purple hover:text-purple-fill"
+											inactiveClass="text-gray-400 hover:bg-white/5 hover:text-gray-200"
+										>
+											{item.label}
+										</A>
+									)}
+								</For>
+							</nav>
+
 							<div class="flex items-center justify-center gap-2 sm:col-start-3 sm:justify-self-end">
 								<NavigationLink href="/export">Export</NavigationLink>
 								<ClearButton />
 							</div>
 						</div>
-
-						<nav
-							aria-label="Analysis sections"
-							class="mx-auto flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-xl border border-edge bg-surface p-[3px]"
-						>
-							<For each={NAV_ITEMS}>
-								{(item) => (
-									<A
-										href={item.href}
-										end={item.end}
-										class="flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[0.625rem] px-3.5 py-1.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-										activeClass="bg-purple font-semibold text-purple-fill hover:bg-purple hover:text-purple-fill"
-										inactiveClass="text-gray-400 hover:bg-white/5 hover:text-gray-200"
-									>
-										{item.label}
-									</A>
-								)}
-							</For>
-						</nav>
 					</header>
 
 					<Show when={!loading()} fallback={<LoadingState label="Loading your data package…" />}>
