@@ -1,3 +1,10 @@
+/** Labeled "Profile based in" fields from the export. */
+export interface ProfileBasedIn {
+	city?: string;
+	region?: string;
+	country?: string;
+}
+
 export interface User {
 	username: string;
 	name: string;
@@ -6,15 +13,16 @@ export interface User {
 	email: string;
 	bio: string;
 	gender: string;
-	privateAccount: Boolean;
+	privateAccount: boolean;
 	dateOfBirth: Date;
-	basedIn: string;
+	basedIn: ProfileBasedIn | null;
 	locationsOfInterest: string[];
-	videosWatched: number;
-	notInterestedProfiles: number;
-	notInterestedPosts: number;
-	postsViewed: number;
-	adsViewed: number;
+	/** Activity counts are undefined when the export file was absent. */
+	videosWatched?: number;
+	notInterestedProfiles?: number;
+	notInterestedPosts?: number;
+	postsViewed?: number;
+	adsViewed?: number;
 }
 
 export interface ProfileChange {

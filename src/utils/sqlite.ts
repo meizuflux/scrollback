@@ -62,7 +62,7 @@ const TABLE_DEFINITIONS: Record<string, TableDefinition> = {
 					user.gender,
 					user.privateAccount ? 1 : 0,
 					safeISOString(user.dateOfBirth),
-					user.basedIn,
+					JSON.stringify(user.basedIn || null),
 					JSON.stringify(user.locationsOfInterest || []),
 					user.videosWatched || 0,
 					user.notInterestedProfiles || 0,

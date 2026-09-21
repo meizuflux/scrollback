@@ -1,5 +1,5 @@
 import { type InstagramDatabase, StoredMediaMetadata, type StoredPost, type StoredStory } from "@/db/database";
-import type { User } from "@/types/user";
+import type { ProfileBasedIn, User } from "@/types/user";
 import { decodeU8String, findFile, loadFile, processMediaFilesBatched } from "@/utils/media";
 import type { ProgFn } from "./import";
 import { CachedAnalysis } from "@/types/analysis";
@@ -28,24 +28,36 @@ const importUser = async (files: File[], database: InstagramDatabase, onProgress
 		loadFile<any>(files, "/ads_information/ads_and_topics/ads_viewed.json"),
 	]);
 
+	const profile = userFileData?.profile_user?.[0]?.string_map_data;
+	const privateAccountValue = profile?.["Private Account"]?.value;
+	const basedInDict = basedInFile?.label_values?.[0]?.dict || [];
+	const basedIn: ProfileBasedIn | null =
+		basedInDict.length > 0
+			? {
+					city: basedInDict.find((entry: any) => entry?.label === "City")?.value,
+					region: basedInDict.find((entry: any) => entry?.label === "Region")?.value,
+					country: basedInDict.find((entry: any) => entry?.label === "Country")?.value,
+				}
+			: null;
+
 	const user: User = {
-		username: userFileData?.profile_user?.[0]?.string_map_data?.Username?.value,
-		name: userFileData?.profile_user?.[0]?.string_map_data?.Name?.value,
-		email: userFileData?.profile_user?.[0]?.string_map_data?.Email?.value,
-		bio: decodeU8String(userFileData?.profile_user?.[0]?.string_map_data?.Bio?.value || ""),
-		gender: userFileData?.profile_user?.[0]?.string_map_data?.Gender?.value,
-		privateAccount: new Boolean(userFileData?.profile_user?.[0]?.string_map_data?.["Private Account"]?.value),
-		dateOfBirth: new Date(userFileData?.profile_user?.[0]?.string_map_data?.["Date of birth"]?.value),
-		basedIn: basedInFile?.label_values?.[0].dict?.[2]?.value || null,
+		username: profile?.Username?.value,
+		name: profile?.Name?.value,
+		email: profile?.Email?.value,
+		bio: decodeU8String(profile?.Bio?.value || ""),
+		gender: profile?.Gender?.value,
+		privateAccount: privateAccountValue === true || privateAccountValue === "true",
+		dateOfBirth: new Date(profile?.["Date of birth"]?.value),
+		basedIn,
 		locationsOfInterest:
 			locOfInterestFile?.label_values
 				?.filter((label: any) => label.label === "Locations of interest")?.[0]
 				?.vec?.map((v: any) => v.value) || [],
-		videosWatched: videosWatchedFile?.impressions_history_videos_watched?.length || 0,
-		notInterestedProfiles: notInterestedProfilesFile?.impressions_history_recs_hidden_authors?.length || 0,
-		notInterestedPosts: notInterestedPostsFile?.impressions_history_posts_not_interested?.length || 0,
-		postsViewed: postsViewedFile?.impressions_history_posts_seen?.length || 0,
-		adsViewed: adsViewedFile?.impressions_history_ads_seen?.length || 0,
+		videosWatched: videosWatchedFile?.impressions_history_videos_watched?.length,
+		notInterestedProfiles: notInterestedProfilesFile?.impressions_history_recs_hidden_authors?.length,
+		notInterestedPosts: notInterestedPostsFile?.impressions_history_posts_not_interested?.length,
+		postsViewed: postsViewedFile?.impressions_history_posts_seen?.length,
+		adsViewed: adsViewedFile?.impressions_history_ads_seen?.length,
 	};
 	const pfpPath = userFileData?.profile_user?.[0]?.media_map_data?.["Profile Photo"]?.uri;
 	if (pfpPath) user.profilePhotoUri = pfpPath;

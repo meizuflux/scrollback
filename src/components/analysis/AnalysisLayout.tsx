@@ -2,13 +2,13 @@ import { A, useLocation, useNavigate } from "@solidjs/router";
 import { type Component, createSignal, For, onMount, type ParentProps, Show } from "solid-js";
 import { createStore, type SetStoreFunction } from "solid-js/store";
 import logo from "@/assets/logo.svg";
-import { AnalysisDataContext } from "@/components/analysis/analysisData";
+import { AnalysisDataContext, type ContentCounts, type EngagementCounts } from "@/components/analysis/analysisData";
 import type { ConversationRow } from "@/components/analysis/analysisTypes";
 import Layout from "@/components/Layout";
 import { Button, LoadingState, NavigationLink } from "@/components/ui";
-import { db, type StoredUser } from "@/db/database";
+import { db, type StoredPost, type StoredUser } from "@/db/database";
 import type { CachedAnalysis } from "@/types/analysis";
-import type { User } from "@/types/user";
+import type { ProfileChange, User } from "@/types/user";
 import { readAnalysisCache, writeAnalysisCache } from "@/utils/analysisCache";
 import { clearData, isDataLoaded } from "@/utils/storage";
 
@@ -56,12 +56,19 @@ const createAnalysis = async (analysis: CachedAnalysis, setter: SetStoreFunction
 };
 
 const loadDataPackage = async () => {
-	const [user, people, conversations, messages] = await Promise.all([
-		db.mainUser.toCollection().first(),
-		db.users.toArray(),
-		db.conversations.toArray(),
-		db.messages.toArray(),
-	]);
+	const [user, people, conversations, messages, profileChanges, posts, stories, likedPosts, savedPosts, comments] =
+		await Promise.all([
+			db.mainUser.toCollection().first(),
+			db.users.toArray(),
+			db.conversations.toArray(),
+			db.messages.toArray(),
+			db.profileChanges.orderBy("timestamp").toArray(),
+			db.posts.toArray(),
+			db.stories.toArray(),
+			db.likedPosts.count(),
+			db.savedPosts.count(),
+			db.comments.count(),
+		]);
 
 	const messageCounts = new Map<string, number>();
 	const lastActivities = new Map<string, Date>();
@@ -82,10 +89,26 @@ const loadDataPackage = async () => {
 		lastActivity: lastActivities.get(conversation.title),
 	}));
 
+	const contentCounts: ContentCounts = {
+		posts: posts.filter((post) => !post.archived).length,
+		archived: posts.filter((post) => post.archived).length,
+		stories: stories.length,
+	};
+	const engagementCounts: EngagementCounts = {
+		likedPosts,
+		savedPosts,
+		comments,
+		storyLikes: people.reduce((sum, person) => sum + (person.stories_liked || 0), 0),
+	};
+
 	return {
 		user: user || null,
 		people,
 		conversationRows,
+		profileChanges,
+		posts,
+		contentCounts,
+		engagementCounts,
 	};
 };
 
@@ -96,6 +119,15 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 	const [user, setUser] = createSignal<User | null>(null);
 	const [people, setPeople] = createSignal<StoredUser[]>([]);
 	const [conversations, setConversations] = createSignal<ConversationRow[]>([]);
+	const [profileChanges, setProfileChanges] = createSignal<ProfileChange[]>([]);
+	const [posts, setPosts] = createSignal<StoredPost[]>([]);
+	const [contentCounts, setContentCounts] = createSignal<ContentCounts>({ posts: 0, archived: 0, stories: 0 });
+	const [engagementCounts, setEngagementCounts] = createSignal<EngagementCounts>({
+		likedPosts: 0,
+		savedPosts: 0,
+		comments: 0,
+		storyLikes: 0,
+	});
 	const [loading, setLoading] = createSignal(true);
 
 	onMount(async () => {
@@ -110,6 +142,10 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 			setUser(dataPackage.user);
 			setPeople(dataPackage.people);
 			setConversations(dataPackage.conversationRows);
+			setProfileChanges(dataPackage.profileChanges);
+			setPosts(dataPackage.posts);
+			setContentCounts(dataPackage.contentCounts);
+			setEngagementCounts(dataPackage.engagementCounts);
 		} catch (error) {
 			console.error("Failed to load analysis data package:", error);
 		} finally {
@@ -118,7 +154,19 @@ const AnalysisLayout: Component<ParentProps> = (props) => {
 	});
 
 	return (
-		<AnalysisDataContext.Provider value={{ analysis, user, people, conversations, loading }}>
+		<AnalysisDataContext.Provider
+			value={{
+				analysis,
+				user,
+				people,
+				conversations,
+				profileChanges,
+				posts,
+				contentCounts,
+				engagementCounts,
+				loading,
+			}}
+		>
 			<Layout>
 				<div class="container mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8">
 					<header class="mb-5 flex flex-col gap-3 border-b border-edge pb-4 sm:mb-7">
