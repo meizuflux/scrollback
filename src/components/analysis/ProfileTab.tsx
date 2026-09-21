@@ -310,42 +310,40 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 
 			{/* Account */}
 			<Panel variant="raised" class="p-6 sm:p-8">
-				<div class="flex flex-col gap-5 sm:flex-row sm:items-center">
+				<div class="flex flex-col gap-5 sm:flex-row sm:items-start">
 					<ProfileAvatar user={props.user} />
-					<div class="min-w-0">
-						<div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-							<div class="min-w-0">
-								<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-									<h2 class="font-sans text-2xl font-semibold tracking-tight text-gray-100">
-										{props.user?.name || "Unavailable"}
-									</h2>
-									<Show when={props.user}>
-										<span
-											class={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5 ${
-												props.user?.privateAccount
-													? "border-red-line bg-red-fill text-red-soft"
-													: "border-edge-strong text-gray-400"
-											}`}
-										>
-											{props.user?.privateAccount ? "Private account" : "Public account"}
-										</span>
-									</Show>
-								</div>
-								<Show when={props.user?.username}>
-									<p class="mt-1 text-gray-400">@{props.user?.username}</p>
+					<div class="flex min-w-0 flex-1 flex-col justify-between gap-x-8 sm:flex-row">
+						<div class="min-w-0">
+							<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+								<h2 class="font-sans text-2xl font-semibold tracking-tight text-gray-100">
+									{props.user?.name || "Unavailable"}
+								</h2>
+								<Show when={props.user}>
+									<span
+										class={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium leading-5 ${
+											props.user?.privateAccount
+												? "border-red-line bg-red-fill text-red-soft"
+												: "border-edge-strong text-gray-400"
+										}`}
+									>
+										{props.user?.privateAccount ? "Private account" : "Public account"}
+									</span>
 								</Show>
 							</div>
-							<div class="flex shrink-0 items-baseline gap-x-6 gap-y-2">
-								<Stat label="Posts" value={props.contentCounts().posts} />
-								<Stat label="Followers" value={networkCounts().followers} />
-								<Stat label="Following" value={networkCounts().following} />
-							</div>
+							<Show when={props.user?.username}>
+								<p class="mt-1 text-gray-400">@{props.user?.username}</p>
+							</Show>
+							<Show when={props.user?.bio}>
+								<p class="mt-2 max-w-xl whitespace-pre-wrap font-space-grotesk text-sm leading-6 text-gray-300">
+									{props.user?.bio}
+								</p>
+							</Show>
 						</div>
-						<Show when={props.user?.bio}>
-							<p class="mt-3 max-w-xl whitespace-pre-wrap font-space-grotesk text-sm leading-6 text-gray-300">
-								{props.user?.bio}
-							</p>
-						</Show>
+						<div class="flex shrink-0 flex-wrap items-baseline justify-end gap-x-6 gap-y-1.5 sm:flex-col sm:items-end">
+							<Stat label="Posts" value={props.contentCounts().posts} />
+							<Stat label="Followers" value={networkCounts().followers} />
+							<Stat label="Following" value={networkCounts().following} />
+						</div>
 					</div>
 				</div>
 
