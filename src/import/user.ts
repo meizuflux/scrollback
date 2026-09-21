@@ -232,13 +232,20 @@ const importProfileChanges = async (files: File[], database: InstagramDatabase, 
 	onProgress(30, `Found ${profileChangesFile.profile_profile_change.length} profile changes. Processing...`);
 
 	const changes = profileChangesFile.profile_profile_change;
-	const profileChanges = changes.map((change: any, index: number) => {
+	const profileChanges = changes.map((change: any) => {
 		const stringMapData = change.string_map_data;
+		const entryFor = (label: string): any =>
+			Object.entries(stringMapData || {}).find(([key]) => key.toLowerCase() === label.toLowerCase())?.[1];
+		const changed = entryFor("Changed")?.value;
+		const previousValue = entryFor("Previous value")?.value;
+		const newValue = entryFor("New value")?.value;
+		const changeDate = entryFor("Change date")?.timestamp;
+
 		return {
-			changed: stringMapData.Changed?.value || "",
-			previousValue: decodeU8String(stringMapData["Previous Value"]?.value || ""),
-			newValue: decodeU8String(stringMapData["New Value"]?.value || ""),
-			timestamp: new Date(stringMapData["Change Date"]?.timestamp * 1000),
+			changed: decodeU8String(changed || ""),
+			previousValue: decodeU8String(previousValue || ""),
+			newValue: decodeU8String(newValue || ""),
+			timestamp: new Date(changeDate ? changeDate * 1000 : Number.NaN),
 		};
 	});
 	onProgress(70, "All profile changes processed, saving to database...");

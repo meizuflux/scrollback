@@ -170,6 +170,24 @@ const Stat: Component<{ label: string; value: number }> = (props) => (
 	</div>
 );
 
+const PROFILE_CHANGES_PREVIEW_COUNT = 5;
+
+const ProfileChangeRow: Component<{ change: ProfileChange }> = (props) => (
+	<li class="flex flex-col gap-1 rounded-lg border border-edge bg-surface px-4 py-3 sm:flex-row sm:items-baseline sm:gap-4">
+		<span class="shrink-0 font-mono text-xs uppercase tracking-wider text-gray-500">
+			{formatHistoryDate(props.change.timestamp)}
+		</span>
+		<span class="shrink-0 text-xs font-semibold uppercase tracking-[0.08em] text-gray-400">
+			{props.change.changed || "Profile"}
+		</span>
+		<span class="flex min-w-0 items-center gap-2 text-sm">
+			<span class="truncate text-gray-500 line-through">{props.change.previousValue || "—"}</span>
+			<span class="text-gray-600">→</span>
+			<span class="truncate text-gray-100">{props.change.newValue || "—"}</span>
+		</span>
+	</li>
+);
+
 const PostThumb: Component<{ post: StoredPost }> = (props) => {
 	const [imageUrl, setImageUrl] = createSignal<string | null>(null);
 
@@ -252,6 +270,10 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 			.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
 	);
 	const visiblePosts = () => (showAllPosts() ? posts() : posts().slice(0, columns() * 3));
+
+	const profileChanges = createMemo(() =>
+		[...props.profileChanges()].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
+	);
 
 	const networkCounts = createMemo(() => {
 		const counts = {
@@ -437,26 +459,44 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 					}
 				>
 					<ol class="mt-5 space-y-2">
-						<For each={props.profileChanges()}>
-							{(change) => (
-								<li class="flex flex-col gap-1 rounded-lg border border-edge bg-surface px-4 py-3 sm:flex-row sm:items-baseline sm:gap-4">
-									<span class="shrink-0 font-mono text-xs uppercase tracking-wider text-gray-500">
-										{formatHistoryDate(change.timestamp)}
-									</span>
-									<span class="shrink-0 text-xs font-semibold uppercase tracking-[0.08em] text-gray-400">
-										{change.changed || "Profile"}
-									</span>
-									<span class="flex min-w-0 items-center gap-2 text-sm">
-										<span class="truncate text-gray-500 line-through">
-											{change.previousValue || "—"}
-										</span>
-										<span class="text-gray-600">→</span>
-										<span class="truncate text-gray-100">{change.newValue || "—"}</span>
-									</span>
-								</li>
-							)}
+						<For each={profileChanges().slice(0, PROFILE_CHANGES_PREVIEW_COUNT)}>
+							{(change) => <ProfileChangeRow change={change} />}
 						</For>
 					</ol>
+					<Show when={profileChanges().length > PROFILE_CHANGES_PREVIEW_COUNT}>
+						<details class="group mt-3">
+							<summary class="flex w-full cursor-pointer list-none items-center justify-between rounded-lg border border-edge bg-surface px-4 py-3 text-sm text-gray-400 transition hover:text-gray-200 [&::-webkit-details-marker]:hidden">
+								<span class="transition-colors">
+									<span class="group-open:hidden">
+										Show {profileChanges().length - PROFILE_CHANGES_PREVIEW_COUNT} earlier change
+										{profileChanges().length - PROFILE_CHANGES_PREVIEW_COUNT === 1 ? "" : "s"}
+									</span>
+									<span class="hidden group-open:inline">Hide earlier changes</span>
+								</span>
+								<svg
+									class="h-4 w-4 transition-transform group-open:rotate-180"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									aria-hidden="true"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="m19.5 8.25-7.5 7.5-7.5-7.5"
+									/>
+								</svg>
+							</summary>
+							<div class="mt-3 ml-1 border-l-2 border-edge pl-3 sm:ml-3 sm:pl-4">
+								<ol class="space-y-2">
+									<For each={profileChanges().slice(PROFILE_CHANGES_PREVIEW_COUNT)}>
+										{(change) => <ProfileChangeRow change={change} />}
+									</For>
+								</ol>
+							</div>
+						</details>
+					</Show>
 				</Show>
 			</Panel>
 
