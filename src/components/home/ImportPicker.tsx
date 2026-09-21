@@ -1,4 +1,5 @@
 import { type Component, Show } from "solid-js";
+import { Button, Panel } from "@/components/ui";
 
 interface ImportPickerProps {
 	filePickerDisabled: boolean;
@@ -15,7 +16,7 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 	};
 
 	return (
-		<div class="mb-8 rounded-lg border border-pink/35 bg-[radial-gradient(circle_at_88%_18%,rgba(121,115,245,0.2),transparent_16rem),linear-gradient(145deg,rgba(39,27,43,0.96),rgba(24,24,24,0.96))] p-7 shadow-[0_18px_50px_rgba(0,0,0,0.16)] text-center sm:p-10">
+		<Panel variant="raised" class="mb-8 p-7 text-center sm:p-10">
 			<input
 				type="file"
 				accept=".zip"
@@ -36,8 +37,8 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				onChange={handleChange}
 			/>
 
-			<div class="mx-auto mb-5 flex h-10 w-10 items-center justify-center rounded-xl border border-purple/50 bg-purple/10 text-purple shadow-[0_0_24px_rgba(120,115,245,0.12)]">
-				<svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+			<div class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-purple-line bg-purple-fill/60 text-purple-soft">
+				<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -52,32 +53,34 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 					/>
 				</svg>
 			</div>
-			<h3 class="mb-3 font-sans text-xl font-semibold text-white">Import your Instagram archive</h3>
+			<h3 class="mb-3 font-sans text-xl font-semibold tracking-tight text-gray-100">
+				Import your Instagram archive
+			</h3>
 			<p class="mx-auto mb-7 max-w-md text-sm text-gray-400 sm:text-base">
 				Upload the zip file or extracted folder from your Instagram data download
 			</p>
 
 			<div class="mx-auto flex max-w-md flex-col justify-center gap-3 sm:flex-row">
-				<button
-					type="button"
-					class="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ff9ad8] hover:bg-[#ff9ad8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[156px]"
+				<Button
+					variant="primary"
+					class="w-full sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("zipPicker")}
 					disabled={props.filePickerDisabled}
 				>
 					Select ZIP file
-				</button>
-				<button
-					type="button"
-					class="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[156px]"
+				</Button>
+				<Button
+					variant="secondary"
+					class="w-full sm:w-auto sm:min-w-[156px]"
 					onClick={() => chooseFile("folderPicker")}
 					disabled={props.filePickerDisabled}
 				>
 					Select folder
-				</button>
+				</Button>
 			</div>
-			<button
-				type="button"
-				class="mt-4 inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-purple/70 bg-purple/10 px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:bg-purple/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple disabled:cursor-not-allowed disabled:opacity-50"
+			<Button
+				variant="ghost"
+				class="mt-4"
 				onClick={props.onTryDemo}
 				disabled={!props.demoManifestReady}
 				aria-busy={!props.demoManifestReady}
@@ -96,11 +99,11 @@ const ImportPicker: Component<ImportPickerProps> = (props) => {
 				>
 					Try demo
 				</Show>
-			</button>
+			</Button>
 			<p class="mt-5 text-sm text-gray-400">
 				Your data stays on this device. Processing happens locally in your browser.
 			</p>
-		</div>
+		</Panel>
 	);
 };
 

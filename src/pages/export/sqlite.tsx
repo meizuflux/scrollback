@@ -1,6 +1,6 @@
 import { type Component, Match, Show, Switch } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 import Layout from "@/components/Layout";
+import { Button, NavigationLink, Panel } from "@/components/ui";
 import {
 	AdvancedOptions,
 	DownloadReady,
@@ -11,7 +11,6 @@ import {
 import { useSqliteExport } from "@/pages/export/useSqliteExport";
 
 const SqliteExport: Component = () => {
-	const navigate = useNavigate();
 	const {
 		sqlInstance,
 		tableOptions,
@@ -40,19 +39,21 @@ const SqliteExport: Component = () => {
 
 	return (
 		<Layout>
-			<div class="container mx-auto max-w-5xl px-4 py-7 sm:px-6">
+			<div class="container mx-auto max-w-5xl px-4 py-8 sm:px-6">
 				<div class="mb-6">
-					<button
-						type="button"
-						class="mb-4 flex cursor-pointer items-center text-sm text-gray-400 transition-colors hover:text-gray-100"
-						onClick={() => navigate("/export")}
+					<NavigationLink
+						href="/export"
+						class="mb-4 border-0 px-0 py-0 text-gray-400 hover:border-0 hover:bg-transparent hover:text-gray-100"
 					>
-						← Back to Export Options
-					</button>
-					<p class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text text-xs font-bold uppercase leading-4 tracking-[0.16em] text-transparent">
+						<span aria-hidden="true" class="mr-1">
+							←
+						</span>{" "}
+						Back to Export Options
+					</NavigationLink>
+					<p class="mb-3 text-xs font-bold uppercase leading-4 tracking-[0.16em] text-purple-soft">
 						Portable backup
 					</p>
-					<h1 class="mb-3 font-sans text-3xl font-semibold tracking-tight text-white">
+					<h1 class="mb-3 font-sans text-3xl font-semibold tracking-tight text-gray-100">
 						SQLite database export
 					</h1>
 					<p class="text-base text-gray-400">
@@ -61,12 +62,12 @@ const SqliteExport: Component = () => {
 				</div>
 
 				<Show when={sqlInstance.error}>
-					<div class="mb-6 rounded-lg border border-red/60 bg-red/10 p-4">
-						<span class="text-red">Failed to load SQL.js. Please refresh the page.</span>
+					<div class="mb-6 rounded-lg border border-red-line bg-red-fill/60 p-4">
+						<span class="text-red-soft">Failed to load SQL.js. Please refresh the page.</span>
 					</div>
 				</Show>
 
-				<div class="mb-6 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
+				<Panel class="mb-6 p-5 sm:p-6">
 					<TableSelection
 						tableOptions={tableOptions}
 						selectedCount={selectedTableCount}
@@ -90,9 +91,8 @@ const SqliteExport: Component = () => {
 						onCopy={copySchemaToClipboard}
 					/>
 
-					<button
-						type="button"
-						class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink disabled:cursor-not-allowed disabled:opacity-50"
+					<Button
+						variant="primary"
 						onClick={exportToSqlite}
 						disabled={selectedTableCount() === 0 || isExporting() || !sqlInstance()}
 					>
@@ -100,8 +100,8 @@ const SqliteExport: Component = () => {
 							<Match when={!sqlInstance()}>Loading...</Match>
 							<Match when={isExporting()}>Generating...</Match>
 						</Switch>
-					</button>
-				</div>
+					</Button>
+				</Panel>
 
 				<ExportStatus visible={isExporting} progress={exportProgress} status={exportStatus} />
 				<DownloadReady

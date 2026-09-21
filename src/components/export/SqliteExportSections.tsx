@@ -1,5 +1,6 @@
 import { type Accessor, type Component, For, Show } from "solid-js";
 import type { TableOption } from "@/utils/sqlite";
+import { Button, Panel, TextInput } from "@/components/ui";
 
 const formatFileSize = (bytes: number): string => {
 	if (bytes === 0) return "0 B";
@@ -19,30 +20,23 @@ interface TableSelectionProps {
 
 export const TableSelection: Component<TableSelectionProps> = (props) => (
 	<div class="mb-6">
-		<div class="mb-4 flex items-center justify-between">
-			<h4 class="font-sans text-lg font-semibold text-gray-100">Select tables to export</h4>
+		<div class="mb-4 flex items-center justify-between gap-3">
+			<h4 class="font-sans text-lg font-semibold tracking-tight text-gray-100">Select tables to export</h4>
 			<div class="text-sm text-gray-400">
-				{props.selectedCount()} of {props.tableOptions().length} selected
+				<span class="font-mono font-medium text-gray-100">{props.selectedCount()}</span> of{" "}
+				{props.tableOptions().length} selected
 			</div>
 		</div>
 
-		<div class="mb-6 flex gap-2">
-			<button
-				type="button"
-				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-pink bg-pink px-4 py-2.5 text-sm font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
-				onClick={props.onSelectAll}
-			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<div class="mb-6 flex flex-wrap gap-2">
+			<Button variant="primary" onClick={props.onSelectAll}>
+				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
 				</svg>
 				Select All
-			</button>
-			<button
-				type="button"
-				class="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-				onClick={props.onSelectNone}
-			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			</Button>
+			<Button variant="secondary" onClick={props.onSelectNone}>
+				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -51,17 +45,17 @@ export const TableSelection: Component<TableSelectionProps> = (props) => (
 					></path>
 				</svg>
 				Clear All
-			</button>
+			</Button>
 		</div>
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<For each={props.tableOptions()}>
 				{(table) => (
 					<label
-						class="relative cursor-pointer rounded-lg border p-4 transition-colors focus-within:border-purple"
+						class="relative cursor-pointer rounded-xl border p-4 transition-colors focus-within:border-purple"
 						classList={{
-							"border-purple bg-gray-800": table.enabled,
-							"border-gray-700 bg-gray-900 hover:border-gray-600": !table.enabled,
+							"border-purple-line bg-purple-fill/30": table.enabled,
+							"border-edge bg-panel hover:border-edge-strong": !table.enabled,
 						}}
 					>
 						<input
@@ -70,12 +64,17 @@ export const TableSelection: Component<TableSelectionProps> = (props) => (
 							onChange={() => props.onToggle(table.name)}
 							class="sr-only"
 						/>
-						<div class="flex items-start justify-between">
+						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0 flex-1">
 								<div class="mb-2 flex items-center gap-2">
 									<div class="text-sm font-semibold text-gray-100">{table.label}</div>
 									<Show when={table.enabled}>
-										<svg class="h-4 w-4 text-purple" fill="currentColor" viewBox="0 0 20 20">
+										<svg
+											class="h-4 w-4 text-purple"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											aria-hidden="true"
+										>
 											<path
 												fill-rule="evenodd"
 												d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -110,7 +109,7 @@ export const AdvancedOptions: Component<AdvancedOptionsProps> = (props) => (
 	<div class="mb-4">
 		<button
 			type="button"
-			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple transition-colors hover:text-pink"
+			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple-soft transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 			onClick={props.onToggle}
 		>
 			<svg
@@ -118,6 +117,7 @@ export const AdvancedOptions: Component<AdvancedOptionsProps> = (props) => (
 				classList={{ "rotate-90": props.open() }}
 				fill="currentColor"
 				viewBox="0 0 20 20"
+				aria-hidden="true"
 			>
 				<path
 					fill-rule="evenodd"
@@ -128,14 +128,13 @@ export const AdvancedOptions: Component<AdvancedOptionsProps> = (props) => (
 			Advanced Options
 		</button>
 		<Show when={props.open()}>
-			<div class="space-y-4 rounded-lg border border-purple/30 bg-gray-900/85 p-4">
+			<div class="space-y-4 rounded-xl border border-edge bg-panel p-4">
 				<div>
 					<label class="mb-2 block text-sm font-medium text-gray-400">Output filename</label>
-					<input
+					<TextInput
 						type="text"
 						value={props.fileName()}
 						onInput={(event) => props.onFileName(event.currentTarget.value)}
-						class="min-h-10 w-full cursor-text rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm leading-5 text-gray-100 outline-none placeholder:text-gray-500 transition-colors hover:border-gray-600 focus:border-purple focus:bg-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						placeholder="instagram-data.sqlite"
 					/>
 				</div>
@@ -156,7 +155,7 @@ export const SchemaPreview: Component<SchemaPreviewProps> = (props) => (
 	<div class="mb-4">
 		<button
 			type="button"
-			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple transition-colors hover:text-pink disabled:cursor-not-allowed disabled:text-gray-500"
+			class="mb-3 flex cursor-pointer items-center text-sm font-semibold text-purple-soft transition-colors hover:text-purple disabled:cursor-not-allowed disabled:text-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 			onClick={props.onToggle}
 		>
 			<svg
@@ -164,6 +163,7 @@ export const SchemaPreview: Component<SchemaPreviewProps> = (props) => (
 				classList={{ "rotate-90": props.open() }}
 				fill="currentColor"
 				viewBox="0 0 20 20"
+				aria-hidden="true"
 			>
 				<path
 					fill-rule="evenodd"
@@ -174,14 +174,10 @@ export const SchemaPreview: Component<SchemaPreviewProps> = (props) => (
 			View Generated SQL Schema
 		</button>
 		<Show when={props.open()}>
-			<div class="relative rounded-lg border border-purple/40 bg-[radial-gradient(circle_at_100%_0%,rgba(120,115,245,0.1),transparent_12rem),rgba(24,24,24,0.92)] p-4">
-				<button
-					type="button"
-					class="absolute right-3 top-3 z-10 inline-flex min-h-8 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-3 py-1 text-xs font-semibold text-gray-100 transition-colors hover:border-purple hover:bg-purple/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-					onClick={props.onCopy}
-				>
+			<div class="relative rounded-xl border border-edge bg-panel p-4">
+				<Button variant="secondary" size="sm" class="absolute right-3 top-3 z-10" onClick={props.onCopy}>
 					{props.copyButtonText()}
-				</button>
+				</Button>
 				<Show when={props.schema()}>
 					<pre class="max-h-[70vh] overflow-x-auto whitespace-pre pr-20 font-mono text-sm text-gray-400 md:max-h-[60vh]">
 						<code class="text-gray-400">{props.schema()}</code>
@@ -206,20 +202,20 @@ interface ExportStatusProps {
 
 export const ExportStatus: Component<ExportStatusProps> = (props) => (
 	<Show when={props.visible()}>
-		<div class="mb-4 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
-			<h3 class="mb-4 font-sans text-lg font-semibold text-gray-100">Generating database</h3>
+		<Panel class="mb-4 p-5 sm:p-6">
+			<h3 class="mb-4 font-sans text-lg font-semibold tracking-tight text-gray-100">Generating database</h3>
 			<div class="mb-4">
 				<div class="mb-2 h-3 rounded-full bg-gray-700">
 					<div
-						class="h-3 rounded-full bg-gradient-to-r from-pink to-purple transition-all duration-500 ease-out"
-						style={`width: ${props.progress()}%`}
+						class="h-3 rounded-full bg-purple transition-all duration-500 ease-out"
+						style={{ width: `${props.progress()}%` }}
 					></div>
 				</div>
 				<p class="text-sm text-gray-400">
 					{props.progress()}% - {props.status()}
 				</p>
 			</div>
-		</div>
+		</Panel>
 	</Show>
 );
 
@@ -232,11 +228,11 @@ interface DownloadReadyProps {
 
 export const DownloadReady: Component<DownloadReadyProps> = (props) => (
 	<Show when={props.visible()}>
-		<div class="mb-4 rounded-lg border border-pink/35 bg-[radial-gradient(circle_at_88%_18%,rgba(121,115,245,0.2),transparent_16rem),linear-gradient(145deg,rgba(39,27,43,0.96),rgba(24,24,24,0.96))] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.16)] sm:p-6">
+		<Panel variant="raised" class="mb-4 p-5 text-center sm:p-6">
 			<div class="text-center">
 				<div class="mb-4">
-					<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple text-purple shadow-[0_0_20px_rgba(120,115,245,0.15)]">
-						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<div class="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-purple-line text-purple-soft">
+						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
@@ -246,18 +242,14 @@ export const DownloadReady: Component<DownloadReadyProps> = (props) => (
 						</svg>
 					</div>
 				</div>
-				<h3 class="mb-4 font-sans text-2xl font-semibold text-gray-100">Database ready</h3>
+				<h3 class="mb-4 font-sans text-2xl font-semibold tracking-tight text-gray-100">Database ready</h3>
 				<p class="mx-auto mb-6 max-w-lg text-gray-400">
 					Your SQLite database has been generated successfully. Click the button below to download it.
 				</p>
-				<button
-					type="button"
-					class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-pink bg-pink px-4 py-2.5 text-base font-semibold leading-5 text-gray-950 shadow-[0_8px_24px_rgba(255,110,196,0.14)] transition-colors hover:border-[#ffb1df] hover:bg-[#ffb1df] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink"
-					onClick={props.onDownload}
-				>
+				<Button variant="primary" onClick={props.onDownload}>
 					Download {props.fileName()} ({formatFileSize(props.fileSize())})
-				</button>
+				</Button>
 			</div>
-		</div>
+		</Panel>
 	</Show>
 );

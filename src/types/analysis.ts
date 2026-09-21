@@ -18,7 +18,7 @@ interface _CachedAnalysis {
 	postsSaved: number;
 	reactionsSent: number;
 	reactionsReceived: number;
-	topThreeConversations: { title: string; count: number }[];
+	topConversations: { title: string; count: number }[];
 }
 
 export type CachedAnalysis = Partial<_CachedAnalysis>;

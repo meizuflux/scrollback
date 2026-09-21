@@ -212,7 +212,7 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 	analysis.messageCount = allMessages.length;
 	analysis.conversationCount = conversations.length;
 
-	// Calculate top three conversations by message count
+	// Calculate top five conversations by message count
 	const conversationMessageCounts = new Map<string, number>();
 
 	for (const message of allMessages) {
@@ -222,9 +222,9 @@ export default async (files: File[], database: InstagramDatabase, onProgress: Pr
 		}
 	}
 
-	analysis.topThreeConversations = Array.from(conversationMessageCounts.entries())
+	analysis.topConversations = Array.from(conversationMessageCounts.entries())
 		.sort((a, b) => b[1] - a[1])
-		.slice(0, 3)
+		.slice(0, 5)
 		.map(([title, count]) => ({ title, count }));
 
 	onProgress(100, `Imported ${allMessages.length} messages and ${conversations.length} conversations.`);

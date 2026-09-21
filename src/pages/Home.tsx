@@ -8,6 +8,7 @@ import ImportPicker from "@/components/home/ImportPicker";
 import ImportStatus from "@/components/home/ImportStatus";
 import logo from "@/assets/logo.svg";
 import Layout from "@/components/Layout";
+import { Panel } from "@/components/ui";
 import { enterDemoMode, isDemoMode } from "@/utils/demo";
 import { loadDemoFiles, prefetchDemoManifest } from "@/demo/loadDemoFiles";
 import { loadAnalysisPage } from "@/pages/analysisLoader";
@@ -220,10 +221,10 @@ const Home: Component = () => {
 			<div class="container mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
 				{/* Header */}
 				<div class="relative mx-auto mb-10 max-w-2xl text-center sm:mb-12">
-					<div class="mx-auto mb-6 h-12 w-12">
-						<img src={logo} alt="Scrollback Logo" class="h-12 w-12" />
+					<div class="mx-auto mb-6 h-14 w-14">
+						<img src={logo} alt="Scrollback Logo" class="h-14 w-14" />
 					</div>
-					<h1 class="mb-3 bg-gradient-to-r from-pink to-purple bg-clip-text font-sans text-3xl font-bold tracking-tight text-transparent">
+					<h1 class="mb-3 font-sans text-3xl font-bold tracking-tight text-gray-50 sm:text-4xl">
 						Scrollback
 					</h1>
 					<p class="text-base text-gray-400 sm:text-lg">Explore your Instagram archive.</p>
@@ -261,8 +262,8 @@ const Home: Component = () => {
 					/>
 
 					{/* How to Get Instagram Data */}
-					<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold text-white">
+					<Panel class="mb-8 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold tracking-tight text-gray-100">
 							<svg
 								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"
@@ -294,7 +295,7 @@ const Home: Component = () => {
 										href="https://accountscenter.instagram.com/info_and_permissions/"
 										target="_blank"
 										rel="noopener noreferrer"
-										class="cursor-pointer text-pink underline decoration-pink underline-offset-4 transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
+										class="cursor-pointer text-purple-soft underline decoration-purple-line underline-offset-4 transition-colors hover:text-purple focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 									>
 										Instagram Account Center
 									</a>
@@ -329,11 +330,11 @@ const Home: Component = () => {
 								</span>
 							</div>
 						</div>
-					</div>
+					</Panel>
 
 					{/* Limitations */}
-					<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
-						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold text-white">
+					<Panel class="mb-8 p-5 sm:p-6">
+						<h2 class="mb-4 flex items-center gap-2 font-sans text-lg font-semibold tracking-tight text-gray-100">
 							<svg
 								class="h-5 w-5 text-gray-400"
 								viewBox="0 0 24 24"
@@ -371,7 +372,7 @@ const Home: Component = () => {
 								<span>Some features may not work on older browsers or mobile devices</span>
 							</li>
 						</ul>
-					</div>
+					</Panel>
 				</Show>
 			</div>
 		</Layout>

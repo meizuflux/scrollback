@@ -1,34 +1,23 @@
 import { useSearchParams } from "@solidjs/router";
-import { type Component, createMemo, createSignal, For, Show } from "solid-js";
-import type {
-	AnalysisTabsProps,
-	ConversationTypeFilter,
-	PeopleFilter,
-	PeopleSort,
-	TabId,
+import { type Component, createMemo, createSignal, Match, Show, Switch } from "solid-js";
+import {
+	isPeopleFilter,
+	isPeopleSort,
+	isTabId,
+	type ConversationRow,
+	type ConversationTypeFilter,
+	type PeopleFilter,
+	type PeopleSort,
+	type TabId,
 } from "@/components/analysis/analysisTypes";
 import ConversationsTab from "@/components/analysis/ConversationsTab";
 import HighlightsTab from "@/components/analysis/Overview";
 import PeopleTab from "@/components/analysis/PeopleTab";
 import ProfileTab from "@/components/analysis/ProfileTab";
-import { db } from "@/db/database";
-import type { ConversationSenderStat } from "@/components/analysis/analysisTypes";
-
-export type {
-	AnalysisTabsProps,
-	ConversationRow,
-	ConversationTypeFilter,
-	PeopleFilter,
-	PeopleSort,
-	TabId,
-} from "@/components/analysis/analysisTypes";
-
-const tabItems: Array<{ id: TabId; label: string }> = [
-	{ id: "highlights", label: "Highlights" },
-	{ id: "people", label: "People" },
-	{ id: "conversations", label: "Conversations" },
-	{ id: "profile", label: "Profile" },
-];
+import { LoadingState } from "@/components/ui";
+import { createConversationStats } from "@/components/analysis/conversationStats";
+import type { StoredUser } from "@/db/database";
+import type { AnalysisTabsProps } from "@/components/analysis/analysisTypes";
 
 interface AnalysisSearchParams {
 	[key: string]: string | string[] | undefined;
@@ -41,69 +30,23 @@ interface AnalysisSearchParams {
 
 const getParam = (value: string | string[] | undefined) => (typeof value === "string" ? value : "");
 
-const isTabId = (value: string): value is TabId => tabItems.some((tab) => tab.id === value);
-const isPeopleFilter = (value: string): value is PeopleFilter =>
-	[
-		"all",
-		"followers",
-		"following",
-		"mutuals",
-		"close-friends",
-		"blocked",
-		"requested",
-		"hidden-story",
-		"pending-request",
-		"recently-unfollowed",
-	].includes(value);
-const isPeopleSort = (value: string): value is PeopleSort =>
-	["username-asc", "username-desc", "followers", "following", "close-friends", "blocked"].includes(value);
-
 const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	const [searchParams, setSearchParams] = useSearchParams<AnalysisSearchParams>();
 	const [conversationSearch, setConversationSearch] = createSignal("");
 	const [conversationType, setConversationType] = createSignal<ConversationTypeFilter>("all");
 	const [minimumMessages, setMinimumMessages] = createSignal("");
 	const [selectedConversation, setSelectedConversation] = createSignal<string | null>(null);
-	const [conversationStats, setConversationStats] = createSignal<ConversationSenderStat[]>([]);
-	const [conversationStatsLoading, setConversationStatsLoading] = createSignal(false);
+	const conversationStats = createConversationStats(selectedConversation);
 
-	const loadConversationStats = async (conversation: { title: string }) => {
-		if (selectedConversation() === conversation.title) {
-			setSelectedConversation(null);
-			return;
-		}
-		setSelectedConversation(conversation.title);
-		const cache = JSON.parse(localStorage.getItem("conversation_stats_cache") || "{}") as Record<
-			string,
-			ConversationSenderStat[]
-		>;
-		if (cache[conversation.title]) {
-			setConversationStats(cache[conversation.title]);
-			return;
-		}
-		setConversationStatsLoading(true);
-		try {
-			const counts = new Map<string, number>();
-			for (const message of await db.messages
-				.filter((message) => message.conversation === conversation.title)
-				.toArray()) {
-				const sender = message.sender_name || "Unknown sender";
-				counts.set(sender, (counts.get(sender) || 0) + 1);
-			}
-			const stats = Array.from(counts, ([sender, count]) => ({ sender, count })).sort(
-				(a, b) => b.count - a.count || a.sender.localeCompare(b.sender),
-			);
-			setConversationStats(stats);
-			localStorage.setItem("conversation_stats_cache", JSON.stringify({ ...cache, [conversation.title]: stats }));
-		} finally {
-			setConversationStatsLoading(false);
-		}
+	const toggleConversation = (conversation: ConversationRow) => {
+		setSelectedConversation((current) => (current === conversation.title ? null : conversation.title));
 	};
 
 	const activeTab = createMemo<TabId>(() => {
 		const tab = getParam(searchParams.tab);
 		return isTabId(tab) ? tab : "highlights";
 	});
+
 	const peopleSearch = () => getParam(searchParams.peopleSearch);
 	const peopleRelationship = () => {
 		const relationship = getParam(searchParams.relationship);
@@ -115,7 +58,6 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	};
 	const peopleTableOpen = () => getParam(searchParams.table) === "open";
 
-	const setActiveTab = (tab: TabId) => setSearchParams({ tab: tab === "highlights" ? null : tab }, { replace: true });
 	const setPeopleSearch = (value: string) =>
 		setSearchParams({ peopleSearch: value || null, tab: "people", table: "open" }, { replace: true });
 	const setPeopleRelationship = (value: PeopleFilter) =>
@@ -131,38 +73,73 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 	const togglePeopleTable = () =>
 		setSearchParams({ table: peopleTableOpen() ? null : "open", tab: "people" }, { replace: true });
 
+	const compareUsernames = (a: StoredUser, b: StoredUser) =>
+		a.username.localeCompare(b.username, undefined, { sensitivity: "base" });
+
+	const sortPeople = (people: StoredUser[]) => {
+		switch (peopleSort()) {
+			case "username-desc":
+				return [...people].sort((a, b) => compareUsernames(a, b) * -1);
+			case "followers":
+				return [...people].sort(
+					(a, b) =>
+						Number(b.follower?.value === true) - Number(a.follower?.value === true) ||
+						compareUsernames(a, b),
+				);
+			case "following":
+				return [...people].sort(
+					(a, b) =>
+						Number(b.following?.value === true) - Number(a.following?.value === true) ||
+						compareUsernames(a, b),
+				);
+			case "close-friends":
+				return [...people].sort(
+					(a, b) =>
+						Number(b.close_friends?.value === true) - Number(a.close_friends?.value === true) ||
+						compareUsernames(a, b),
+				);
+			case "blocked":
+				return [...people].sort(
+					(a, b) =>
+						Number(b.blocked?.value === true) - Number(a.blocked?.value === true) || compareUsernames(a, b),
+				);
+			default:
+				return [...people].sort(compareUsernames);
+		}
+	};
+
 	const filteredPeople = createMemo(() => {
 		const query = peopleSearch().trim().toLocaleLowerCase();
 		const relationship = peopleRelationship();
 
-		return props.people
-			.filter((person) => {
-				const username = person.username.toLocaleLowerCase();
-				if (query && !username.includes(query)) return false;
-				switch (relationship) {
-					case "followers":
-						return person.follower?.value === true;
-					case "following":
-						return person.following?.value === true;
-					case "mutuals":
-						return person.follower?.value === true && person.following?.value === true;
-					case "close-friends":
-						return person.close_friends?.value === true;
-					case "blocked":
-						return person.blocked?.value === true;
-					case "requested":
-						return person.requested_to_follow_you?.value === true;
-					case "hidden-story":
-						return person.hidden_story_from?.value === true;
-					case "pending-request":
-						return person.pending_follow_request?.value === true;
-					case "recently-unfollowed":
-						return person.recently_unfollowed?.value === true;
-					default:
-						return true;
-				}
-			})
-			.sort((a, b) => a.username.localeCompare(b.username, undefined, { sensitivity: "base" }));
+		const matches = props.people.filter((person) => {
+			const username = person.username.toLocaleLowerCase();
+			if (query && !username.includes(query)) return false;
+			switch (relationship) {
+				case "followers":
+					return person.follower?.value === true;
+				case "following":
+					return person.following?.value === true;
+				case "mutuals":
+					return person.follower?.value === true && person.following?.value === true;
+				case "close-friends":
+					return person.close_friends?.value === true;
+				case "blocked":
+					return person.blocked?.value === true;
+				case "requested":
+					return person.requested_to_follow_you?.value === true;
+				case "hidden-story":
+					return person.hidden_story_from?.value === true;
+				case "pending-request":
+					return person.pending_follow_request?.value === true;
+				case "recently-unfollowed":
+					return person.recently_unfollowed?.value === true;
+				default:
+					return true;
+			}
+		});
+
+		return sortPeople(matches);
 	});
 
 	const filteredConversations = createMemo(() => {
@@ -170,7 +147,7 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 		const minimum = Math.max(0, Number.parseInt(minimumMessages(), 10) || 0);
 		const type = conversationType();
 
-		return props.conversations
+		return [...props.conversations]
 			.filter((conversation) => {
 				if (query) {
 					const searchable = [conversation.title, ...conversation.participants].join(" ").toLocaleLowerCase();
@@ -210,46 +187,13 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 		});
 	};
 
-	const activeTabClass = (tab: TabId) => {
-		if (activeTab() !== tab) return "text-gray-400 hover:bg-gray-800 hover:text-gray-100";
-		if (tab === "highlights") return "bg-pink text-gray-950 shadow-[0_2px_14px_rgba(255,110,196,0.35)] focus-visible:outline-pink";
-		if (tab === "people") return "bg-lavender text-gray-950 shadow-[0_2px_14px_rgba(170,167,255,0.35)] focus-visible:outline-lavender";
-		if (tab === "conversations") return "bg-purple text-gray-950 shadow-[0_2px_14px_rgba(120,115,245,0.35)] focus-visible:outline-purple";
-		return "bg-purple text-gray-950 shadow-[0_2px_14px_rgba(120,115,245,0.35)] focus-visible:outline-purple";
-	};
-
 	return (
-		<div class="space-y-7">
-			<div class="rounded-full border border-gray-600/50 bg-gray-900/90 p-1 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
-				<nav class="grid grid-cols-2 gap-1 md:grid-cols-4" aria-label="Analysis sections">
-					<For each={tabItems}>
-						{(tab) => (
-							<button
-								type="button"
-								class={`flex cursor-pointer items-center justify-center rounded-full px-3 py-2.5 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 ${activeTabClass(tab.id)}`}
-								aria-current={activeTab() === tab.id ? "page" : undefined}
-								onClick={() => setActiveTab(tab.id)}
-							>
-								{tab.label}
-							</button>
-						)}
-					</For>
-				</nav>
-			</div>
-
-			<Show
-				when={!props.loading}
-				fallback={
-					<div class="rounded-lg border border-gray-600/60 bg-[linear-gradient(145deg,rgba(32,32,32,0.96),rgba(24,24,24,0.96))] p-12 text-center text-gray-400 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
-						Loading your data package…
-					</div>
-				}
-			>
-				<Show when={activeTab() === "highlights"}>
+		<Show when={!props.loading} fallback={<LoadingState label="Loading your data package…" />}>
+			<Switch>
+				<Match when={activeTab() === "highlights"}>
 					<HighlightsTab analysis={props.analysis} />
-				</Show>
-
-				<Show when={activeTab() === "people"}>
+				</Match>
+				<Match when={activeTab() === "people"}>
 					<PeopleTab
 						people={props.people}
 						filteredPeople={filteredPeople()}
@@ -264,9 +208,8 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 						onPeopleTableToggle={togglePeopleTable}
 						onClearFilters={clearPeopleFilters}
 					/>
-				</Show>
-
-				<Show when={activeTab() === "conversations"}>
+				</Match>
+				<Match when={activeTab() === "conversations"}>
 					<ConversationsTab
 						conversations={props.conversations}
 						filteredConversations={filteredConversations()}
@@ -280,16 +223,14 @@ const AnalysisTabs: Component<AnalysisTabsProps> = (props) => {
 						onClearFilters={clearConversationFilters}
 						selectedConversation={selectedConversation}
 						conversationStats={conversationStats}
-						conversationStatsLoading={conversationStatsLoading}
-						onConversationClick={loadConversationStats}
+						onConversationClick={toggleConversation}
 					/>
-				</Show>
-
-				<Show when={activeTab() === "profile"}>
+				</Match>
+				<Match when={activeTab() === "profile"}>
 					<ProfileTab user={props.user} analysis={props.analysis} onOpenPeopleFilter={openPeopleFilter} />
-				</Show>
-			</Show>
-		</div>
+				</Match>
+			</Switch>
+		</Show>
 	);
 };
 

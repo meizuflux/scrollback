@@ -1,6 +1,7 @@
 import { type Component, Show } from "solid-js";
 import ImportProgress from "@/components/ImportProgress";
 import type { ImportStep } from "@/import/import";
+import { Button, Panel } from "@/components/ui";
 
 interface ImportStatusProps {
 	isImporting: boolean;
@@ -17,19 +18,19 @@ interface ImportStatusProps {
 const ImportStatus: Component<ImportStatusProps> = (props) => (
 	<>
 		<Show when={props.isImporting}>
-			<div class="mb-8 rounded-lg border border-gray-600/40 bg-gray-900/80 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-6">
+			<Panel class="mb-8 p-5 sm:p-6">
 				<Show when={props.importAborted}>
-					<p class="mb-4 text-sm text-orange">Finishing cancellation and cleaning up…</p>
+					<p class="mb-4 text-sm text-orange-soft">Finishing cancellation and cleaning up…</p>
 				</Show>
 				<ImportProgress steps={props.steps} onStop={props.importAborted ? undefined : props.onStop} />
-			</div>
+			</Panel>
 		</Show>
 
 		<Show when={props.showAbortMessage}>
-			<div class="mb-8 rounded-lg border border-orange/60 bg-orange/10 p-4">
+			<div class="mb-8 rounded-lg border border-orange-line bg-orange-fill/60 p-4">
 				<div class="flex items-start gap-3">
 					<svg
-						class="mt-0.5 h-5 w-5 shrink-0 text-orange"
+						class="mt-0.5 h-5 w-5 shrink-0 text-orange-soft"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -43,8 +44,8 @@ const ImportStatus: Component<ImportStatusProps> = (props) => (
 						/>
 					</svg>
 					<div>
-						<h3 class="mb-1 font-sans text-base font-semibold text-orange">Import Stopped</h3>
-						<p class="text-sm text-orange">
+						<h3 class="mb-1 font-sans text-base font-semibold text-orange-soft">Import Stopped</h3>
+						<p class="text-sm text-orange-soft">
 							The import process was cancelled. You can try again with your data files.
 						</p>
 					</div>
@@ -53,26 +54,18 @@ const ImportStatus: Component<ImportStatusProps> = (props) => (
 		</Show>
 
 		<Show when={props.errorMessage}>
-			<div class="mb-8 rounded-lg border border-red/60 bg-red/10 p-4" role="alert">
-				<h3 class="mb-1 font-sans text-base font-semibold text-red">Couldn’t load the data</h3>
-				<p class="text-sm text-red">{props.errorMessage}</p>
+			<div class="mb-8 rounded-lg border border-red-line bg-red-fill/60 p-4" role="alert">
+				<h3 class="mb-1 font-sans text-base font-semibold text-red-soft">Couldn’t load the data</h3>
+				<p class="text-sm text-red-soft">{props.errorMessage}</p>
 				<div class="mt-3 flex flex-wrap gap-2">
 					<Show when={props.demoMode}>
-						<button
-							type="button"
-							class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-red/60 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-red/15"
-							onClick={props.onRetryDemo}
-						>
+						<Button variant="danger" size="sm" onClick={props.onRetryDemo}>
 							Retry demo
-						</button>
+						</Button>
 					</Show>
-					<button
-						type="button"
-						class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-gray-800"
-						onClick={props.onDismissError}
-					>
+					<Button variant="secondary" size="sm" onClick={props.onDismissError}>
 						Dismiss
-					</button>
+					</Button>
 				</div>
 			</div>
 		</Show>

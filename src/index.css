@@ -5,20 +5,78 @@
 	--font-space-grotesk: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-	--color-pink: #ff6ec4;
-	--color-purple: #7873f5;
-	--color-lavender: #aaa7ff;
-	--color-orange: #f0a06a;
+	/* Cool dark neutral surfaces */
+	--color-page: #0a0b10;
+	--color-surface: #11131a;
+	--color-panel: #151720;
+	--color-raised: #1b1e29;
+	--color-edge: #22252f;
+	--color-edge-strong: #2d313e;
 
-	--color-gray-950: #101010;
-	--color-gray-900: #181818;
-	--color-gray-800: #202020;
-	--color-gray-700: #303030;
-	--color-gray-600: #404040;
-	--color-gray-500: #737373;
-	--color-gray-400: #a3a3a3;
-	--color-gray-300: #d4d4d4;
-	--color-gray-100: #f2f2f2;
+	/* Neutral text scale
+	   gray-400 is the readable muted text (≈6.8:1 on panels).
+	   gray-500 is secondary/decoration only (≈3.8:1). Lower
+	   importance is expressed through weight and placement. */
+	--color-gray-950: #0a0b10;
+	--color-gray-900: #11131a;
+	--color-gray-800: #181a23;
+	--color-gray-700: #2a2e3a;
+	--color-gray-600: #454a5a;
+	--color-gray-500: #6e7387;
+	--color-gray-400: #9aa0b4;
+	--color-gray-300: #c4c8d7;
+	--color-gray-200: #e1e3ec;
+	--color-gray-100: #f1f2f7;
 
-	--color-red: #e7b7b7;
+	/* Pink family — outgoing activity */
+	--color-pink: #ff5fb3;
+	--color-pink-soft: #ffaad6;
+	--color-pink-fill: #2a1023;
+	--color-pink-line: #5e2650;
+
+	/* Purple family — primary controls */
+	--color-purple: #837cf7;
+	--color-purple-soft: #b6b1ff;
+	--color-purple-fill: #1a173c;
+	--color-purple-line: #47417e;
+
+	/* Blue family — incoming activity */
+	--color-blue: #4cc3ff;
+	--color-blue-soft: #a5e0ff;
+	--color-blue-fill: #0d1d2b;
+	--color-blue-line: #1e425a;
+
+	/* Status colors */
+	--color-orange: #ffb155;
+	--color-orange-soft: #ffd49a;
+	--color-orange-fill: #2b1e0d;
+	--color-orange-line: #5c3f18;
+
+	--color-red: #ff6f6f;
+	--color-red-soft: #ffb1b1;
+	--color-red-fill: #2c1316;
+	--color-red-line: #6b2a30;
+	--color-red-700: #7f3340;
+	--color-red-200: #ffb1b1;
+	--color-red-950: #220e12;
+
+	/* Backward-compatible alias */
+	--color-lavender: #b6b1ff;
+
+	/* Shadows with subtle edge highlight */
+	--shadow-panel: inset 0 1px 0 0 rgb(255 255 255 / 0.03), 0 12px 32px -14px rgb(0 0 0 / 0.5);
+	--shadow-raised: inset 0 1px 0 0 rgb(255 255 255 / 0.05), 0 20px 48px -20px rgb(0 0 0 / 0.6);
+}
+
+:root {
+	color-scheme: dark;
+}
+
+body {
+	background-color: var(--color-page);
+	color: var(--color-gray-100);
+}
+
+::selection {
+	background: color-mix(in oklab, var(--color-purple) 40%, transparent);
 }

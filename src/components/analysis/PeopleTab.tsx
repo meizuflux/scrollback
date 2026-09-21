@@ -1,6 +1,12 @@
 import { type Component, createMemo, For, Show } from "solid-js";
-import { ControlLabel, controlClass, EmptyState, InfoTooltip } from "@/components/analysis/AnalysisShared";
-import type { PeopleFilter, PeopleSort } from "@/components/analysis/analysisTypes";
+import { Button, EmptyState, Field, PageHeading, Panel, Select, TextInput } from "@/components/ui";
+import { PairedMetric, SummaryPanel } from "@/components/analysis/Metrics";
+import {
+	PEOPLE_FILTER_OPTIONS,
+	PEOPLE_SORT_OPTIONS,
+	type PeopleFilter,
+	type PeopleSort,
+} from "@/components/analysis/analysisTypes";
 import type { StoredUser } from "@/db/database";
 
 interface PeopleTabProps {
@@ -18,96 +24,80 @@ interface PeopleTabProps {
 	onClearFilters: () => void;
 }
 
-interface StatCardProps {
-	title: string;
-	value: number;
-	description?: string;
-	accent?: "pink" | "purple" | "lavender";
-}
-
-const accentClasses = {
-	pink: "border-t-pink hover:border-pink",
-	purple: "border-t-purple hover:border-purple",
-	lavender: "border-t-lavender hover:border-lavender",
-} as const;
-
-const StatCard: Component<StatCardProps> = (props) => (
-	<div
-		class={`rounded-lg border border-gray-600/50 border-t-[3px] bg-[linear-gradient(145deg,rgba(32,32,32,0.96),rgba(24,24,24,0.92))] p-5 transition-colors ${accentClasses[props.accent || "pink"]}`}
-	>
-		<p class="text-sm font-medium leading-5 text-gray-400">
-			{props.title}
-			{props.description && <InfoTooltip label={props.title} description={props.description} />}
-		</p>
-		<p class="mt-2 font-mono text-2xl font-medium leading-8 text-gray-100">
-			{props.value.toLocaleString()}
-		</p>
-	</div>
-);
-
 const statusValue = (value: boolean | undefined) => (value ? "Yes" : "—");
 const storiesLikedValue = (value: number | undefined) => (value === undefined ? "—" : value.toLocaleString());
 
-const PeopleTab: Component<PeopleTabProps> = (props) => {
-	const peopleForTable = createMemo(() => {
-		const people = [...props.filteredPeople];
-		const sort = props.peopleSort();
+const relationshipTooltip =
+	"This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data.";
 
-		return people.sort((a, b) => {
-			if (sort === "username-desc") {
-				return b.username.localeCompare(a.username, undefined, { sensitivity: "base" });
-			}
-			if (sort === "followers") {
-				return (
-					Number(b.follower?.value === true) - Number(a.follower?.value === true) ||
-					a.username.localeCompare(b.username)
-				);
-			}
-			if (sort === "following") {
-				return (
-					Number(b.following?.value === true) - Number(a.following?.value === true) ||
-					a.username.localeCompare(b.username)
-				);
-			}
-			if (sort === "close-friends") {
-				return (
-					Number(b.close_friends?.value === true) - Number(a.close_friends?.value === true) ||
-					a.username.localeCompare(b.username)
-				);
-			}
-			if (sort === "blocked") {
-				return (
-					Number(b.blocked?.value === true) - Number(a.blocked?.value === true) ||
-					a.username.localeCompare(b.username)
-				);
-			}
-			return a.username.localeCompare(b.username, undefined, { sensitivity: "base" });
-		});
+const reportColumns = [
+	{ key: "follows you", label: "Follows you" },
+	{ key: "following", label: "Following" },
+	{ key: "close friend", label: "Close friend" },
+	{ key: "blocked", label: "Blocked" },
+	{ key: "requested", label: "Requested" },
+	{ key: "hidden story", label: "Hidden story" },
+	{ key: "pending request", label: "Pending request" },
+	{ key: "recently unfollowed", label: "Recently unfollowed" },
+	{ key: "stories liked", label: "Stories liked" },
+] as const;
+
+const PeopleTab: Component<PeopleTabProps> = (props) => {
+	const summaryCounts = createMemo(() => {
+		let followers = 0;
+		let following = 0;
+		let blocked = 0;
+		let notFollowingBack = 0;
+		let notFollowedBack = 0;
+		let closeFriends = 0;
+		for (const person of props.people) {
+			if (person.follower?.value === true) followers += 1;
+			if (person.following?.value === true) following += 1;
+			if (person.blocked?.value === true) blocked += 1;
+			if (person.following?.value === true && person.follower?.value !== true) notFollowingBack += 1;
+			if (person.follower?.value === true && person.following?.value !== true) notFollowedBack += 1;
+			if (person.close_friends?.value === true) closeFriends += 1;
+		}
+		return { followers, following, blocked, notFollowingBack, notFollowedBack, closeFriends };
 	});
 
-	const followers = () => props.people.filter((person) => person.follower?.value === true).length;
-	const following = () => props.people.filter((person) => person.following?.value === true).length;
-	const blocked = () => props.people.filter((person) => person.blocked?.value === true).length;
-	const notFollowingBack = () =>
-		props.people.filter((person) => person.following?.value === true && person.follower?.value !== true).length;
-	const notFollowedBack = () =>
-		props.people.filter((person) => person.follower?.value === true && person.following?.value !== true).length;
-	const closeFriends = () => props.people.filter((person) => person.close_friends?.value === true).length;
+	const reportValue = (person: StoredUser, key: (typeof reportColumns)[number]["key"]) => {
+		switch (key) {
+			case "follows you":
+				return statusValue(person.follower?.value);
+			case "following":
+				return statusValue(person.following?.value);
+			case "close friend":
+				return statusValue(person.close_friends?.value);
+			case "blocked":
+				return statusValue(person.blocked?.value);
+			case "requested":
+				return statusValue(person.requested_to_follow_you?.value);
+			case "hidden story":
+				return statusValue(person.hidden_story_from?.value);
+			case "pending request":
+				return statusValue(person.pending_follow_request?.value);
+			case "recently unfollowed":
+				return statusValue(person.recently_unfollowed?.value);
+			case "stories liked":
+				return storiesLikedValue(person.stories_liked);
+		}
+	};
 
 	return (
-		<section class="space-y-7">
-			<div>
-				<div class="flex flex-col justify-between gap-3 md:flex-row md:items-end">
-					<div>
-						<h1 class="font-sans text-3xl font-semibold tracking-tight text-white">People</h1>
-						<p class="mt-2 text-gray-400">Other Instagram accounts found in this data package.</p>
-					</div>
-					<div class="text-sm text-gray-400">
-						<span class="font-mono text-sm font-medium leading-5 text-gray-100">{props.filteredPeople.length.toLocaleString()}</span>{" "}
+		<section class="space-y-5">
+			<PageHeading
+				title="People"
+				description="Other Instagram accounts found in this data package."
+				trailing={
+					<div class="flex items-baseline gap-1.5 text-sm text-gray-400">
+						<span class="font-mono text-sm font-medium text-gray-100">
+							{props.filteredPeople.length.toLocaleString()}
+						</span>
 						results
 					</div>
-				</div>
-			</div>
+				}
+			/>
 
 			<Show
 				when={props.people.length > 0}
@@ -118,111 +108,107 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 					/>
 				}
 			>
-				<section class="space-y-4" aria-labelledby="people-overview-heading">
-					<div class="flex items-center gap-4">
-						<h2 id="people-overview-heading" class="font-sans text-xl font-semibold tracking-tight text-white">
-							At a Glance
-						</h2>
-						<div class="h-px flex-1 bg-[linear-gradient(90deg,rgba(170,167,255,0.5),rgba(115,115,115,0.35),transparent)]" />
-					</div>
-					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-							<StatCard
-								title="Followers"
-								value={followers()}
-								accent="lavender"
-							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
-						/>
-							<StatCard
-								title="Following"
-								value={following()}
-								accent="lavender"
-							description="This may be different than Instagram’s count because deactivated or otherwise unavailable accounts may not appear in the data."
-						/>
-						<StatCard title="Accounts blocked" value={blocked()} accent="lavender" />
-						<StatCard title="People not following you back" value={notFollowingBack()} accent="lavender" />
-						<StatCard title="People you don't follow back" value={notFollowedBack()} accent="lavender" />
-						<StatCard title="Close friends" value={closeFriends()} accent="lavender" />
-					</div>
-				</section>
+				<div class="space-y-5">
+					<PairedMetric
+						title="Connections"
+						size="lg"
+						left={{
+							label: "Followers",
+							value: summaryCounts().followers,
+							accent: "blue",
+							tooltip: relationshipTooltip,
+						}}
+						right={{
+							label: "Following",
+							value: summaryCounts().following,
+							accent: "pink",
+							tooltip: relationshipTooltip,
+						}}
+					/>
 
-				<div>
+					<SummaryPanel
+						strip
+						title="Other relationships"
+						items={[
+							{ label: "Accounts blocked", value: summaryCounts().blocked, quiet: true },
+							{ label: "Not following you back", value: summaryCounts().notFollowingBack },
+							{ label: "You don't follow back", value: summaryCounts().notFollowedBack },
+							{ label: "Close friends", value: summaryCounts().closeFriends, accent: "purple" },
+						]}
+					/>
+				</div>
+
+				<div class="mt-2">
 					<button
 						type="button"
-						class="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-1 py-2 text-left text-lg font-semibold text-gray-100 transition-colors hover:text-lavender focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender"
+						class="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg py-2 text-left font-sans text-base font-semibold tracking-tight text-gray-100 transition-colors hover:text-purple-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
 						aria-expanded={props.peopleTableOpen()}
 						aria-controls="people-table-panel"
 						onClick={props.onPeopleTableToggle}
 					>
-						<span>View Table</span>
+						<span>People report</span>
 						<span
 							aria-hidden="true"
-							class={`text-gray-400 transition-transform ${props.peopleTableOpen() ? "rotate-90" : ""}`}
+							class={`text-gray-400 transition-transform duration-150 ${props.peopleTableOpen() ? "rotate-90" : ""}`}
 						>
-							▶
+							<svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+								<path
+									d="m8 5 5 5-5 5"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.75"
+								/>
+							</svg>
 						</span>
 					</button>
 
 					<Show when={props.peopleTableOpen()}>
-						<div id="people-table-panel" class="mt-2 space-y-5">
-							<div class="rounded-lg border border-lavender/30 bg-gray-900/85 p-4">
+						<div id="people-table-panel" class="mt-4 space-y-5">
+							<div class="border-b border-edge pb-5">
 								<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
-									<ControlLabel label="Search usernames">
-										<input
-											class={`${controlClass} cursor-text`}
+									<Field label="Search usernames">
+										<TextInput
 											type="search"
 											value={props.peopleSearch()}
 											placeholder="Search by username"
 											onInput={(event) => props.onPeopleSearch(event.currentTarget.value)}
 										/>
-									</ControlLabel>
-									<ControlLabel label="Relationship">
-										<select
-						class={`${controlClass} cursor-pointer`}
+									</Field>
+									<Field label="Relationship">
+										<Select
 											value={props.peopleRelationship()}
 											onChange={(event) =>
 												props.onPeopleRelationship(event.currentTarget.value as PeopleFilter)
 											}
 										>
-											<option value="all">All people</option>
-											<option value="followers">Followers</option>
-											<option value="following">Following</option>
-											<option value="mutuals">Mutuals</option>
-											<option value="close-friends">Close friends</option>
-											<option value="blocked">Blocked</option>
-											<option value="requested">Requested to follow you</option>
-											<option value="hidden-story">Hidden story from</option>
-											<option value="pending-request">Pending follow request</option>
-											<option value="recently-unfollowed">Recently unfollowed</option>
-										</select>
-									</ControlLabel>
-									<button
-										type="button"
-									class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold leading-5 text-gray-100 transition-colors hover:border-lavender hover:bg-lavender/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender disabled:cursor-not-allowed disabled:opacity-50"
+											<For each={PEOPLE_FILTER_OPTIONS}>
+												{(option) => <option value={option.value}>{option.label}</option>}
+											</For>
+										</Select>
+									</Field>
+									<Button
+										variant="secondary"
 										disabled={!props.peopleFiltersActive()}
 										onClick={props.onClearFilters}
 									>
 										Clear filters
-									</button>
+									</Button>
 								</div>
-							</div>
 
-							<div class="rounded-lg border border-lavender/30 bg-gray-900/85 p-4">
-								<ControlLabel label="Sorting options">
-									<select
-									class={`${controlClass} cursor-pointer`}
-										value={props.peopleSort()}
-										onChange={(event) =>
-											props.onPeopleSort(event.currentTarget.value as PeopleSort)
-										}
-									>
-										<option value="username-asc">Username (A–Z)</option>
-										<option value="username-desc">Username (Z–A)</option>
-										<option value="followers">Followers first</option>
-										<option value="following">Following first</option>
-										<option value="close-friends">Close friends first</option>
-										<option value="blocked">Blocked first</option>
-									</select>
-								</ControlLabel>
+								<div class="mt-4 md:max-w-xs">
+									<Field label="Sorting options">
+										<Select
+											value={props.peopleSort()}
+											onChange={(event) =>
+												props.onPeopleSort(event.currentTarget.value as PeopleSort)
+											}
+										>
+											<For each={PEOPLE_SORT_OPTIONS}>
+												{(option) => <option value={option.value}>{option.label}</option>}
+											</For>
+										</Select>
+									</Field>
+								</div>
 							</div>
 
 							<Show
@@ -234,92 +220,54 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 									/>
 								}
 							>
-								<div class="overflow-hidden rounded-lg border border-lavender/35 bg-gray-900/90">
+								<Panel class="overflow-hidden">
 									<div class="overflow-x-auto">
-										<table class="w-full min-w-[1320px] text-left">
-					<thead class="border-b border-gray-700 bg-lavender/10">
-												<tr class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+										<table class="min-w-[1320px] w-full text-left">
+											<thead class="border-b border-edge bg-surface">
+												<tr class="text-xs font-semibold uppercase tracking-wider text-gray-400">
 													<th scope="col" class="px-5 py-3">
 														Username
 													</th>
-													<th scope="col" class="px-5 py-3">
-														Follows you
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Following
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Close friend
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Blocked
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Requested
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Hidden story
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Pending request
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Recently unfollowed
-													</th>
-													<th scope="col" class="px-5 py-3">
-														Stories liked
-													</th>
+													<For each={reportColumns}>
+														{(column) => (
+															<th scope="col" class="px-5 py-3">
+																{column.label}
+															</th>
+														)}
+													</For>
 												</tr>
 											</thead>
-											<tbody class="divide-y divide-gray-700">
-												<For each={peopleForTable()}>
+											<tbody class="divide-y divide-edge">
+												<For each={props.filteredPeople}>
 													{(person) => (
-										<tr class="text-sm text-gray-400 transition-colors hover:bg-lavender/10">
+														<tr class="text-sm text-gray-400 transition-colors hover:bg-white/5">
 															<th
 																scope="row"
 																class="px-5 py-4 font-semibold text-gray-100"
 															>
 																<div class="flex items-center gap-3">
-											<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-lavender/60 bg-[linear-gradient(145deg,rgba(255,110,196,0.22),rgba(120,115,245,0.2))] text-xs font-semibold text-gray-100">
+																	<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-edge-strong bg-raised text-xs font-semibold text-gray-100">
 																		{person.username.slice(0, 1).toUpperCase()}
 																	</div>
-																	<span class="font-mono text-sm text-gray-100">@{person.username}</span>
+																	<span class="font-mono text-sm text-gray-100">
+																		@{person.username}
+																	</span>
 																</div>
 															</th>
-															<td class="px-5 py-4">
-																{statusValue(person.follower?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.following?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.close_friends?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.blocked?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.requested_to_follow_you?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.hidden_story_from?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.pending_follow_request?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{statusValue(person.recently_unfollowed?.value)}
-															</td>
-															<td class="px-5 py-4">
-																{storiesLikedValue(person.stories_liked)}
-															</td>
+															<For each={reportColumns}>
+																{(column) => (
+																	<td class="px-5 py-4">
+																		{reportValue(person, column.key)}
+																	</td>
+																)}
+															</For>
 														</tr>
 													)}
 												</For>
 											</tbody>
 										</table>
 									</div>
-								</div>
+								</Panel>
 							</Show>
 						</div>
 					</Show>
