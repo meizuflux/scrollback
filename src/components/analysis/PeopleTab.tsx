@@ -15,12 +15,10 @@ interface PeopleTabProps {
 	peopleSearch: () => string;
 	peopleRelationship: () => PeopleFilter;
 	peopleSort: () => PeopleSort;
-	peopleTableOpen: () => boolean;
 	peopleFiltersActive: () => boolean;
 	onPeopleSearch: (value: string) => void;
 	onPeopleRelationship: (value: PeopleFilter) => void;
 	onPeopleSort: (value: PeopleSort) => void;
-	onPeopleTableToggle: () => void;
 	onClearFilters: () => void;
 }
 
@@ -138,138 +136,104 @@ const PeopleTab: Component<PeopleTabProps> = (props) => {
 					/>
 				</div>
 
-				<div class="mt-2">
-					<button
-						type="button"
-						class="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg py-2 text-left font-sans text-base font-semibold tracking-tight text-gray-100 transition-colors hover:text-purple-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-						aria-expanded={props.peopleTableOpen()}
-						aria-controls="people-table-panel"
-						onClick={props.onPeopleTableToggle}
-					>
-						<span>People report</span>
-						<span
-							aria-hidden="true"
-							class={`text-gray-400 transition-transform duration-150 ${props.peopleTableOpen() ? "rotate-90" : ""}`}
-						>
-							<svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-								<path
-									d="m8 5 5 5-5 5"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.75"
+				<div class="mt-4 space-y-5">
+					<div class="border-b border-edge pb-5">
+						<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
+							<Field label="Search usernames">
+								<TextInput
+									type="search"
+									value={props.peopleSearch()}
+									placeholder="Search by username"
+									onInput={(event) => props.onPeopleSearch(event.currentTarget.value)}
 								/>
-							</svg>
-						</span>
-					</button>
-
-					<Show when={props.peopleTableOpen()}>
-						<div id="people-table-panel" class="mt-4 space-y-5">
-							<div class="border-b border-edge pb-5">
-								<div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-end">
-									<Field label="Search usernames">
-										<TextInput
-											type="search"
-											value={props.peopleSearch()}
-											placeholder="Search by username"
-											onInput={(event) => props.onPeopleSearch(event.currentTarget.value)}
-										/>
-									</Field>
-									<Field label="Relationship">
-										<Select
-											value={props.peopleRelationship()}
-											onChange={(event) =>
-												props.onPeopleRelationship(event.currentTarget.value as PeopleFilter)
-											}
-										>
-											<For each={PEOPLE_FILTER_OPTIONS}>
-												{(option) => <option value={option.value}>{option.label}</option>}
-											</For>
-										</Select>
-									</Field>
-									<Button
-										variant="secondary"
-										disabled={!props.peopleFiltersActive()}
-										onClick={props.onClearFilters}
-									>
-										Clear filters
-									</Button>
-								</div>
-
-								<div class="mt-4 md:max-w-xs">
-									<Field label="Sorting options">
-										<Select
-											value={props.peopleSort()}
-											onChange={(event) =>
-												props.onPeopleSort(event.currentTarget.value as PeopleSort)
-											}
-										>
-											<For each={PEOPLE_SORT_OPTIONS}>
-												{(option) => <option value={option.value}>{option.label}</option>}
-											</For>
-										</Select>
-									</Field>
-								</div>
-							</div>
-
-							<Show
-								when={props.filteredPeople.length > 0}
-								fallback={
-									<EmptyState
-										title="No people match"
-										description="Try a different username or relationship filter."
-									/>
-								}
+							</Field>
+							<Field label="Relationship">
+								<Select
+									value={props.peopleRelationship()}
+									onChange={(event) =>
+										props.onPeopleRelationship(event.currentTarget.value as PeopleFilter)
+									}
+								>
+									<For each={PEOPLE_FILTER_OPTIONS}>
+										{(option) => <option value={option.value}>{option.label}</option>}
+									</For>
+								</Select>
+							</Field>
+							<Button
+								variant="secondary"
+								disabled={!props.peopleFiltersActive()}
+								onClick={props.onClearFilters}
 							>
-								<Panel class="overflow-hidden">
-									<div class="overflow-x-auto">
-										<table class="min-w-[1320px] w-full text-left">
-											<thead class="border-b border-edge bg-surface">
-												<tr class="text-xs font-semibold uppercase tracking-wider text-gray-400">
+								Clear filters
+							</Button>
+						</div>
+
+						<div class="mt-4 md:max-w-xs">
+							<Field label="Sorting options">
+								<Select
+									value={props.peopleSort()}
+									onChange={(event) => props.onPeopleSort(event.currentTarget.value as PeopleSort)}
+								>
+									<For each={PEOPLE_SORT_OPTIONS}>
+										{(option) => <option value={option.value}>{option.label}</option>}
+									</For>
+								</Select>
+							</Field>
+						</div>
+					</div>
+
+					<Show
+						when={props.filteredPeople.length > 0}
+						fallback={
+							<EmptyState
+								title="No people match"
+								description="Try a different username or relationship filter."
+							/>
+						}
+					>
+						<Panel class="overflow-hidden">
+							<div class="overflow-x-auto">
+								<table class="min-w-[1320px] w-full text-left">
+									<thead class="border-b border-edge bg-surface">
+										<tr class="text-xs font-semibold uppercase tracking-wider text-gray-400">
+											<th scope="col" class="px-5 py-3">
+												Username
+											</th>
+											<For each={reportColumns}>
+												{(column) => (
 													<th scope="col" class="px-5 py-3">
-														Username
+														{column.label}
+													</th>
+												)}
+											</For>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-edge">
+										<For each={props.filteredPeople}>
+											{(person) => (
+												<tr class="text-sm text-gray-400 transition-colors hover:bg-white/5">
+													<th scope="row" class="px-5 py-4 font-semibold text-gray-100">
+														<div class="flex items-center gap-3">
+															<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-edge-strong bg-raised text-xs font-semibold text-gray-100">
+																{person.username.slice(0, 1).toUpperCase()}
+															</div>
+															<span class="font-mono text-sm text-gray-100">
+																@{person.username}
+															</span>
+														</div>
 													</th>
 													<For each={reportColumns}>
 														{(column) => (
-															<th scope="col" class="px-5 py-3">
-																{column.label}
-															</th>
+															<td class="px-5 py-4">{reportValue(person, column.key)}</td>
 														)}
 													</For>
 												</tr>
-											</thead>
-											<tbody class="divide-y divide-edge">
-												<For each={props.filteredPeople}>
-													{(person) => (
-														<tr class="text-sm text-gray-400 transition-colors hover:bg-white/5">
-															<th
-																scope="row"
-																class="px-5 py-4 font-semibold text-gray-100"
-															>
-																<div class="flex items-center gap-3">
-																	<div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-edge-strong bg-raised text-xs font-semibold text-gray-100">
-																		{person.username.slice(0, 1).toUpperCase()}
-																	</div>
-																	<span class="font-mono text-sm text-gray-100">
-																		@{person.username}
-																	</span>
-																</div>
-															</th>
-															<For each={reportColumns}>
-																{(column) => (
-																	<td class="px-5 py-4">
-																		{reportValue(person, column.key)}
-																	</td>
-																)}
-															</For>
-														</tr>
-													)}
-												</For>
-											</tbody>
-										</table>
-									</div>
-								</Panel>
-							</Show>
-						</div>
+											)}
+										</For>
+									</tbody>
+								</table>
+							</div>
+						</Panel>
 					</Show>
 				</div>
 			</Show>

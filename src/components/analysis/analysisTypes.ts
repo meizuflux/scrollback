@@ -1,8 +1,3 @@
-import type { StoredUser } from "@/db/database";
-import type { CachedAnalysis } from "@/types/analysis";
-import type { User } from "@/types/user";
-
-export type TabId = "highlights" | "people" | "conversations" | "profile";
 export type PeopleFilter =
 	| "all"
 	| "followers"
@@ -16,15 +11,6 @@ export type PeopleFilter =
 	| "recently-unfollowed";
 export type PeopleSort = "username-asc" | "username-desc" | "followers" | "following" | "close-friends" | "blocked";
 export type ConversationTypeFilter = "all" | "direct" | "group";
-
-export const TAB_ITEMS: ReadonlyArray<{ id: TabId; label: string }> = [
-	{ id: "highlights", label: "Highlights" },
-	{ id: "people", label: "People" },
-	{ id: "conversations", label: "Conversations" },
-	{ id: "profile", label: "Profile" },
-];
-
-export const isTabId = (value: string): value is TabId => TAB_ITEMS.some((tab) => tab.id === value);
 
 export const PEOPLE_FILTER_OPTIONS: ReadonlyArray<{ value: PeopleFilter; label: string }> = [
 	{ value: "all", label: "All people" },
@@ -60,6 +46,9 @@ export const PEOPLE_SORTS: readonly PeopleSort[] = PEOPLE_SORT_OPTIONS.map((opti
 export const isPeopleFilter = (value: string): value is PeopleFilter => PEOPLE_FILTERS.includes(value as PeopleFilter);
 export const isPeopleSort = (value: string): value is PeopleSort => PEOPLE_SORTS.includes(value as PeopleSort);
 
+export const isConversationTypeFilter = (value: string): value is ConversationTypeFilter =>
+	value === "all" || value === "direct" || value === "group";
+
 export interface ConversationRow {
 	title: string;
 	participants: string[];
@@ -71,12 +60,4 @@ export interface ConversationRow {
 export interface ConversationSenderStat {
 	sender: string;
 	count: number;
-}
-
-export interface AnalysisTabsProps {
-	analysis: CachedAnalysis;
-	user: User | null;
-	people: StoredUser[];
-	conversations: ConversationRow[];
-	loading: boolean;
 }

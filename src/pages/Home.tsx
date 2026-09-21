@@ -104,7 +104,9 @@ const Home: Component = () => {
 			markDataLoaded();
 			onSuccess?.();
 			setDataLoaded(true);
-			navigate("/analysis", { replace: true });
+			const destination = sessionStorage.getItem("analysis_destination") || "/analysis";
+			sessionStorage.removeItem("analysis_destination");
+			navigate(destination, { replace: true });
 		} catch (error) {
 			console.error("Import failed:", error);
 			if (dataCleared) {

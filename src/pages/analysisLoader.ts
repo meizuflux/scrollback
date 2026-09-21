@@ -1,1 +1,1 @@
-export const loadAnalysisPage = () => import("@/pages/Analysis");
+export const loadAnalysisPage = () => import("@/components/analysis/AnalysisLayout");

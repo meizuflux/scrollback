@@ -3,14 +3,12 @@ import { db } from "@/db/database";
 import { createMediaURL } from "@/utils/media";
 import type { CachedAnalysis } from "@/types/analysis";
 import type { User } from "@/types/user";
-import type { PeopleFilter } from "@/components/analysis/analysisTypes";
 import { PageHeading, Panel } from "@/components/ui";
 import { ActionPanel } from "@/components/analysis/Metrics";
 
 interface ProfileTabProps {
 	user: User | null;
 	analysis: CachedAnalysis;
-	onOpenPeopleFilter: (filter: PeopleFilter) => void;
 }
 
 const initialsFor = (user: User | null) => {
@@ -115,7 +113,7 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 						description={relationshipTooltip}
 						accent="blue"
 						actionLabel="View people"
-						onClick={() => props.onOpenPeopleFilter("followers")}
+						href="/analysis/people?relationship=followers"
 					/>
 					<ActionPanel
 						label="Following"
@@ -123,7 +121,7 @@ const ProfileTab: Component<ProfileTabProps> = (props) => {
 						description={relationshipTooltip}
 						accent="pink"
 						actionLabel="View people"
-						onClick={() => props.onOpenPeopleFilter("following")}
+						href="/analysis/people?relationship=following"
 					/>
 				</div>
 			</Panel>

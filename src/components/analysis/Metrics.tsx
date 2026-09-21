@@ -1,4 +1,5 @@
 import { type Component, type JSX, For, Show } from "solid-js";
+import { A } from "@solidjs/router";
 import { InfoTooltip, Panel } from "@/components/ui";
 
 export type Accent = "pink" | "blue" | "purple" | "neutral";
@@ -165,16 +166,14 @@ export const ActionPanel: Component<{
 	description?: string;
 	accent?: Accent;
 	actionLabel: string;
-	onClick: () => void;
+	href?: string;
+	onClick?: () => void;
 }> = (props) => {
 	const accent = () => props.accent || "purple";
-	return (
-		<button
-			type="button"
-			class="group flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl border border-edge bg-panel p-4 text-left transition-colors hover:border-purple-line hover:bg-purple-fill/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple"
-			title={props.description}
-			onClick={props.onClick}
-		>
+	const className =
+		"group flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl border border-edge bg-panel p-4 text-left transition-colors hover:border-purple-line hover:bg-purple-fill/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple";
+	const content = (
+		<>
 			<div class="min-w-0">
 				<p
 					class={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
@@ -200,6 +199,18 @@ export const ActionPanel: Component<{
 					<path d="m8 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" />
 				</svg>
 			</span>
+		</>
+	);
+	if (props.href) {
+		return (
+			<A class={className} href={props.href} title={props.description} activeClass="" inactiveClass="">
+				{content}
+			</A>
+		);
+	}
+	return (
+		<button type="button" class={className} title={props.description} onClick={props.onClick}>
+			{content}
 		</button>
 	);
 };
